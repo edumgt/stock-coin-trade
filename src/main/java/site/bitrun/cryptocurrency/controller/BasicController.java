@@ -44,6 +44,12 @@ public class BasicController {
         return "index";
     }
 
+    // 주식 실습 화면
+    @GetMapping("/trade/stock")
+    public String stockPracticePage() {
+        return "trade/stock";
+    }
+
     // 회원가입 view
     @GetMapping("/member/register")
     public String memberRegisterForm(@ModelAttribute MemberRegisterForm memberRegisterForm) {

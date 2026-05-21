@@ -31,8 +31,18 @@ services:
       SPRING_DATASOURCE_USERNAME: mockinv
       SPRING_DATASOURCE_PASSWORD: mockinv1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      PYTHON_STOCK_API_BASE_URL: http://stock-backend:8000
     ports:
       - "8080:8080"
+    restart: unless-stopped
+
+  stock-backend:
+    build:
+      context: .
+      dockerfile: python-stock-backend/Dockerfile
+    container_name: stock-practice-backend
+    ports:
+      - "8000:8000"
     restart: unless-stopped
 
 volumes:
