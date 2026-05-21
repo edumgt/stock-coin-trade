@@ -42,3 +42,7 @@ temp/
 *.swp
 *.swo
 *~
+
+# Python cache
+__pycache__/
+*.pyc
