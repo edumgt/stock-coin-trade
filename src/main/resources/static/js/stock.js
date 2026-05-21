@@ -20,14 +20,18 @@ function showMessage(message, isError = false) {
 async function requestJson(url, options = {}) {
     const response = await fetch(url, options);
     const raw = await response.text();
-    let data = {};
+    let data = null;
     try {
-        data = raw ? JSON.parse(raw) : {};
+        data = raw ? JSON.parse(raw) : null;
     } catch (e) {
-        throw new Error("응답 형식이 올바르지 않습니다. 잠시 후 다시 시도해주세요.");
+        console.error("JSON parse failed:", e.message, raw);
+        throw new Error(`응답 형식이 올바르지 않습니다. (${e.message})`);
     }
     if (!response.ok) {
-        throw new Error(data.message || "요청에 실패했습니다.");
+        throw new Error(data?.message || "요청에 실패했습니다.");
+    }
+    if (data === null) {
+        throw new Error("서버 응답이 비어 있습니다. 잠시 후 다시 시도해주세요.");
     }
     return data;
 }
