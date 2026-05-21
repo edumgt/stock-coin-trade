@@ -20,9 +20,10 @@ function showMessage(message, isError = false) {
 async function requestJson(url, options = {}) {
     const response = await fetch(url, options);
     const raw = await response.text();
+    const normalized = raw.trim();
     let data = null;
     try {
-        data = raw ? JSON.parse(raw) : null;
+        data = normalized ? JSON.parse(normalized) : null;
     } catch (e) {
         console.error("JSON parse failed:", e.message, raw);
         throw new Error(`응답 형식이 올바르지 않습니다. (${e.message})`);
