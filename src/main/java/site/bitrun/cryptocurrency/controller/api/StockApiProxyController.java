@@ -67,10 +67,13 @@ public class StockApiProxyController {
                     .status(response.statusCode())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(response.body());
-        } catch (IOException | InterruptedException ex) {
-            if (ex instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity
+                    .status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body("{\"error\":\"STOCK_BACKEND_INTERRUPTED\",\"message\":\"주식 실습 백엔드 호출이 중단되었습니다.\"}");
+        } catch (IOException ex) {
             return ResponseEntity
                     .status(HttpStatus.SERVICE_UNAVAILABLE)
                     .contentType(MediaType.APPLICATION_JSON)

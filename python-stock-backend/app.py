@@ -46,7 +46,10 @@ def account_snapshot() -> dict:
         total_position_value += position["quantity"] * current_price(symbol)
 
     total_asset = state["cash"] + total_position_value
-    pnl_rate = ((total_asset - state["initial_cash"]) / state["initial_cash"]) * 100
+    initial_cash = state["initial_cash"]
+    pnl_rate = 0
+    if initial_cash != 0:
+        pnl_rate = ((total_asset - initial_cash) / initial_cash) * 100
     return {
         "cash": state["cash"],
         "totalAsset": total_asset,
@@ -93,7 +96,10 @@ def positions():
 def buy():
     data = request.get_json(silent=True) or {}
     symbol = str(data.get("symbol", "")).upper()
-    quantity = int(data.get("quantity", 0))
+    try:
+        quantity = int(data.get("quantity", 0))
+    except (TypeError, ValueError):
+        return jsonify({"message": "quantity는 정수여야 합니다."}), 400
 
     if not symbol or quantity <= 0:
         return jsonify({"message": "symbol and quantity(>0) are required"}), 400
@@ -127,7 +133,10 @@ def buy():
 def sell():
     data = request.get_json(silent=True) or {}
     symbol = str(data.get("symbol", "")).upper()
-    quantity = int(data.get("quantity", 0))
+    try:
+        quantity = int(data.get("quantity", 0))
+    except (TypeError, ValueError):
+        return jsonify({"message": "quantity는 정수여야 합니다."}), 400
 
     if not symbol or quantity <= 0:
         return jsonify({"message": "symbol and quantity(>0) are required"}), 400
