@@ -9,8 +9,13 @@
         <!-- favicon -->
         <link rel="icon" th:href="@{/img/favicon.png}">
 
-        <!-- Noto Sans KR -->
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
+        <!-- Pretendard (self-hosted) -->
+        <style>
+            @font-face { font-family: 'Pretendard'; font-weight: 400; font-display: swap; src: url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+            @font-face { font-family: 'Pretendard'; font-weight: 500; font-display: swap; src: url('/fonts/Pretendard-Medium.woff2') format('woff2'); }
+            @font-face { font-family: 'Pretendard'; font-weight: 600; font-display: swap; src: url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+            @font-face { font-family: 'Pretendard'; font-weight: 700; font-display: swap; src: url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+        </style>
 
         <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
@@ -18,6 +23,14 @@
             tailwind.config = {
                 theme: {
                     extend: {
+                        fontFamily: {
+                            sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Apple SD Gothic Neo', 'Malgun Gothic', 'sans-serif']
+                        },
+                        fontSize: {
+                            base: ['17px', { lineHeight: '1.6' }],
+                            sm:   ['15px', { lineHeight: '1.5' }],
+                            xs:   ['13px', { lineHeight: '1.4' }],
+                        },
                         colors: {
                             brand: {
                                 50: '#eff6ff',

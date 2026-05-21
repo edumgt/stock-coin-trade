@@ -2,4 +2,11 @@
 .github
 target
 captures
+docs
+scripts
+k8s
+node_modules
+package.json
+package-lock.json
 README.md
+*.md

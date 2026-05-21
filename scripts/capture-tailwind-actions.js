@@ -56,6 +56,20 @@ async function main() {
     fullPage: true,
   });
 
+  // Action 4: 주식 실습 화면
+  await page.goto("http://127.0.0.1:8080/trade/stock", {
+    waitUntil: "networkidle",
+  });
+  await page.waitForFunction(() => {
+    const el = document.getElementById("accountCash");
+    return el && el.textContent && el.textContent.trim() !== "-";
+  }, { timeout: 15000 });
+  await page.waitForTimeout(800);
+  await page.screenshot({
+    path: "captures/action-4-stock-trade-practice.png",
+    fullPage: true,
+  });
+
   await browser.close();
 }
 

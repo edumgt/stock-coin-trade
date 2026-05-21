@@ -1,4 +1,9 @@
-* { font-family: 'Noto Sans KR', sans-serif; }
+* {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
 .text-align-table-right { text-align: right; }
 
 td, th { vertical-align: middle; }

@@ -21,11 +21,13 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/app.Dockerfile
     container_name: crypto-mock-app
     depends_on:
       db:
         condition: service_healthy
+      stock-backend:
+        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/mockinv?useUnicode=true&characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: mockinv
@@ -39,7 +41,7 @@ services:
   stock-backend:
     build:
       context: .
-      dockerfile: python-stock-backend/Dockerfile
+      dockerfile: docker/stock-backend.Dockerfile
     container_name: stock-practice-backend
     ports:
       - "8000:8000"

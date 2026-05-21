@@ -89,20 +89,24 @@ async function submitOrder(type) {
         return;
     }
 
-    const payload = {symbol: stockSymbol.value, quantity: qty};
-    await requestJson(`/api/stocks/orders/${type}`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(payload)
-    });
-    showMessage(`${type === "buy" ? "매수" : "매도"} 주문이 완료되었습니다.`);
-    await refreshAll();
+    try {
+        const payload = {symbol: stockSymbol.value, quantity: qty};
+        await requestJson(`/api/stocks/orders/${type}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        });
+        showMessage(`${type === "buy" ? "매수" : "매도"} 주문이 완료되었습니다.`);
+        await refreshAll({ silent: true });
+    } catch (error) {
+        showMessage(error.message, true);
+    }
 }
 
-async function refreshAll() {
+async function refreshAll({ silent = false } = {}) {
     try {
         await Promise.all([loadQuote(), loadAccount(), loadPositions()]);
-        showMessage("");
+        if (!silent) showMessage("");
     } catch (error) {
         showMessage(error.message, true);
     }
