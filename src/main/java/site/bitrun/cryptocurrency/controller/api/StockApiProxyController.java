@@ -65,18 +65,18 @@ public class StockApiProxyController {
             HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
             return ResponseEntity
                     .status(response.statusCode())
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(new MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8))
                     .body(response.body());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             return ResponseEntity
                     .status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(new MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8))
                     .body("{\"error\":\"STOCK_BACKEND_INTERRUPTED\",\"message\":\"주식 실습 백엔드 호출이 중단되었습니다.\"}");
         } catch (IOException ex) {
             return ResponseEntity
                     .status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(new MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8))
                     .body("{\"error\":\"STOCK_BACKEND_UNAVAILABLE\",\"message\":\"주식 실습 백엔드 연결에 실패했습니다.\"}");
         }
     }

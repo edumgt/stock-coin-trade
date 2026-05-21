@@ -19,7 +19,13 @@ function showMessage(message, isError = false) {
 
 async function requestJson(url, options = {}) {
     const response = await fetch(url, options);
-    const data = await response.json();
+    const raw = await response.text();
+    let data = {};
+    try {
+        data = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+        throw new Error("응답 형식이 올바르지 않습니다. 잠시 후 다시 시도해주세요.");
+    }
     if (!response.ok) {
         throw new Error(data.message || "요청에 실패했습니다.");
     }
