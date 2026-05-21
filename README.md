@@ -11,7 +11,8 @@ Spring Boot + Thymeleaf 기반의 가상 암호화폐 모의투자 웹 애플리
 
 - Tailwind 기반 반응형 UI
 - 회원가입/로그인(세션 + BCrypt)
-- KRW 마켓 기준 모의 매수/매도
+- KRW 마켓 기준 코인 모의 매수/매도
+- 주식 거래 실습 화면(파이썬 기반 백엔드 연동)
 - 보유자산(평가금액/수익률) 실시간 계산
 - 업비트 WebSocket 실시간 시세
 - 국내 4대 거래소 시세 비교 API (`/api/crypto/{code}/domestic-prices`)
@@ -146,6 +147,7 @@ docker compose up -d --build
 ### 7-2. 접속
 
 - `http://localhost:8080`
+- 주식 백엔드: `http://localhost:8000`
 
 ### 7-3. 종료
 
@@ -451,3 +453,5 @@ EKS 내부에서 앱과 MariaDB가 함께 동작하는 구조를 표현합니다
 - AWS 콘솔 이미지: `docs/aws-console/*`
 - AWS 아키텍처 SVG: `docs/architecture-eks.svg`
 - 거래 화면: `src/main/resources/templates/trade/order.html`
+- 주식 화면: `src/main/resources/templates/trade/stock.html`
+- 파이썬 주식 백엔드: `python-stock-backend/*`
