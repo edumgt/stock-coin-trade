@@ -5,57 +5,127 @@
       layout:decorate="~{fragments/layout}">
 <head>
     <title>주식 실습</title>
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.0/dist/apexcharts.min.js"></script>
 </head>
 <body layout:fragment="content">
+
+<!-- Page header -->
 <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     <div class="flex flex-wrap items-center gap-3">
         <h2 class="text-2xl font-bold text-slate-900">주식 거래 실습</h2>
-        <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">Python Backend</span>
+        <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">KOSPI · KOSDAQ</span>
+        <span id="dataSourceBadge" class="hidden rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">시뮬레이션</span>
     </div>
-    <p class="mt-2 text-sm text-slate-600">가상 잔고 기반으로 매수/매도 실습을 진행합니다.</p>
+    <p class="mt-2 text-sm text-slate-600">한국 주식 시장(KOSPI · KOSDAQ) 실시간 시세 기반 가상 모의투자 실습입니다.</p>
 </section>
 
-<section class="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+<!-- Market indices -->
+<section class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-2">
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-widest text-slate-500">KOSPI</span>
+            <span id="kospiChange" class="text-xs font-semibold">-</span>
+        </div>
+        <p id="kospiPrice" class="mt-1 text-2xl font-bold text-slate-900">-</p>
+        <p id="kospiChangeAmt" class="mt-0.5 text-sm text-slate-500">-</p>
+    </article>
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-widest text-slate-500">KOSDAQ</span>
+            <span id="kosdaqChange" class="text-xs font-semibold">-</span>
+        </div>
+        <p id="kosdaqPrice" class="mt-1 text-2xl font-bold text-slate-900">-</p>
+        <p id="kosdaqChangeAmt" class="mt-0.5 text-sm text-slate-500">-</p>
+    </article>
+</section>
+
+<!-- Chart section -->
+<section class="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <select id="stockSymbol"
+                    class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            </select>
+            <span id="chartStockName" class="text-sm font-semibold text-slate-700"></span>
+        </div>
+        <div class="flex items-center gap-1" id="periodBtns">
+            <button data-period="1d"  class="period-btn rounded-lg px-3 py-1.5 text-xs font-semibold transition">1일</button>
+            <button data-period="1w"  class="period-btn rounded-lg px-3 py-1.5 text-xs font-semibold transition">1주</button>
+            <button data-period="1m"  class="period-btn rounded-lg px-3 py-1.5 text-xs font-semibold transition active">1개월</button>
+            <button data-period="3m"  class="period-btn rounded-lg px-3 py-1.5 text-xs font-semibold transition">3개월</button>
+            <button data-period="1y"  class="period-btn rounded-lg px-3 py-1.5 text-xs font-semibold transition">1년</button>
+        </div>
+    </div>
+
+    <!-- Candlestick chart -->
+    <div id="candleChart" class="mt-4" style="min-height:300px;"></div>
+    <!-- Volume chart -->
+    <div id="volumeChart" class="mt-1" style="min-height:110px;"></div>
+</section>
+
+<!-- Quote / Account / Order -->
+<section class="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
+
+    <!-- Quote -->
     <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 class="text-base font-bold text-slate-900">현재 시세</h3>
         <div class="mt-4 space-y-2 text-sm">
-            <div>
-                <label for="stockSymbol" class="mb-1 block font-semibold text-slate-700">종목</label>
-                <select id="stockSymbol" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    <option value="AAPL">AAPL</option>
-                    <option value="MSFT">MSFT</option>
-                    <option value="NVDA">NVDA</option>
-                    <option value="TSLA">TSLA</option>
-                    <option value="AMZN">AMZN</option>
-                </select>
+            <div class="flex items-baseline justify-between">
+                <span class="text-slate-500">현재가</span>
+                <span id="quotePrice" class="text-lg font-bold text-slate-900">-</span>
             </div>
-            <p class="text-slate-600">가격: <span id="quotePrice" class="font-semibold text-slate-900">-</span></p>
-            <p class="text-slate-600">등락률: <span id="quoteChange" class="font-semibold text-slate-900">-</span></p>
-            <p class="text-slate-500 text-xs">* 모의 실습용 가격입니다.</p>
+            <div class="flex items-baseline justify-between">
+                <span class="text-slate-500">전일 대비</span>
+                <span id="quoteChange" class="font-semibold">-</span>
+            </div>
+            <div class="flex items-baseline justify-between">
+                <span class="text-slate-500">등락률</span>
+                <span id="quoteChangeRate" class="font-semibold">-</span>
+            </div>
+            <div class="flex items-baseline justify-between">
+                <span class="text-slate-500">거래량</span>
+                <span id="quoteVolume" class="font-semibold text-slate-700">-</span>
+            </div>
+            <div class="flex items-baseline justify-between">
+                <span class="text-slate-500">시장</span>
+                <span id="quoteMarket" class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">-</span>
+            </div>
         </div>
     </article>
 
+    <!-- Account -->
     <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 class="text-base font-bold text-slate-900">계좌 현황</h3>
         <div class="mt-4 space-y-2 text-sm text-slate-600">
-            <p>보유 현금: <span id="accountCash" class="font-semibold text-slate-900">-</span></p>
-            <p>총 자산: <span id="accountAsset" class="font-semibold text-slate-900">-</span></p>
-            <p>수익률: <span id="accountPnlRate" class="font-semibold text-slate-900">-</span></p>
+            <div class="flex items-baseline justify-between">
+                <span>보유 현금</span>
+                <span id="accountCash" class="font-semibold text-slate-900">-</span>
+            </div>
+            <div class="flex items-baseline justify-between">
+                <span>총 자산</span>
+                <span id="accountAsset" class="font-semibold text-slate-900">-</span>
+            </div>
+            <div class="flex items-baseline justify-between">
+                <span>수익률</span>
+                <span id="accountPnlRate" class="font-semibold text-slate-900">-</span>
+            </div>
         </div>
     </article>
 
+    <!-- Order -->
     <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 class="text-base font-bold text-slate-900">주문</h3>
         <div class="mt-4 grid grid-cols-1 gap-3">
-            <input id="orderQty" type="number" min="1" step="1" placeholder="수량"
-                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"/>
+            <input id="orderQty" type="number" min="1" step="1" placeholder="수량 (주)"
+                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"/>
             <div class="grid grid-cols-2 gap-2">
                 <button id="buyBtn" type="button"
-                        class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                        class="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">
                     매수
                 </button>
                 <button id="sellBtn" type="button"
-                        class="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">
+                        class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700">
                     매도
                 </button>
             </div>
@@ -64,6 +134,7 @@
     </article>
 </section>
 
+<!-- Positions table -->
 <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <h3 class="text-base font-bold text-slate-900">보유 포지션</h3>
     <div class="mt-4 overflow-x-auto">
@@ -71,6 +142,7 @@
             <thead class="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
                 <th class="px-3 py-2 text-left">종목</th>
+                <th class="px-3 py-2 text-left">시장</th>
                 <th class="px-3 py-2 text-right">수량</th>
                 <th class="px-3 py-2 text-right">평균단가</th>
                 <th class="px-3 py-2 text-right">현재가</th>

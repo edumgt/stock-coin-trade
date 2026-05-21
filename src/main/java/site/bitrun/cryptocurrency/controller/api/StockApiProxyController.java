@@ -25,10 +25,28 @@ public class StockApiProxyController {
         this.stockBackendBaseUrl = stockBackendBaseUrl;
     }
 
+    @GetMapping("/api/stocks/list")
+    public ResponseEntity<String> getList() {
+        return callBackend("GET", "/api/stocks/list", null);
+    }
+
+    @GetMapping("/api/stocks/market")
+    public ResponseEntity<String> getMarket() {
+        return callBackend("GET", "/api/stocks/market", null);
+    }
+
     @GetMapping("/api/stocks/quote")
     public ResponseEntity<String> getQuote(@RequestParam("symbol") String symbol) {
+        String encoded = URLEncoder.encode(symbol, StandardCharsets.UTF_8);
+        return callBackend("GET", "/api/stocks/quote?symbol=" + encoded, null);
+    }
+
+    @GetMapping("/api/stocks/chart")
+    public ResponseEntity<String> getChart(@RequestParam("symbol") String symbol,
+                                           @RequestParam(value = "period", defaultValue = "1m") String period) {
         String encodedSymbol = URLEncoder.encode(symbol, StandardCharsets.UTF_8);
-        return callBackend("GET", "/api/stocks/quote?symbol=" + encodedSymbol, null);
+        String encodedPeriod = URLEncoder.encode(period, StandardCharsets.UTF_8);
+        return callBackend("GET", "/api/stocks/chart?symbol=" + encodedSymbol + "&period=" + encodedPeriod, null);
     }
 
     @GetMapping("/api/stocks/account")
