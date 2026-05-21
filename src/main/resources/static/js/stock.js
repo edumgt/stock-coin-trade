@@ -26,7 +26,7 @@ async function requestJson(url, options = {}) {
         data = normalized ? JSON.parse(normalized) : null;
     } catch (e) {
         console.error("JSON parse failed:", e.message, raw);
-        throw new Error(`응답 형식이 올바르지 않습니다. (${e.message})`);
+        throw new Error("응답 형식이 올바르지 않습니다. 잠시 후 다시 시도해주세요.");
     }
     if (!response.ok) {
         throw new Error(data?.message || "요청에 실패했습니다.");
