@@ -102,6 +102,7 @@ async function submitOrder(type) {
 async function refreshAll() {
     try {
         await Promise.all([loadQuote(), loadAccount(), loadPositions()]);
+        showMessage("");
     } catch (error) {
         showMessage(error.message, true);
     }
