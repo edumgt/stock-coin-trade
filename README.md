@@ -440,6 +440,10 @@ EKS 내부에서 앱과 MariaDB가 함께 동작하는 구조를 표현합니다
 
 ![Action 3](captures/action-3-trade-eth-coinone-korbit.png)
 
+4. 주식 거래 실습 화면
+
+![Action 4](captures/action-4-stock-trade-practice.png)
+
 ---
 
 ## 15) 주요 경로
