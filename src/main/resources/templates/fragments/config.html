@@ -1,23 +1,19 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-    <!-- configFragment -->
     <th:block th:fragment="configFragment">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
-
-        <!-- favicon -->
         <link rel="icon" th:href="@{/img/favicon.png}">
 
-        <!-- Pretendard (self-hosted) -->
         <style>
             @font-face { font-family: 'Pretendard'; font-weight: 400; font-display: swap; src: url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
             @font-face { font-family: 'Pretendard'; font-weight: 500; font-display: swap; src: url('/fonts/Pretendard-Medium.woff2') format('woff2'); }
             @font-face { font-family: 'Pretendard'; font-weight: 600; font-display: swap; src: url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
             @font-face { font-family: 'Pretendard'; font-weight: 700; font-display: swap; src: url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+            @font-face { font-family: 'Pretendard'; font-weight: 800; font-display: swap; src: url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
         </style>
 
-        <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
@@ -27,16 +23,27 @@
                             sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Apple SD Gothic Neo', 'Malgun Gothic', 'sans-serif']
                         },
                         fontSize: {
-                            base: ['17px', { lineHeight: '1.6' }],
-                            sm:   ['15px', { lineHeight: '1.5' }],
-                            xs:   ['13px', { lineHeight: '1.4' }],
+                            '2xs': ['13px', { lineHeight: '1.4' }],
+                            xs:   ['14px', { lineHeight: '1.5' }],
+                            sm:   ['16px', { lineHeight: '1.6' }],
+                            base: ['18px', { lineHeight: '1.7' }],
+                            lg:   ['20px', { lineHeight: '1.6' }],
+                            xl:   ['22px', { lineHeight: '1.5' }],
+                            '2xl':['26px', { lineHeight: '1.4' }],
+                            '3xl':['30px', { lineHeight: '1.3' }],
+                            '4xl':['36px', { lineHeight: '1.2' }],
                         },
                         colors: {
-                            brand: {
-                                50: '#eff6ff',
-                                500: '#3b82f6',
-                                600: '#2563eb',
-                                700: '#1d4ed8'
+                            gold: {
+                                300: '#FFE566',
+                                400: '#FFCC00',
+                                500: '#E6B800',
+                                600: '#CC9900',
+                            },
+                            surface: {
+                                50:  '#FAFAFA',
+                                100: '#F4F4F4',
+                                200: '#EEEEEE',
                             }
                         }
                     }
@@ -44,10 +51,7 @@
             };
         </script>
 
-        <!-- Common style -->
         <link th:href="@{/css/style.css}" rel="stylesheet">
-
-        <!-- Highcharts.js CDN -->
         <script src="https://code.highcharts.com/11.1.0/highcharts.js"></script>
     </th:block>
 </html>

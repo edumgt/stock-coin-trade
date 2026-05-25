@@ -6,5 +6,5 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY python-stock-backend/app.py /app/app.py
 
-EXPOSE 8000
+EXPOSE 8200
 CMD ["python", "app.py"]

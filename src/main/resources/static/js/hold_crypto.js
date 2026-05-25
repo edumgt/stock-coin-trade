@@ -238,39 +238,49 @@ fetch(upbitTradePriceApiUrl)
                 .get()
         );
 
-        // Build the chart
+        const goldPalette = ['#FFCC00','#E6B800','#FFD740','#CC9900','#FFE566','#B38600','#FFF0A0','#997300'];
+
         Highcharts.chart('hold_asset_chart', {
             chart: {
-                plotBackgroundColor: null,
+                plotBackgroundColor: 'transparent',
+                backgroundColor: 'transparent',
                 plotBorderWidth: null,
                 plotShadow: false,
-                type: 'pie'
+                type: 'pie',
+                style: { fontFamily: "'Pretendard', sans-serif" }
             },
             title: {
-                text: '보유 비중(%)',
-                align: 'center'
+                text: '보유 비중',
+                align: 'center',
+                style: { color: '#F2F2F2', fontSize: '16px', fontWeight: '800', fontFamily: "'Pretendard', sans-serif" }
             },
             tooltip: {
-                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>',
+                backgroundColor: '#161616',
+                borderColor: 'rgba(255,204,0,0.30)',
+                borderRadius: 10,
+                style: { color: '#F2F2F2', fontSize: '14px', fontFamily: "'Pretendard', sans-serif" }
             },
             plotOptions: {
                 pie: {
-                    // allowPointSelect: false, // 클릭 효과
                     cursor: 'pointer',
-                    colors,
-                    borderRadius: 5,
+                    colors: goldPalette,
+                    borderWidth: 1,
+                    borderColor: 'rgba(12,12,12,0.8)',
+                    borderRadius: 4,
                     dataLabels: {
                         enabled: true,
-                        format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
-                        distance: -50,
-                        filter: {
-                            property: 'percentage',
-                            operator: '>',
-                            value: 4
-                        }
+                        format: '<b style="color:#F2F2F2">{point.name}</b><br><span style="color:#FFCC00">{point.percentage:.1f}%</span>',
+                        distance: -45,
+                        style: { fontSize: '13px', fontWeight: '700', fontFamily: "'Pretendard', sans-serif", textOutline: 'none' },
+                        filter: { property: 'percentage', operator: '>', value: 4 }
                     }
                 }
             },
+            legend: {
+                itemStyle: { color: '#888', fontFamily: "'Pretendard', sans-serif", fontSize: '13px' }
+            },
+            credits: { enabled: false },
             series: [{
                 name: '비중',
                 data: chartData

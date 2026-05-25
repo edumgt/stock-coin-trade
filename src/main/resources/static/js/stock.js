@@ -83,20 +83,21 @@ function initCharts() {
                 wick:   { useFillColor: true },
             },
         },
-        grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
+        grid: { borderColor: "rgba(255,255,255,0.06)", strokeDashArray: 4 },
         tooltip: {
+            theme: "dark",
             custom({ seriesIndex, dataPointIndex, w }) {
                 const d = w.globals.initialSeries[seriesIndex].data[dataPointIndex];
                 if (!d) return "";
                 const dt = new Date(d.x).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
                 const [o, h, l, c] = [d.o, d.h, d.l, d.c].map(v => Number(v).toLocaleString("ko-KR"));
-                const color = d.c >= d.o ? "#e11d48" : "#2563eb";
-                return `<div style="padding:8px 12px;font-size:12px;line-height:1.8;">
-                    <div style="color:#64748b;margin-bottom:4px;">${dt}</div>
-                    <div>시가 <b>${o}</b></div>
-                    <div>고가 <b style="color:#e11d48">${h}</b></div>
-                    <div>저가 <b style="color:#2563eb">${l}</b></div>
-                    <div>종가 <b style="color:${color}">${c}</b></div>
+                const color = d.c >= d.o ? "#22c55e" : "#f43f5e";
+                return `<div style="padding:10px 14px;font-size:13px;line-height:1.9;background:#161616;border:1px solid rgba(255,255,255,0.10);border-radius:10px;font-family:'Pretendard',sans-serif;">
+                    <div style="color:#888;margin-bottom:6px;font-size:12px;">${dt}</div>
+                    <div style="color:#F2F2F2;">시가 <b>${o}</b></div>
+                    <div style="color:#22c55e;">고가 <b>${h}</b></div>
+                    <div style="color:#f43f5e;">저가 <b>${l}</b></div>
+                    <div style="color:${color};">종가 <b>${c}</b></div>
                 </div>`;
             },
         },
@@ -134,9 +135,9 @@ function initCharts() {
                 style: { fontSize: "10px", colors: "#94a3b8" },
             },
         },
-        fill: { opacity: 0.6 },
-        colors: ["#818cf8"],
-        grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
+        fill: { opacity: 0.5 },
+        colors: ["rgba(255,204,0,0.7)"],
+        grid: { borderColor: "rgba(255,255,255,0.06)", strokeDashArray: 4 },
         tooltip: {
             x: { format: "yyyy-MM-dd HH:mm" },
             y: { formatter: (v) => Number(v).toLocaleString("ko-KR") + "주" },
@@ -247,16 +248,16 @@ async function loadPositions() {
     }
     data.positions.forEach(pos => {
         const pnl   = Number(pos.pnl || 0);
-        const color = colorClass(pnl);
+        const color = pnl > 0 ? "#22c55e" : pnl < 0 ? "#f43f5e" : "#888";
         const tr    = document.createElement("tr");
         tr.innerHTML = `
-            <td class="px-3 py-2 font-semibold text-slate-800">${pos.name || pos.symbol}<br><span class="text-xs text-slate-400">${pos.symbol}</span></td>
-            <td class="px-3 py-2"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">${pos.market || "-"}</span></td>
-            <td class="px-3 py-2 text-right">${pos.quantity}</td>
-            <td class="px-3 py-2 text-right">${formatKrw(pos.avgPrice)}</td>
-            <td class="px-3 py-2 text-right">${formatKrw(pos.currentPrice)}</td>
-            <td class="px-3 py-2 text-right">${formatKrw(pos.evalAmount)}</td>
-            <td class="px-3 py-2 text-right font-semibold" style="color:${color}">${pnl >= 0 ? "+" : ""}${formatKrw(pnl)}</td>`;
+            <td style="padding:10px 12px;font-weight:700;color:#F2F2F2;">${pos.name || pos.symbol}<br><span style="font-size:12px;color:#FFCC00;">${pos.symbol}</span></td>
+            <td style="padding:10px 12px;"><span style="background:rgba(255,255,255,0.06);color:#888;border:1px solid rgba(255,255,255,0.10);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;">${pos.market || "-"}</span></td>
+            <td style="padding:10px 12px;text-align:right;color:#F2F2F2;font-weight:600;">${pos.quantity}</td>
+            <td style="padding:10px 12px;text-align:right;color:#F2F2F2;font-weight:600;">${formatKrw(pos.avgPrice)}</td>
+            <td style="padding:10px 12px;text-align:right;color:#F2F2F2;font-weight:600;">${formatKrw(pos.currentPrice)}</td>
+            <td style="padding:10px 12px;text-align:right;color:#FFCC00;font-weight:700;">${formatKrw(pos.evalAmount)}</td>
+            <td style="padding:10px 12px;text-align:right;font-weight:800;font-size:15px;color:${color};">${pnl >= 0 ? "+" : ""}${formatKrw(pnl)}</td>`;
         positionsBody.appendChild(tr);
     });
 }
@@ -285,13 +286,11 @@ async function submitOrder(type) {
 /* ── Period buttons ───────────────────────────────────────────────────────── */
 function updatePeriodBtns(active) {
     document.querySelectorAll(".period-btn").forEach(btn => {
-        const isActive = btn.dataset.period === active;
-        btn.className = [
-            "period-btn rounded-lg px-3 py-1.5 text-xs font-semibold transition",
-            isActive
-                ? "bg-indigo-600 text-white shadow"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200",
-        ].join(" ");
+        if (btn.dataset.period === active) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
     });
 }
 

@@ -4,38 +4,40 @@
       layout:decorate="~{fragments/layout}">
 
 <body layout:fragment="content">
-<div class="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-    <h1 class="text-center text-2xl font-bold text-slate-900">로그인</h1>
-    <p class="mt-2 text-center text-sm text-slate-500">모의투자 서비스를 계속 사용하려면 로그인하세요.</p>
-
-    <form action="/member/login" th:action th:object="${memberLoginForm}" method="post" class="mt-6 space-y-4">
-        <div th:if="${#fields.hasGlobalErrors()}" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
-            <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">전체 오류 메시지</p>
+<div class="mx-auto max-w-md">
+    <div class="glass-card p-8">
+        <div class="text-center mb-6">
+            <div class="brand-logo-text mb-3" style="font-size:24px;">EDUMGT</div>
+            <h1 class="text-2xl font-black text-[#F2F2F2]">로그인</h1>
+            <p class="mt-2 text-sm text-[#888]">모의투자 서비스를 이용하려면 로그인하세요.</p>
         </div>
 
-        <div>
-            <label class="mb-1 block text-sm font-semibold text-slate-700" for="email">Email</label>
-            <input type="email" th:field="*{email}" id="email"
-                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-brand-500 transition focus:border-brand-500 focus:ring-1"/>
-            <div class="mt-1 text-xs text-rose-600" th:errors="*{email}">email 오류</div>
-        </div>
+        <form action="/member/login" th:action th:object="${memberLoginForm}" method="post" class="space-y-4">
+            <div th:if="${#fields.hasGlobalErrors()}"
+                 style="background:rgba(190,18,60,0.12); border:1px solid rgba(190,18,60,0.35); border-radius:0.625rem; padding:0.75rem 1rem; font-size:15px; color:#fb7185;">
+                <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">전체 오류 메시지</p>
+            </div>
 
-        <div>
-            <label class="mb-1 block text-sm font-semibold text-slate-700" for="password">Password</label>
-            <input type="password" th:field="*{password}" id="password"
-                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-brand-500 transition focus:border-brand-500 focus:ring-1"/>
-            <div class="mt-1 text-xs text-rose-600" th:errors="*{password}">password 오류</div>
-        </div>
+            <div>
+                <label style="display:block; font-size:14px; font-weight:700; color:#888; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.06em;" for="email">Email</label>
+                <input type="email" th:field="*{email}" id="email" class="dark-input" placeholder="이메일 주소"/>
+                <div class="mt-1 text-xs text-[#fb7185]" th:errors="*{email}">email 오류</div>
+            </div>
 
-        <button type="submit"
-                class="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">
-            로그인
-        </button>
-        <button type="button" th:onclick="|location.href='@{/member/register}'|"
-                class="w-full rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
-            회원가입
-        </button>
-    </form>
+            <div>
+                <label style="display:block; font-size:14px; font-weight:700; color:#888; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.06em;" for="password">Password</label>
+                <input type="password" th:field="*{password}" id="password" class="dark-input" placeholder="비밀번호"/>
+                <div class="mt-1 text-xs text-[#fb7185]" th:errors="*{password}">password 오류</div>
+            </div>
+
+            <div class="pt-2 space-y-3">
+                <button type="submit" class="btn-gold">로그인</button>
+                <button type="button" th:onclick="|location.href='@{/member/register}'|" class="btn-ghost">
+                    회원가입
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 </body>
 </html>

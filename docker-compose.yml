@@ -1,5 +1,5 @@
 networks:
-  crypto-infra-net:
+  shared-net:
     external: true
 
 services:
@@ -9,7 +9,7 @@ services:
       dockerfile: docker/app.Dockerfile
     container_name: crypto-mock-app
     networks:
-      - crypto-infra-net
+      - shared-net
     depends_on:
       stock-backend:
         condition: service_started
@@ -18,7 +18,7 @@ services:
       SPRING_DATASOURCE_USERNAME: mockinv
       SPRING_DATASOURCE_PASSWORD: mockinv1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      PYTHON_STOCK_API_BASE_URL: http://stock-backend:8000
+      PYTHON_STOCK_API_BASE_URL: http://stock-backend:8200
     ports:
       - "8083:8080"
     restart: on-failure
@@ -29,7 +29,7 @@ services:
       dockerfile: docker/stock-backend.Dockerfile
     container_name: stock-practice-backend
     networks:
-      - crypto-infra-net
+      - shared-net
     ports:
-      - "8000:8000"
+      - "8200:8200"
     restart: unless-stopped

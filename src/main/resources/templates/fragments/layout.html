@@ -7,8 +7,8 @@
     <th:block th:replace="~{fragments/config::configFragment}" ></th:block>
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-800">
-<header th:replace="~{fragments/header::headerFragment}"></header>
+<body class="min-h-screen">
+<div th:replace="~{fragments/header::headerFragment}"></div>
 <main class="mx-auto w-full max-w-[1640px] px-4 py-6" layout:fragment="content"></main>
 <footer th:replace="~{fragments/footer::footerFragment}"></footer>
 </body>

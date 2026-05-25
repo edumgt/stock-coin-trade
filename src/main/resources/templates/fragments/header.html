@@ -1,28 +1,75 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org" >
-<header class="border-b border-slate-200 bg-white" th:fragment="headerFragment">
-    <div class="mx-auto flex w-full max-w-[1640px] items-center justify-between px-4 py-3">
-        <a href="/" class="flex items-center gap-3">
-            <span class="brand-logo-text">EDUMGT</span>
-        </a>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="headerFragment">
 
-        <nav class="ml-6 mr-auto">
-            <ul class="flex items-center gap-2 text-sm font-semibold text-slate-600">
-                <li><a th:href="@{/trade/order}" class="rounded-lg px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900">코인 거래</a></li>
-                <li><a th:href="@{/trade/stock}" class="rounded-lg px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900">주식 실습</a></li>
-                <li><a th:href="@{/trade/hold/crypto}" class="rounded-lg px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900">보유자산</a></li>
-            </ul>
+    <!-- Offcanvas overlay -->
+    <div id="oc-overlay" onclick="closeOffcanvas()"></div>
+
+    <!-- Offcanvas panel -->
+    <aside id="oc-panel">
+        <div class="oc-header">
+            <span class="brand-logo-text" style="font-size:17px;">EDUMGT</span>
+            <button class="oc-close-btn" onclick="closeOffcanvas()">✕</button>
+        </div>
+        <nav class="oc-nav">
+            <a th:href="@{/}" class="oc-nav-item">홈</a>
+            <div class="oc-divider"></div>
+            <a th:href="@{/trade/order}" class="oc-nav-item">코인 거래</a>
+            <a th:href="@{/trade/stock}" class="oc-nav-item">주식 실습</a>
+            <a th:href="@{/trade/hold/crypto}" class="oc-nav-item">보유자산</a>
         </nav>
-
-        <div th:if="${session.loginMember != null}" class="flex items-center gap-3">
-            <span th:text="|${session.loginMember.username}님, 안녕하세요!|" class="text-sm text-slate-700">님, 안녕하세요!</span>
-            <button type="button" th:onclick="|location.href='@{/member/logout}'|" class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">로그아웃</button>
+        <div class="oc-footer">
+            <p style="font-size:13px; color:var(--muted);">© 2025 EDUMGT</p>
         </div>
+    </aside>
 
-        <div th:if="${session.loginMember == null}" class="flex items-center gap-2">
-            <button type="button" th:onclick="|location.href='@{/member/login}'|" class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">로그인</button>
-            <button type="button" th:onclick="|location.href='@{/member/register}'|" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">회원가입</button>
+    <!-- Site header -->
+    <header id="site-header">
+        <div class="mx-auto flex w-full max-w-[1640px] items-center justify-between px-4 py-3">
+            <div class="flex items-center gap-3">
+                <button class="hamburger-btn" onclick="openOffcanvas()" aria-label="메뉴 열기">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <a href="/" style="text-decoration:none;">
+                    <span class="brand-logo-text">EDUMGT</span>
+                </a>
+            </div>
+
+            <div th:if="${session.loginMember != null}" class="flex items-center gap-3">
+                <span th:text="|${session.loginMember.username}님|"
+                      style="font-size:15px; color:var(--muted); font-weight:600;"></span>
+                <button type="button" th:onclick="|location.href='@{/member/logout}'|"
+                        style="background:#fff; color:#be123c; border:1.5px solid #be123c; border-radius:0.5rem; padding:0.35rem 1rem; font-size:14px; font-weight:700; cursor:pointer; transition:background 0.15s;"
+                        onmouseover="this.style.background='#ffe4e6'"
+                        onmouseout="this.style.background='#fff'">로그아웃</button>
+            </div>
+
+            <div th:if="${session.loginMember == null}" class="flex items-center gap-2">
+                <button type="button" th:onclick="|location.href='@{/member/login}'|"
+                        class="btn-ghost" style="width:auto; padding:0.35rem 1rem; font-size:14px;">로그인</button>
+                <button type="button" th:onclick="|location.href='@{/member/register}'|"
+                        class="btn-gold" style="width:auto; padding:0.35rem 1rem; font-size:14px;">회원가입</button>
+            </div>
         </div>
-    </div>
-</header>
+    </header>
+
+    <script>
+        function openOffcanvas() {
+            document.getElementById('oc-overlay').classList.add('open');
+            document.getElementById('oc-panel').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeOffcanvas() {
+            document.getElementById('oc-overlay').classList.remove('open');
+            document.getElementById('oc-panel').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeOffcanvas();
+        });
+    </script>
+
+</th:block>
 </html>
