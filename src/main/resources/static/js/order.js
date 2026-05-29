@@ -152,3 +152,40 @@ sellQuantityBtnGroup.forEach(button => {
         sellQuantityElement.value = sellCount;
     });
 });
+
+/* ── 코인 관심종목 (Watchlist) - 토스증권·Robinhood 참고 ─────────────────── */
+const CRYPTO_WATCH_KEY = "cryptoWatchlist";
+let cryptoWatchlist = new Set(JSON.parse(localStorage.getItem(CRYPTO_WATCH_KEY) || "[]"));
+
+function saveCryptoWatchlist() {
+    localStorage.setItem(CRYPTO_WATCH_KEY, JSON.stringify([...cryptoWatchlist]));
+}
+
+function renderCryptoWatchBtns() {
+    cryptoWatchlist.forEach(code => {
+        const btn = document.getElementById(code + "-watch-btn");
+        if (btn) {
+            btn.textContent = "⭐";
+            btn.style.color = "#FFCC00";
+        }
+    });
+}
+
+function toggleCryptoWatch(marketCode) {
+    const btn = document.getElementById(marketCode + "-watch-btn");
+    if (cryptoWatchlist.has(marketCode)) {
+        cryptoWatchlist.delete(marketCode);
+        if (btn) { btn.textContent = "☆"; btn.style.color = "#888"; }
+    } else {
+        cryptoWatchlist.add(marketCode);
+        if (btn) { btn.textContent = "⭐"; btn.style.color = "#FFCC00"; }
+    }
+    saveCryptoWatchlist();
+}
+
+/* 페이지 로드 시 저장된 관심종목 별표 복원 */
+document.addEventListener("DOMContentLoaded", () => {
+    renderCryptoWatchBtns();
+});
+/* WebSocket 연결 후 DOM이 이미 렌더된 경우 즉시 적용 */
+renderCryptoWatchBtns();

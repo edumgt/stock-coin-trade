@@ -12,11 +12,11 @@
 <!-- Page header -->
 <section class="glass-card p-6">
     <div class="flex flex-wrap items-center gap-3">
-        <h2 class="text-2xl font-black text-[#F2F2F2]">주식 거래 실습</h2>
+        <h2 class="text-2xl font-black" style="color:var(--fg);">주식 거래 실습</h2>
         <span class="badge badge-gold">KOSPI · KOSDAQ</span>
         <span id="dataSourceBadge" class="hidden badge badge-muted">시뮬레이션</span>
     </div>
-    <p class="mt-2 text-sm text-[#888]">한국 주식 시장(KOSPI · KOSDAQ) 실시간 시세 기반 가상 모의투자 실습입니다.</p>
+    <p class="mt-2 text-sm" style="color:var(--muted);">한국 주식 시장(KOSPI · KOSDAQ) 실시간 시세 기반 가상 모의투자 실습입니다.</p>
 </section>
 
 <!-- Market indices -->
@@ -26,25 +26,57 @@
             <span class="section-label">KOSPI</span>
             <span id="kospiChange" class="text-xs font-bold">-</span>
         </div>
-        <p id="kospiPrice" class="mt-2 text-2xl font-black text-[#F2F2F2]">-</p>
-        <p id="kospiChangeAmt" class="mt-1 text-sm text-[#888]">-</p>
+        <p id="kospiPrice" class="mt-2 text-2xl font-black" style="color:var(--fg);">-</p>
+        <p id="kospiChangeAmt" class="mt-1 text-sm" style="color:var(--muted);">-</p>
     </article>
     <article class="glass-card p-5">
         <div class="flex items-center justify-between">
             <span class="section-label">KOSDAQ</span>
             <span id="kosdaqChange" class="text-xs font-bold">-</span>
         </div>
-        <p id="kosdaqPrice" class="mt-2 text-2xl font-black text-[#F2F2F2]">-</p>
-        <p id="kosdaqChangeAmt" class="mt-1 text-sm text-[#888]">-</p>
+        <p id="kosdaqPrice" class="mt-2 text-2xl font-black" style="color:var(--fg);">-</p>
+        <p id="kosdaqChangeAmt" class="mt-1 text-sm" style="color:var(--muted);">-</p>
     </article>
 </section>
 
-<!-- Chart -->
+<!-- Market Movers: 상승/하락 TOP 3 (키움증권 참고) -->
+<section class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+    <article class="glass-card p-4">
+        <h4 class="section-label mb-3" style="display:flex;align-items:center;gap:6px;">
+            상승 TOP 3
+            <span style="color:#E11D48;font-size:13px;font-weight:900;">▲</span>
+        </h4>
+        <div id="gainers"><p class="text-xs" style="color:var(--muted);">로딩 중...</p></div>
+    </article>
+    <article class="glass-card p-4">
+        <h4 class="section-label mb-3" style="display:flex;align-items:center;gap:6px;">
+            하락 TOP 3
+            <span style="color:#2563EB;font-size:13px;font-weight:900;">▼</span>
+        </h4>
+        <div id="losers"><p class="text-xs" style="color:var(--muted);">로딩 중...</p></div>
+    </article>
+</section>
+
+<!-- Chart (시장 탭 + 종목 검색) -->
 <section class="mt-5 glass-card p-5">
+    <!-- Market filter tabs + search -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-1 flex-wrap" id="marketTabs">
+            <button data-market="ALL"    class="market-tab active">전체</button>
+            <button data-market="KOSPI"  class="market-tab">KOSPI</button>
+            <button data-market="KOSDAQ" class="market-tab">KOSDAQ</button>
+            <button data-market="WATCH"  class="market-tab">⭐ 관심</button>
+        </div>
+        <input id="stockSearch" type="text" placeholder="종목명 · 코드 검색"
+               class="dark-input" style="width:200px;padding:6px 12px;font-size:13px;"/>
+    </div>
+    <!-- Symbol + watchlist + period -->
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <select id="stockSymbol" class="dark-select" style="font-size:15px; font-weight:600;"></select>
-            <span id="chartStockName" class="text-sm font-bold text-[#FFCC00]"></span>
+        <div class="flex items-center gap-2">
+            <select id="stockSymbol" class="dark-select" style="font-size:14px;font-weight:600;"></select>
+            <span id="chartStockName" class="text-sm font-bold" style="color:var(--accent);"></span>
+            <button id="watchlistBtn" type="button" title="관심종목 추가/제거"
+                    style="font-size:20px;background:none;border:none;cursor:pointer;line-height:1;padding:0 2px;color:var(--muted);">☆</button>
         </div>
         <div class="flex items-center gap-1" id="periodBtns">
             <button data-period="1d"  class="period-btn">1일</button>
@@ -61,68 +93,130 @@
 <!-- Quote / Account / Order -->
 <section class="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
 
+    <!-- 현재 시세 -->
     <article class="glass-card p-5">
-        <h3 class="text-base font-black text-[#F2F2F2] mb-4">현재 시세</h3>
+        <h3 class="text-base font-black mb-4" style="color:var(--fg);">현재 시세</h3>
         <div class="space-y-3">
             <div class="flex items-baseline justify-between">
-                <span class="text-sm text-[#888]">현재가</span>
-                <span id="quotePrice" class="text-xl font-black text-[#FFCC00]">-</span>
+                <span class="text-sm" style="color:var(--muted);">현재가</span>
+                <span id="quotePrice" class="text-xl font-black" style="color:var(--accent);">-</span>
             </div>
-            <div class="flex items-baseline justify-between" style="border-top:1px solid rgba(255,255,255,0.06); padding-top:0.6rem;">
-                <span class="text-sm text-[#888]">전일 대비</span>
+            <div class="flex items-baseline justify-between" style="border-top:1px solid var(--border);padding-top:.6rem;">
+                <span class="text-sm" style="color:var(--muted);">전일 대비</span>
                 <span id="quoteChange" class="font-bold">-</span>
             </div>
             <div class="flex items-baseline justify-between">
-                <span class="text-sm text-[#888]">등락률</span>
+                <span class="text-sm" style="color:var(--muted);">등락률</span>
                 <span id="quoteChangeRate" class="font-bold">-</span>
             </div>
             <div class="flex items-baseline justify-between">
-                <span class="text-sm text-[#888]">거래량</span>
-                <span id="quoteVolume" class="font-semibold text-[#F2F2F2]">-</span>
+                <span class="text-sm" style="color:var(--muted);">거래량</span>
+                <span id="quoteVolume" class="font-semibold" style="color:var(--fg);">-</span>
             </div>
             <div class="flex items-baseline justify-between">
-                <span class="text-sm text-[#888]">시장</span>
+                <span class="text-sm" style="color:var(--muted);">시장</span>
                 <span id="quoteMarket" class="badge badge-muted">-</span>
+            </div>
+            <div class="flex items-baseline justify-between" style="border-top:1px solid var(--border);padding-top:.6rem;">
+                <span class="text-sm" style="color:var(--muted);">손익분기가</span>
+                <span id="quoteBreakEven" class="font-semibold" style="color:var(--muted);">-</span>
             </div>
         </div>
     </article>
 
+    <!-- 계좌 현황 -->
     <article class="glass-card p-5">
-        <h3 class="text-base font-black text-[#F2F2F2] mb-4">계좌 현황</h3>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-black" style="color:var(--fg);">계좌 현황</h3>
+            <button id="resetBtn" type="button"
+                    style="font-size:12px;padding:3px 12px;border-radius:999px;background:rgba(225,29,72,.08);color:#E11D48;border:1px solid rgba(225,29,72,.25);cursor:pointer;font-weight:600;">
+                초기화
+            </button>
+        </div>
         <div class="space-y-3">
             <div class="flex items-baseline justify-between">
-                <span class="text-sm text-[#888]">보유 현금</span>
-                <span id="accountCash" class="font-bold text-[#F2F2F2]">-</span>
+                <span class="text-sm" style="color:var(--muted);">보유 현금</span>
+                <span id="accountCash" class="font-bold" style="color:var(--fg);">-</span>
             </div>
-            <div class="flex items-baseline justify-between" style="border-top:1px solid rgba(255,255,255,0.06); padding-top:0.6rem;">
-                <span class="text-sm text-[#888]">총 자산</span>
-                <span id="accountAsset" class="font-bold text-[#F2F2F2]">-</span>
+            <div class="flex items-baseline justify-between" style="border-top:1px solid var(--border);padding-top:.6rem;">
+                <span class="text-sm" style="color:var(--muted);">총 자산</span>
+                <span id="accountAsset" class="font-bold" style="color:var(--fg);">-</span>
             </div>
             <div class="flex items-baseline justify-between">
-                <span class="text-sm text-[#888]">수익률</span>
+                <span class="text-sm" style="color:var(--muted);">수익률</span>
                 <span id="accountPnlRate" class="font-black text-lg">-</span>
             </div>
         </div>
+        <div id="portfolioChart" class="mt-4" style="min-height:200px;"></div>
     </article>
 
+    <!-- 주문 -->
     <article class="glass-card p-5">
-        <h3 class="text-base font-black text-[#F2F2F2] mb-4">주문</h3>
+        <h3 class="text-base font-black mb-4" style="color:var(--fg);">주문</h3>
         <div class="space-y-3">
             <input id="orderQty" type="number" min="1" step="1" placeholder="수량 (주)" class="dark-input"/>
             <div class="grid grid-cols-2 gap-2">
-                <button id="buyBtn" type="button" class="btn-buy">매수</button>
+                <button id="buyBtn"  type="button" class="btn-buy">매수</button>
                 <button id="sellBtn" type="button" class="btn-sell">매도</button>
             </div>
-            <p id="stockMessage" class="text-xs text-[#888]"></p>
+            <p id="stockMessage" class="text-xs" style="color:var(--muted);"></p>
         </div>
     </article>
 
 </section>
 
-<!-- Positions -->
+<!-- 호가창 Order Book (키움증권 참고) -->
 <section class="mt-5 glass-card overflow-hidden">
-    <div class="px-5 py-4" style="border-bottom:1px solid rgba(255,255,255,0.08);">
-        <h3 class="text-base font-black text-[#F2F2F2]">보유 포지션</h3>
+    <div class="px-5 py-3 flex items-center justify-between" style="border-bottom:1px solid var(--border);">
+        <h3 class="text-base font-black" style="color:var(--fg);">호가창</h3>
+        <span class="text-xs" style="color:var(--muted);">모의 호가 데이터 · 시세 갱신 시 업데이트</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3" style="font-size:13px;">
+        <!-- Ask (매도호가) -->
+        <div>
+            <div class="px-4 py-2 text-xs font-bold" style="color:#2563EB;border-bottom:1px solid var(--border);background:rgba(37,99,235,0.04);">
+                매도 호가 (Ask)
+            </div>
+            <table class="w-full">
+                <thead>
+                    <tr style="background:var(--surface-2);">
+                        <th class="px-4 py-1 text-right text-xs" style="color:var(--muted);">가격</th>
+                        <th class="px-4 py-1 text-right text-xs" style="color:var(--muted);">수량</th>
+                    </tr>
+                </thead>
+                <tbody id="askBody"></tbody>
+            </table>
+        </div>
+        <!-- Center: current price + spread -->
+        <div class="hidden md:flex flex-col items-center justify-center py-4 gap-2"
+             style="border-left:1px solid var(--border);border-right:1px solid var(--border);">
+            <span class="text-xs" style="color:var(--muted);">현재가</span>
+            <span id="obCurrentPrice" class="text-base font-black" style="color:var(--accent);">-</span>
+            <span class="text-xs mt-2" style="color:var(--muted);">스프레드</span>
+            <span id="obSpread" class="text-xs font-bold" style="color:var(--fg-2);">-</span>
+        </div>
+        <!-- Bid (매수호가) -->
+        <div>
+            <div class="px-4 py-2 text-xs font-bold" style="color:#E11D48;border-bottom:1px solid var(--border);background:rgba(225,29,72,0.04);">
+                매수 호가 (Bid)
+            </div>
+            <table class="w-full">
+                <thead>
+                    <tr style="background:var(--surface-2);">
+                        <th class="px-4 py-1 text-right text-xs" style="color:var(--muted);">가격</th>
+                        <th class="px-4 py-1 text-right text-xs" style="color:var(--muted);">수량</th>
+                    </tr>
+                </thead>
+                <tbody id="bidBody"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- 보유 포지션 -->
+<section class="mt-5 glass-card overflow-hidden">
+    <div class="px-5 py-4" style="border-bottom:1px solid var(--border);">
+        <h3 class="text-base font-black" style="color:var(--fg);">보유 포지션</h3>
     </div>
     <div class="overflow-x-auto">
         <table class="dark-table min-w-full">
@@ -138,6 +232,31 @@
             </tr>
             </thead>
             <tbody id="positionsBody"></tbody>
+        </table>
+    </div>
+</section>
+
+<!-- 거래 내역 Trade History -->
+<section class="mt-5 glass-card overflow-hidden">
+    <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border);">
+        <h3 class="text-base font-black" style="color:var(--fg);">거래 내역</h3>
+        <span class="text-xs" style="color:var(--muted);">세션 내 최근 30건</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="dark-table min-w-full">
+            <thead>
+            <tr>
+                <th class="text-left">시간</th>
+                <th class="text-left">종목</th>
+                <th class="text-left">구분</th>
+                <th class="text-right">수량</th>
+                <th class="text-right">단가</th>
+                <th class="text-right">거래금액</th>
+            </tr>
+            </thead>
+            <tbody id="historyBody">
+                <tr><td colspan="6" class="px-3 py-4 text-center" style="color:var(--muted);">거래 내역이 없습니다.</td></tr>
+            </tbody>
         </table>
     </div>
 </section>

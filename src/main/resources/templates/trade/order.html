@@ -17,24 +17,24 @@
             <!-- Buy form -->
             <form th:action="@{/trade/order/buy}" th:object="${buyCryptoForm}" method="post" class="glass-card p-5">
                 <input type="hidden" id="buyMarketCode" name="buyMarketCode" value="KRW-BTC">
-                <h3 class="text-lg font-black text-[#F2F2F2]">
-                    <span id="buy_symbol_name" class="text-[#FFCC00]">BTC</span> 매수
+                <h3 class="text-lg font-black" style="color:var(--fg);">
+                    <span id="buy_symbol_name" style="color:#E11D48;">BTC</span> 매수
                 </h3>
 
                 <div class="asset-bar mt-4 flex items-center justify-between">
-                    <span class="text-sm font-semibold text-[#888]">매수 가능</span>
-                    <span th:if="${session.loginMember != null}" class="font-bold text-[#F2F2F2]">
+                    <span class="text-sm font-semibold" style="color:var(--muted);">매수 가능</span>
+                    <span th:if="${session.loginMember != null}" class="font-bold" style="color:var(--fg);">
                         <span id="holdAsset" th:text="|${#numbers.formatInteger(memberAsset, 1, 'COMMA')}|">0</span>
-                        <span class="ml-1 text-sm text-[#888]">KRW</span>
+                        <span class="ml-1 text-sm" style="color:var(--muted);">KRW</span>
                     </span>
-                    <span th:if="${session.loginMember == null}" class="text-sm text-[#888]">로그인이 필요합니다.</span>
+                    <span th:if="${session.loginMember == null}" class="text-sm" style="color:var(--muted);">로그인이 필요합니다.</span>
                 </div>
                 <span th:if="${session.loginMember == null}" id="holdAsset" class="hidden">0</span>
 
                 <div class="mt-4">
                     <label class="section-label mb-2 block" for="buyKrw">주문총액 (KRW)</label>
                     <input type="text" id="buyKrw" th:field="*{buyKrw}" class="dark-input" placeholder="주문 금액 입력"/>
-                    <div class="mt-1 text-xs text-[#fb7185]" th:if="${#fields.hasErrors('buyKrw')}" th:errors="*{buyKrw}">숫자만 입력 오류</div>
+                    <div class="mt-1 text-xs" style="color:#E11D48;" th:if="${#fields.hasErrors('buyKrw')}" th:errors="*{buyKrw}">숫자만 입력 오류</div>
                 </div>
 
                 <div class="mt-3 grid grid-cols-4 gap-2" id="buyQuantityBtnGroup">
@@ -54,22 +54,22 @@
             <!-- Sell form -->
             <form th:action="@{/trade/order/sell}" th:object="${sellCryptoForm}" method="post" class="glass-card p-5">
                 <input type="hidden" id="sellMarketCode" name="sellMarketCode" value="KRW-BTC">
-                <h3 class="text-lg font-black text-[#F2F2F2]">
-                    <span id="sell_symbol_name" class="text-[#fb7185]">BTC</span> 매도
+                <h3 class="text-lg font-black" style="color:var(--fg);">
+                    <span id="sell_symbol_name" style="color:#2563EB;">BTC</span> 매도
                 </h3>
 
                 <div class="asset-bar mt-4 flex items-center justify-between">
-                    <span class="text-sm font-semibold text-[#888]">매도 가능</span>
-                    <span class="font-bold text-[#F2F2F2]">
+                    <span class="text-sm font-semibold" style="color:var(--muted);">매도 가능</span>
+                    <span class="font-bold" style="color:var(--fg);">
                         <span id="holdCryptoCount">-</span>
-                        <span id="holdCryptoSymbol" class="ml-1 text-sm text-[#888]">-</span>
+                        <span id="holdCryptoSymbol" class="ml-1 text-sm" style="color:var(--muted);">-</span>
                     </span>
                 </div>
 
                 <div class="mt-4">
-                    <label class="section-label mb-2 block" for="sellCount">주문수량 <span id="sellCryptoSymbol" class="text-[#FFCC00]"></span></label>
+                    <label class="section-label mb-2 block" for="sellCount">주문수량 <span id="sellCryptoSymbol" style="color:var(--accent);"></span></label>
                     <input type="text" id="sellCount" th:field="*{sellCount}" class="dark-input" placeholder="주문 수량 입력"/>
-                    <div class="mt-1 text-xs text-[#fb7185]" th:if="${#fields.hasErrors('sellCount')}" th:errors="*{sellCount}">숫자만 입력 오류</div>
+                    <div class="mt-1 text-xs" style="color:#E11D48;" th:if="${#fields.hasErrors('sellCount')}" th:errors="*{sellCount}">숫자만 입력 오류</div>
                 </div>
 
                 <div class="mt-3 grid grid-cols-4 gap-2" id="sellQuantityBtnGroup">
@@ -92,8 +92,8 @@
     <!-- Right: market list -->
     <section class="glass-card overflow-hidden flex flex-col">
         <div class="px-4 py-3 flex items-center gap-2"
-             style="border-bottom:1px solid rgba(255,255,255,0.08);">
-            <h3 class="text-sm font-black text-[#F2F2F2] tracking-wide uppercase">원화 마켓</h3>
+             style="border-bottom:1px solid var(--border);">
+            <h3 class="text-sm font-black" style="color:var(--fg);letter-spacing:.05em;text-transform:uppercase;">원화 마켓</h3>
             <span class="badge badge-gold ml-auto">KRW</span>
         </div>
         <div class="overflow-auto flex-1" style="max-height:1320px;">
@@ -104,16 +104,23 @@
                     <th class="text-right">현재가</th>
                     <th class="text-right">전일대비</th>
                     <th class="text-right">거래대금</th>
+                    <th class="text-center" style="width:36px;">관심</th>
                 </tr>
                 </thead>
                 <tbody>
                 <th:block th:each="item : ${upbitMarketList}">
                     <tr th:onclick="getCryptoChartAndData([[${item.market}]])"
                         style="cursor:pointer;">
-                        <td class="font-semibold text-[#F2F2F2]" th:text="${item.koreanName}">-</td>
+                        <td class="font-semibold" style="color:var(--fg);" th:text="${item.koreanName}">-</td>
                         <td class="font-bold text-right" th:id="${item.market} + '-trade_price'">-</td>
                         <td class="text-right" th:id="${item.market} + '-signed_change_rate'">-</td>
-                        <td class="text-right text-[#888]" th:id="${item.market} + '-acc_trade_price_24h'">-</td>
+                        <td class="text-right" style="color:var(--muted);" th:id="${item.market} + '-acc_trade_price_24h'">-</td>
+                        <td class="text-center" onclick="event.stopPropagation()">
+                            <button th:id="${item.market} + '-watch-btn'"
+                                    th:attr="onclick='toggleCryptoWatch(\'' + ${item.market} + '\')'  "
+                                    style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px 4px;color:var(--muted);"
+                                    title="관심종목 추가/제거">☆</button>
+                        </td>
                     </tr>
                 </th:block>
                 </tbody>

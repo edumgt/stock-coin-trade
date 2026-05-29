@@ -10,7 +10,7 @@
 
     <!-- Summary -->
     <section class="glass-card p-6">
-        <h2 class="text-center text-2xl font-black text-[#F2F2F2] mb-6">보유자산 현황</h2>
+        <h2 class="text-center text-2xl font-black mb-6" style="color:var(--fg);">보유자산 현황</h2>
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div class="space-y-3">
@@ -20,14 +20,14 @@
                         <div class="stat-label">보유 KRW</div>
                         <div class="stat-value">
                             <span id="member_asset" th:text="${#numbers.formatInteger(memberAsset,1,'COMMA')}">-</span>
-                            <span style="font-size:14px; font-weight:500; color:#888; margin-left:4px;">KRW</span>
+                            <span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span>
                         </div>
                     </div>
-                    <div class="stat-card" style="border-color:rgba(255,204,0,0.20); background:rgba(255,204,0,0.04);">
+                    <div class="stat-card gold-stat">
                         <div class="stat-label">총 보유자산</div>
-                        <div class="stat-value text-[#FFCC00]">
+                        <div class="stat-value">
                             <span id="total_member_asset">-</span>
-                            <span style="font-size:14px; font-weight:500; color:#888; margin-left:4px;">KRW</span>
+                            <span style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.7);margin-left:4px;">KRW</span>
                         </div>
                     </div>
                 </div>
@@ -36,16 +36,16 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="stat-card">
                         <div class="stat-label">총매수금액</div>
-                        <div style="font-size:18px; font-weight:700; color:#F2F2F2; margin-top:0.25rem;">
+                        <div style="font-size:17px;font-weight:700;color:var(--fg);margin-top:.25rem;">
                             <span id="total_buy_krw" th:text="${#numbers.formatInteger(totalBuyKrw,1,'COMMA')}">-</span>
-                            <span style="font-size:13px; color:#888; margin-left:4px;">KRW</span>
+                            <span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">총평가손익</div>
-                        <div style="font-size:18px; font-weight:700; margin-top:0.25rem;">
+                        <div style="font-size:17px;font-weight:700;margin-top:.25rem;">
                             <span id="total_krw_of_return">-</span>
-                            <span style="font-size:13px; color:#888; margin-left:4px;">KRW</span>
+                            <span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span>
                         </div>
                     </div>
                 </div>
@@ -54,16 +54,16 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="stat-card">
                         <div class="stat-label">총평가금액</div>
-                        <div style="font-size:18px; font-weight:700; color:#F2F2F2; margin-top:0.25rem;">
+                        <div style="font-size:17px;font-weight:700;color:var(--fg);margin-top:.25rem;">
                             <span id="total_evaluation_krw">-</span>
-                            <span style="font-size:13px; color:#888; margin-left:4px;">KRW</span>
+                            <span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">총평가수익률</div>
-                        <div style="font-size:22px; font-weight:800; margin-top:0.25rem;">
+                        <div style="font-size:21px;font-weight:800;margin-top:.25rem;">
                             <span id="total_evaluation_rate_of_return">-</span>
-                            <span style="font-size:13px; color:#888; margin-left:2px;">%</span>
+                            <span style="font-size:12px;color:var(--muted);margin-left:2px;">%</span>
                         </div>
                     </div>
                 </div>
@@ -76,8 +76,8 @@
 
     <!-- Holdings table -->
     <section class="glass-card overflow-hidden">
-        <div class="px-5 py-4" style="border-bottom:1px solid rgba(255,255,255,0.08);">
-            <h3 class="text-base font-black text-[#F2F2F2]">보유 코인</h3>
+        <div class="px-5 py-4" style="border-bottom:1px solid var(--border);">
+            <h3 class="text-base font-black" style="color:var(--fg);">보유 코인</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="dark-table min-w-full">
@@ -97,44 +97,44 @@
                         <div class="flex items-center gap-3">
                             <img th:src="@{|https://static.upbit.com/logos/${holdCrypto.marketCodeOnlySymbol}.png|}"
                                  alt="" class="h-9 w-9 rounded-full"
-                                 style="border:1px solid rgba(255,255,255,0.12);"/>
+                                 style="border:1px solid var(--border);"/>
                             <div>
-                                <p class="font-bold text-[#F2F2F2]" th:text="${holdCrypto.koreanName}">비트코인</p>
-                                <p class="text-xs text-[#FFCC00] font-semibold" th:text="${holdCrypto.marketCodeOnlySymbol}">BTC</p>
+                                <p class="font-bold" style="color:var(--fg);" th:text="${holdCrypto.koreanName}">비트코인</p>
+                                <p class="text-xs font-semibold" style="color:var(--accent);" th:text="${holdCrypto.marketCodeOnlySymbol}">BTC</p>
                             </div>
                         </div>
                     </td>
                     <td class="text-right">
-                        <span class="font-semibold text-[#F2F2F2]"
+                        <span class="font-semibold" style="color:var(--fg);"
                               th:id="|${holdCrypto.marketCode}-hold-count|"
                               th:text="${#numbers.formatDecimal(holdCrypto.holdCount,1,'COMMA',8,'POINT')}">0.03535</span>
-                        <span class="ml-1 text-xs text-[#888]" th:text="${holdCrypto.marketCodeOnlySymbol}">BTC</span>
+                        <span class="ml-1 text-xs" style="color:var(--muted);" th:text="${holdCrypto.marketCodeOnlySymbol}">BTC</span>
                     </td>
                     <td class="text-right">
-                        <span class="font-semibold text-[#F2F2F2]"
+                        <span class="font-semibold" style="color:var(--fg);"
                               th:id="|${holdCrypto.marketCode}-buy-average|"
                               th:text="${#numbers.formatDecimal(holdCrypto.buyAverage,1,'COMMA',4,'POINT')}">21,943,430</span>
-                        <span class="ml-1 text-xs text-[#888]">KRW</span>
+                        <span class="ml-1 text-xs" style="color:var(--muted);">KRW</span>
                     </td>
                     <td class="text-right">
-                        <span class="font-semibold text-[#F2F2F2]"
+                        <span class="font-semibold" style="color:var(--fg);"
                               th:id="|${holdCrypto.marketCode}-buy-total-krw|"
                               th:text="${#numbers.formatInteger(holdCrypto.buyTotalKrw,1,'COMMA')}">21,943,430</span>
-                        <span class="ml-1 text-xs text-[#888]">KRW</span>
+                        <span class="ml-1 text-xs" style="color:var(--muted);">KRW</span>
                     </td>
-                    <td class="text-right" style="background:rgba(255,204,0,0.04);">
-                        <span class="font-bold text-[#FFCC00]"
+                    <td class="text-right" style="background:var(--accent-light);">
+                        <span class="font-bold" style="color:var(--accent);"
                               th:id="|${holdCrypto.marketCode}-evaluation-krw|">21,943,430</span>
-                        <span class="ml-1 text-xs text-[#888]">KRW</span>
+                        <span class="ml-1 text-xs" style="color:var(--muted);">KRW</span>
                     </td>
                     <td class="text-right">
                         <p class="mb-1">
                             <span class="font-bold" th:id="|${holdCrypto.marketCode}-krw-of-return|">-</span>
-                            <span class="ml-1 text-xs text-[#888]">KRW</span>
+                            <span class="ml-1 text-xs" style="color:var(--muted);">KRW</span>
                         </p>
                         <p>
                             <span class="font-black text-base" th:id="|${holdCrypto.marketCode}-rate-of-return|">-</span>
-                            <span class="ml-1 text-xs text-[#888]">%</span>
+                            <span class="ml-1 text-xs" style="color:var(--muted);">%</span>
                         </p>
                     </td>
                 </tr>

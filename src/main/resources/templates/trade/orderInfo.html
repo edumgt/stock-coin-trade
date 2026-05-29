@@ -1,31 +1,31 @@
 <th:block th:fragment="orderInfoFragment">
     <div class="space-y-4">
         <div class="flex items-end gap-3">
-            <h2 id="crypto_korean_name" class="text-4xl font-black text-[#F2F2F2]">-</h2>
-            <span class="pb-1 text-lg font-semibold text-[#FFCC00]" id="crypto_symbol_name">-</span>
+            <h2 id="crypto_korean_name" class="text-4xl font-black" style="color:var(--fg);">-</h2>
+            <span class="pb-1 text-lg font-semibold" style="color:var(--accent);" id="crypto_symbol_name">-</span>
         </div>
 
-        <div id="trading_chart_view" class="overflow-hidden rounded-[1.25rem]"
-             style="border:1px solid rgba(255,255,255,0.10);"></div>
+        <div id="trading_chart_view" class="overflow-hidden rounded-[var(--radius)]"
+             style="border:1px solid var(--border);"></div>
 
         <div class="glass-card p-5">
             <div class="flex items-center gap-3 flex-wrap">
-                <h5 class="text-base font-black text-[#F2F2F2]">
+                <h5 class="text-base font-black" style="color:var(--fg);">
                     국내 4대 거래소 시세 비교 &mdash;
-                    <span id="domestic_price_symbol" class="text-[#FFCC00]">BTC</span>
+                    <span id="domestic_price_symbol" style="color:var(--accent);">BTC</span>
                 </h5>
-                <small id="domestic_price_updated_at" class="ml-auto text-xs text-[#888]">-</small>
+                <small id="domestic_price_updated_at" class="ml-auto text-xs" style="color:var(--muted);">-</small>
             </div>
 
             <div class="mt-4 flex flex-wrap items-center gap-3">
-                <label style="font-size:14px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em;" for="domestic_exchange_select">거래소 선택</label>
+                <label style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;" for="domestic_exchange_select">거래소 선택</label>
                 <select id="domestic_exchange_select" class="dark-select" style="height:6rem;" size="4" multiple>
                     <option value="UPBIT" selected>업비트</option>
                     <option value="BITHUMB" selected>빗썸</option>
                     <option value="COINONE" selected>코인원</option>
                     <option value="KORBIT" selected>코빗</option>
                 </select>
-                <small class="text-xs text-[#888]">Ctrl/Cmd + 클릭으로 다중 선택</small>
+                <small class="text-xs" style="color:var(--muted);">Ctrl/Cmd + 클릭으로 다중 선택</small>
             </div>
 
             <div class="mt-4 overflow-x-auto">
@@ -38,20 +38,20 @@
                     </thead>
                     <tbody>
                     <tr id="domestic-row-UPBIT">
-                        <td class="font-semibold text-[#F2F2F2]">업비트</td>
-                        <td id="domestic-price-UPBIT" class="text-right font-black text-[#FFCC00]">-</td>
+                        <td class="font-semibold" style="color:var(--fg);">업비트</td>
+                        <td id="domestic-price-UPBIT" class="text-right font-black" style="color:var(--accent);">-</td>
                     </tr>
                     <tr id="domestic-row-BITHUMB">
-                        <td class="font-semibold text-[#F2F2F2]">빗썸</td>
-                        <td id="domestic-price-BITHUMB" class="text-right font-black text-[#FFCC00]">-</td>
+                        <td class="font-semibold" style="color:var(--fg);">빗썸</td>
+                        <td id="domestic-price-BITHUMB" class="text-right font-black" style="color:var(--accent);">-</td>
                     </tr>
                     <tr id="domestic-row-COINONE">
-                        <td class="font-semibold text-[#F2F2F2]">코인원</td>
-                        <td id="domestic-price-COINONE" class="text-right font-black text-[#FFCC00]">-</td>
+                        <td class="font-semibold" style="color:var(--fg);">코인원</td>
+                        <td id="domestic-price-COINONE" class="text-right font-black" style="color:var(--accent);">-</td>
                     </tr>
                     <tr id="domestic-row-KORBIT">
-                        <td class="font-semibold text-[#F2F2F2]">코빗</td>
-                        <td id="domestic-price-KORBIT" class="text-right font-black text-[#FFCC00]">-</td>
+                        <td class="font-semibold" style="color:var(--fg);">코빗</td>
+                        <td id="domestic-price-KORBIT" class="text-right font-black" style="color:var(--accent);">-</td>
                     </tr>
                     </tbody>
                 </table>
@@ -86,15 +86,13 @@
                 symbol: "UPBIT:" + chartSymbol + "KRW",
                 interval: "D",
                 timezone: "Asia/Seoul",
-                theme: "dark",
+                theme: "light",
                 style: "1",
                 locale: "kr",
                 enable_publishing: false,
                 allow_symbol_change: false,
                 container_id: "trading_chart_view",
                 "hide_side_toolbar": false,
-                backgroundColor: "rgba(12, 12, 12, 1)",
-                gridColor: "rgba(255, 255, 255, 0.06)",
             });
 
             const xhr = new XMLHttpRequest();

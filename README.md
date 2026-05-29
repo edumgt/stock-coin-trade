@@ -7,7 +7,38 @@ Spring Boot + Thymeleaf 기반의 가상 암호화폐 모의투자 웹 애플리
 
 ---
 
-## 1) 주요 기능
+## 1) 참고 앱 기능 분석 및 적용
+
+6개 주요 주식·코인 거래 앱을 분석하여 아래 기능을 이 프로젝트에 반영하였습니다.
+
+### 1-1. 분석 앱 및 주요 기능
+
+| 앱 | 특징 | 핵심 참고 기능 |
+|---|---|---|
+| **토스증권** (KR) | 심플·초보 친화 UX, 모바일 퍼스트 | 관심종목(⭐) 등록·해제, 손익분기가(매입단가) 표시, 간편 %비율 주문 버튼 |
+| **키움증권** (KR) | 전문 트레이더 특화, 최다 사용자 | 호가창(매도/매수 호가 레벨), 거래 내역(체결 내역), 상승·하락 TOP 종목 랭킹 |
+| **삼성증권 POP** (KR) | 자산 분석 중심, 포트폴리오 뷰 | 포트폴리오 파이 차트(종목별 보유 비중 도넛 차트), 보유자산 시각화 |
+| **Robinhood** (US) | 수수료 0원, 감성 피드 UX | 관심종목(Watchlist), 주문 성공/실패 즉시 피드백 메시지, 깔끔한 손익 표시 |
+| **eToro** (EU) | 소셜 트레이딩, 멀티 마켓 | 시장 탭 필터(KOSPI / KOSDAQ / 관심종목), 종목명·코드 통합 검색 |
+| **Trading 212** (EU) | 모의투자 연습 특화, 파이 포트폴리오 | 계좌 초기화(모의투자 전체 리셋), 종목 검색, 직관적 포지션 관리 |
+
+### 1-2. 이 프로젝트에 적용된 신규 기능
+
+| 기능 | 참고 앱 | 위치 |
+|---|---|---|
+| ⭐ 관심종목 (Watchlist) | 토스증권·Robinhood | 주식 거래 페이지 / 코인 거래 마켓 리스트 |
+| 📋 호가창 (Order Book) | 키움증권 | 주식 거래 페이지 · 매도/매수 호가 5단계 |
+| 📈 상승/하락 TOP 3 (Market Movers) | 키움증권 | 주식 거래 페이지 상단 |
+| 🗒️ 거래 내역 (Trade History) | 키움증권·Robinhood | 주식 거래 페이지 하단 |
+| 🥧 포트폴리오 파이 차트 | 삼성증권 POP | 주식 계좌 현황 카드 내 도넛 차트 |
+| 🔄 계좌 초기화 | Trading 212 | 주식 계좌 현황 카드 초기화 버튼 |
+| 🔍 종목 검색 | eToro·Trading 212 | 주식 거래 차트 섹션 검색창 |
+| 🗂️ 시장 탭 필터 | eToro | 전체 / KOSPI / KOSDAQ / ⭐관심 탭 |
+| 💡 손익분기가 표시 | 토스증권 | 주식 현재 시세 카드 (매입단가 표시) |
+
+---
+
+## 2) 주요 기능
 
 - Tailwind 기반 반응형 UI
 - 회원가입/로그인(세션 + BCrypt)
@@ -17,10 +48,11 @@ Spring Boot + Thymeleaf 기반의 가상 암호화폐 모의투자 웹 애플리
 - 업비트 WebSocket 실시간 시세
 - 국내 4대 거래소 시세 비교 API (`/api/crypto/{code}/domestic-prices`)
 - Docker / Kubernetes / Amazon EKS 배포 구성 (DB 포함)
+- **[신규]** 관심종목(⭐) / 호가창 / 상승·하락 TOP 3 / 거래 내역 / 포트폴리오 파이 차트 / 계좌 초기화 / 종목 검색 / 시장 탭 / 손익분기가
 
 ---
 
-## 2) 테스트 로그인 계정
+## 3) 테스트 로그인 계정
 
 앱 시작 시 아래 계정이 없으면 자동 생성됩니다.
 
@@ -29,7 +61,7 @@ Spring Boot + Thymeleaf 기반의 가상 암호화폐 모의투자 웹 애플리
 
 ---
 
-## 3) 기술 스택
+## 4) 기술 스택
 
 - Backend: Java 17+, Spring Boot 3.1.2, Spring MVC, Spring Data JPA
 - Frontend: Thymeleaf, Tailwind CSS, JavaScript
@@ -45,7 +77,7 @@ Spring Boot + Thymeleaf 기반의 가상 암호화폐 모의투자 웹 애플리
 
 ---
 
-## 4) 저장소 분석 요약
+## 5) 저장소 분석 요약
 
 이 저장소는 단순한 정적 데모가 아니라, 서버 렌더링 UI와 세션 인증, DB 트랜잭션, 외부 시세 API 연동을 한 프로젝트 안에서 처리하는 Spring Boot 모놀리식 애플리케이션입니다.
 
@@ -71,7 +103,7 @@ Spring Boot + Thymeleaf 기반의 가상 암호화폐 모의투자 웹 애플리
 
 ---
 
-## 5) 환경 구분
+## 6) 환경 구분
 
 현재 저장소 기준으로 `local / dev / stage / prod` 4개 환경은 아래처럼 운영하는 구성이 가장 일관됩니다.
 
@@ -90,7 +122,7 @@ Spring Boot + Thymeleaf 기반의 가상 암호화폐 모의투자 웹 애플리
 
 ---
 
-## 6) 개발환경 k8s 구성과 AWS 구성 구분
+## 7) 개발환경 k8s 구성과 AWS 구성 구분
 
 ### 6-1. Dev Kubernetes
 
@@ -136,7 +168,7 @@ kubectl apply -k k8s/overlays/dev
 
 ---
 
-## 7) Docker 실행
+## 8) Docker 실행
 
 ### 7-1. 실행
 
@@ -163,7 +195,7 @@ docker compose down -v
 
 ---
 
-## 8) Kubernetes 실행 (일반 k8s / dev)
+## 9) Kubernetes 실행 (일반 k8s / dev)
 
 ### 8-1. base 배포
 
@@ -187,7 +219,7 @@ kubectl -n crypto-mock-dev port-forward svc/crypto-mock-app 8080:80
 
 ---
 
-## 9) Amazon EKS 실행
+## 10) Amazon EKS 실행
 
 `k8s/eks` 는 EKS + ALB Ingress + in-cluster MariaDB 구성입니다.
 
@@ -247,7 +279,7 @@ export ECR_REPO=java-crypto-mock-stage
 
 ---
 
-## 10) CI/CD shell 구성
+## 11) CI/CD shell 구성
 
 환경별 실행을 위해 아래 shell entrypoint 를 추가했습니다.
 
@@ -286,7 +318,7 @@ export ECR_REPO=java-crypto-mock-stage
 
 ---
 
-## 11) AWS 콘솔 레퍼런스 이미지
+## 12) AWS 콘솔 레퍼런스 이미지
 
 아래 이미지는 현재 repo 를 AWS 에 올렸을 때 참고하기 좋은 콘솔/공식 문서 유사 화면입니다. 실제 이 저장소의 실시간 콘솔 캡처는 아니고, AWS 공식 문서/블로그/워크숍에서 가져온 레퍼런스 이미지입니다.
 
@@ -320,7 +352,7 @@ export ECR_REPO=java-crypto-mock-stage
 
 ---
 
-## 12) Mermaid 다이어그램
+## 13) Mermaid 다이어그램
 
 ### 12-1. 환경별 배포 흐름
 
@@ -417,7 +449,7 @@ sequenceDiagram
 
 ---
 
-## 13) AWS 아키텍처 (SVG)
+## 14) AWS 아키텍처 (SVG)
 
 선이 복잡하지 않도록 단순화한 AWS 아이콘 스타일의 SVG 다이어그램입니다.  
 EKS 내부에서 앱과 MariaDB가 함께 동작하는 구조를 표현합니다.
@@ -426,7 +458,7 @@ EKS 내부에서 앱과 MariaDB가 함께 동작하는 구조를 표현합니다
 
 ---
 
-## 14) 화면 캡처
+## 15) 화면 캡처
 
 1. Tailwind 홈 화면
 
@@ -446,7 +478,7 @@ EKS 내부에서 앱과 MariaDB가 함께 동작하는 구조를 표현합니다
 
 ---
 
-## 15) 주요 경로
+## 16) 주요 경로
 
 - Docker: `Dockerfile`, `docker-compose.yml`
 - Kubernetes(base): `k8s/base/*`

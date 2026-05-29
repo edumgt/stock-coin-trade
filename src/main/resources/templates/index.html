@@ -10,10 +10,10 @@
 <section class="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
 
     <article class="glow-card p-8 relative overflow-hidden">
-        <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(255,204,0,0.12) 0%,transparent 70%);pointer-events:none;"></div>
+        <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(124,92,252,0.12) 0%,transparent 70%);pointer-events:none;"></div>
         <div class="badge badge-gold mb-4" style="width:fit-content;">실시간 시세</div>
-        <h1 class="text-[28px] font-black text-[#F2F2F2] leading-tight">코인 거래 실습</h1>
-        <p class="mt-3 text-sm text-[#888] leading-relaxed">
+        <h1 class="text-[28px] font-black leading-tight" style="color:var(--fg);">코인 거래 실습</h1>
+        <p class="mt-3 text-sm leading-relaxed" style="color:var(--muted);">
             업비트 기반 실시간 시세로 코인 실습을 제공합니다.<br>
             KRW 마켓 매수/매도 및 보유자산 관리를 사용할 수 있습니다.
         </p>
@@ -24,17 +24,15 @@
     </article>
 
     <article class="glass-card p-8 relative overflow-hidden">
-        <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(255,204,0,0.06) 0%,transparent 70%);pointer-events:none;"></div>
-        <div class="badge badge-muted mb-4" style="width:fit-content;">신규</div>
-        <h1 class="text-[28px] font-black text-[#F2F2F2] leading-tight">주식 거래 실습</h1>
-        <p class="mt-3 text-sm text-[#888] leading-relaxed">
+        <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(124,92,252,0.07) 0%,transparent 70%);pointer-events:none;"></div>
+        <div class="badge badge-muted mb-4" style="width:fit-content;">KOSPI · KOSDAQ</div>
+        <h1 class="text-[28px] font-black leading-tight" style="color:var(--fg);">주식 거래 실습</h1>
+        <p class="mt-3 text-sm leading-relaxed" style="color:var(--muted);">
             파이썬 기반 백엔드에서 시세/주문/포지션을 처리합니다.<br>
             KOSPI · KOSDAQ 가상 잔고로 매수/매도 실습을 진행할 수 있습니다.
         </p>
         <button th:onclick="|location.href='@{/trade/stock}'|" type="button"
-                style="margin-top:1.5rem; width:fit-content; background:rgba(255,255,255,0.08); color:#F2F2F2; border:1px solid rgba(255,255,255,0.14); border-radius:0.625rem; padding:0.65rem 1.75rem; font-size:16px; font-weight:700; cursor:pointer; transition:background 0.2s;"
-                onmouseover="this.style.background='rgba(255,255,255,0.14)'"
-                onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+                class="btn-ghost mt-6" style="width:fit-content; padding:0.65rem 1.75rem;">
             주식 실습 시작 →
         </button>
     </article>
@@ -44,12 +42,12 @@
 <!-- Market Cap Table -->
 <section class="glass-card overflow-hidden">
     <div class="px-6 py-4 flex flex-wrap items-center justify-between gap-3"
-         style="border-bottom:1px solid rgba(255,255,255,0.08);">
+         style="border-bottom:1px solid var(--border);">
         <div class="flex items-center gap-3">
-            <h2 class="text-lg font-bold text-[#F2F2F2]">시가총액 Top 100</h2>
+            <h2 class="text-lg font-bold" style="color:var(--fg);">시가총액 Top 100</h2>
             <span class="badge badge-gold">CoinMarketCap</span>
         </div>
-        <p class="text-xs text-[#888]">매시 정각 업데이트</p>
+        <p class="text-xs" style="color:var(--muted);">매시 정각 업데이트</p>
     </div>
 
     <div class="overflow-x-auto">
@@ -67,22 +65,22 @@
             </thead>
             <tbody>
             <tr th:each="crypto : ${cryptoRankList}">
-                <td class="text-[#888] font-semibold" th:text="${crypto.id}">1</td>
+                <td class="font-semibold" style="color:var(--muted);" th:text="${crypto.id}">1</td>
                 <td>
                     <img class="h-8 w-8 rounded-full"
                          th:src="|https://s2.coinmarketcap.com/static/img/coins/32x32/${crypto.apiCryptoId}.png|"
                          alt="coin logo">
                 </td>
-                <td class="font-bold text-[#F2F2F2]" th:text="|${crypto.name} (${crypto.symbol})|">Bitcoin (BTC)</td>
-                <td class="text-right text-[#F2F2F2]" th:text="${crypto.quote.usd.price}">0</td>
-                <td class="text-right font-bold text-[#F2F2F2]"
+                <td class="font-bold" style="color:var(--fg);" th:text="|${crypto.name} (${crypto.symbol})|">Bitcoin (BTC)</td>
+                <td class="text-right" style="color:var(--fg);" th:text="${crypto.quote.usd.price}">0</td>
+                <td class="text-right font-bold" style="color:var(--fg);"
                     th:text="'$' + ${#numbers.formatInteger(crypto.quote.usd.marketCap, 1, 'COMMA')}">0</td>
                 <td class="text-right font-semibold"
-                    th:style="${crypto.quote.usd.percentChange24h} > 0 ? 'color:#22c55e' : 'color:#f43f5e'"
+                    th:style="${crypto.quote.usd.percentChange24h} > 0 ? 'color:#E11D48' : 'color:#2563EB'"
                     th:text="${crypto.quote.usd.percentChange24h} > 0 ? '+' + ${#numbers.formatDecimal(crypto.quote.usd.percentChange24h, 1, 2)} + '%' : ${#numbers.formatDecimal(crypto.quote.usd.percentChange24h, 1, 2)} + '%'">0%
                 </td>
                 <td class="text-right font-semibold"
-                    th:style="${crypto.quote.usd.percentChange7d} > 0 ? 'color:#22c55e' : 'color:#f43f5e'"
+                    th:style="${crypto.quote.usd.percentChange7d} > 0 ? 'color:#E11D48' : 'color:#2563EB'"
                     th:text="${crypto.quote.usd.percentChange7d} > 0 ? '+' + ${#numbers.formatDecimal(crypto.quote.usd.percentChange7d, 1, 2)} + '%' : ${#numbers.formatDecimal(crypto.quote.usd.percentChange7d, 1, 2)} + '%'">0%
                 </td>
             </tr>

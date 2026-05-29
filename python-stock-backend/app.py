@@ -43,9 +43,10 @@ CHART_TTL  = 300
 INDEX_TTL  = 60
 
 state = {
-    "initial_cash": 10_000_000,
-    "cash":         10_000_000,
-    "positions":    {},
+    "initial_cash":  10_000_000,
+    "cash":          10_000_000,
+    "positions":     {},
+    "trade_history": [],
 }
 
 
@@ -313,6 +314,15 @@ def buy():
             total_amount = pos["avg_price"] * pos["quantity"] + amount
             pos["quantity"]  = total_qty
             pos["avg_price"] = int(total_amount / total_qty)
+        state["trade_history"].append({
+            "ts": int(time.time() * 1000),
+            "type": "BUY",
+            "symbol": symbol,
+            "name": STOCKS[symbol]["name"],
+            "quantity": quantity,
+            "price": price,
+            "amount": amount,
+        })
         return jsonify({"status": "ok", "symbol": symbol, "quantity": quantity, "price": price})
 
 
@@ -338,7 +348,55 @@ def sell():
         state["cash"]   += amount
         if pos["quantity"] == 0:
             del state["positions"][symbol]
+        state["trade_history"].append({
+            "ts": int(time.time() * 1000),
+            "type": "SELL",
+            "symbol": symbol,
+            "name": STOCKS.get(symbol, {}).get("name", symbol),
+            "quantity": quantity,
+            "price": price,
+            "amount": amount,
+        })
         return jsonify({"status": "ok", "symbol": symbol, "quantity": quantity, "price": price})
+
+
+# ── Trade History ─────────────────────────────────────────────────────────────
+@app.get("/api/stocks/orders/history")
+def order_history():
+    with lock:
+        return jsonify({"history": list(reversed(state["trade_history"]))})
+
+
+# ── Account Reset ──────────────────────────────────────────────────────────────
+@app.post("/api/stocks/account/reset")
+def reset_account():
+    with lock:
+        state["cash"]          = state["initial_cash"]
+        state["positions"]     = {}
+        state["trade_history"] = []
+        return jsonify({"status": "ok", "cash": state["initial_cash"]})
+
+
+# ── Market Movers ─────────────────────────────────────────────────────────────
+@app.get("/api/stocks/movers")
+def movers():
+    quotes = []
+    for symbol in STOCKS:
+        try:
+            q = get_quote_cached(symbol)
+            quotes.append({
+                "symbol":     q["symbol"],
+                "name":       q["name"],
+                "price":      q["price"],
+                "changeRate": q.get("changeRate", 0),
+                "market":     q["market"],
+            })
+        except Exception:
+            pass
+    sorted_q = sorted(quotes, key=lambda x: x.get("changeRate", 0), reverse=True)
+    gainers  = sorted_q[:3]
+    losers   = sorted_q[-3:][::-1]
+    return jsonify({"gainers": gainers, "losers": losers})
 
 
 if __name__ == "__main__":

@@ -238,7 +238,8 @@ fetch(upbitTradePriceApiUrl)
                 .get()
         );
 
-        const goldPalette = ['#FFCC00','#E6B800','#FFD740','#CC9900','#FFE566','#B38600','#FFF0A0','#997300'];
+        /* Copilot purple palette */
+        const accentPalette = ['#7C5CFC','#5865F2','#A78BFA','#E11D48','#2563EB','#059669','#F59E0B','#8B5CF6'];
 
         Highcharts.chart('hold_asset_chart', {
             chart: {
@@ -252,25 +253,26 @@ fetch(upbitTradePriceApiUrl)
             title: {
                 text: '보유 비중',
                 align: 'center',
-                style: { color: '#F2F2F2', fontSize: '16px', fontWeight: '800', fontFamily: "'Pretendard', sans-serif" }
+                style: { color: '#111827', fontSize: '15px', fontWeight: '800', fontFamily: "'Pretendard', sans-serif" }
             },
             tooltip: {
                 pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>',
-                backgroundColor: '#161616',
-                borderColor: 'rgba(255,204,0,0.30)',
+                backgroundColor: '#FFFFFF',
+                borderColor: 'rgba(124,92,252,0.25)',
                 borderRadius: 10,
-                style: { color: '#F2F2F2', fontSize: '14px', fontFamily: "'Pretendard', sans-serif" }
+                shadow: { color: 'rgba(0,0,0,0.10)', offsetX: 0, offsetY: 4, opacity: 1, width: 16 },
+                style: { color: '#111827', fontSize: '14px', fontFamily: "'Pretendard', sans-serif" }
             },
             plotOptions: {
                 pie: {
                     cursor: 'pointer',
-                    colors: goldPalette,
-                    borderWidth: 1,
-                    borderColor: 'rgba(12,12,12,0.8)',
+                    colors: accentPalette,
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF',
                     borderRadius: 4,
                     dataLabels: {
                         enabled: true,
-                        format: '<b style="color:#F2F2F2">{point.name}</b><br><span style="color:#FFCC00">{point.percentage:.1f}%</span>',
+                        format: '<b style="color:#111827">{point.name}</b><br><span style="color:#7C5CFC">{point.percentage:.1f}%</span>',
                         distance: -45,
                         style: { fontSize: '13px', fontWeight: '700', fontFamily: "'Pretendard', sans-serif", textOutline: 'none' },
                         filter: { property: 'percentage', operator: '>', value: 4 }
@@ -278,7 +280,7 @@ fetch(upbitTradePriceApiUrl)
                 }
             },
             legend: {
-                itemStyle: { color: '#888', fontFamily: "'Pretendard', sans-serif", fontSize: '13px' }
+                itemStyle: { color: '#6B7280', fontFamily: "'Pretendard', sans-serif", fontSize: '13px' }
             },
             credits: { enabled: false },
             series: [{

@@ -8,49 +8,70 @@
     <!-- Offcanvas panel -->
     <aside id="oc-panel">
         <div class="oc-header">
-            <span class="brand-logo-text" style="font-size:17px;">EDUMGT</span>
+            <span class="brand-logo-text" style="font-size:18px; letter-spacing:1.5px;">EDUMGT</span>
             <button class="oc-close-btn" onclick="closeOffcanvas()">✕</button>
         </div>
         <nav class="oc-nav">
-            <a th:href="@{/}" class="oc-nav-item">홈</a>
+            <a th:href="@{/}" class="oc-nav-item">
+                <span style="font-size:16px;">🏠</span> 홈
+            </a>
             <div class="oc-divider"></div>
-            <a th:href="@{/trade/order}" class="oc-nav-item">코인 거래</a>
-            <a th:href="@{/trade/stock}" class="oc-nav-item">주식 실습</a>
-            <a th:href="@{/trade/hold/crypto}" class="oc-nav-item">보유자산</a>
+            <a th:href="@{/trade/order}" class="oc-nav-item">
+                <span style="font-size:16px;">💹</span> 코인 거래
+            </a>
+            <a th:href="@{/trade/stock}" class="oc-nav-item">
+                <span style="font-size:16px;">📈</span> 주식 실습
+            </a>
+            <a th:href="@{/trade/hold/crypto}" class="oc-nav-item">
+                <span style="font-size:16px;">💼</span> 보유자산
+            </a>
         </nav>
         <div class="oc-footer">
-            <p style="font-size:13px; color:var(--muted);">© 2025 EDUMGT</p>
+            <p style="font-size:12px; color:var(--muted);">© 2025 EDUMGT Demo</p>
         </div>
     </aside>
 
     <!-- Site header -->
     <header id="site-header">
-        <div class="mx-auto flex w-full max-w-[1640px] items-center justify-between px-4 py-3">
+        <div class="mx-auto flex w-full max-w-[1640px] items-center justify-between px-4 py-2.5">
             <div class="flex items-center gap-3">
                 <button class="hamburger-btn" onclick="openOffcanvas()" aria-label="메뉴 열기">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                    <span></span><span></span><span></span>
                 </button>
-                <a href="/" style="text-decoration:none;">
+                <a href="/" style="text-decoration:none; display:flex; align-items:center; gap:8px;">
                     <span class="brand-logo-text">EDUMGT</span>
                 </a>
+                <!-- Nav pills (desktop) -->
+                <nav class="hidden md:flex items-center gap-1 ml-4">
+                    <a th:href="@{/trade/order}"
+                       style="font-size:13px; font-weight:600; color:var(--muted); padding:5px 14px; border-radius:999px; text-decoration:none; transition:all .15s;"
+                       onmouseover="this.style.background='var(--accent-light)';this.style.color='var(--accent)'"
+                       onmouseout="this.style.background='';this.style.color='var(--muted)'">코인</a>
+                    <a th:href="@{/trade/stock}"
+                       style="font-size:13px; font-weight:600; color:var(--muted); padding:5px 14px; border-radius:999px; text-decoration:none; transition:all .15s;"
+                       onmouseover="this.style.background='var(--accent-light)';this.style.color='var(--accent)'"
+                       onmouseout="this.style.background='';this.style.color='var(--muted)'">주식</a>
+                    <a th:href="@{/trade/hold/crypto}"
+                       style="font-size:13px; font-weight:600; color:var(--muted); padding:5px 14px; border-radius:999px; text-decoration:none; transition:all .15s;"
+                       onmouseover="this.style.background='var(--accent-light)';this.style.color='var(--accent)'"
+                       onmouseout="this.style.background='';this.style.color='var(--muted)'">보유자산</a>
+                </nav>
             </div>
 
-            <div th:if="${session.loginMember != null}" class="flex items-center gap-3">
+            <div th:if="${session.loginMember != null}" class="flex items-center gap-2">
                 <span th:text="|${session.loginMember.username}님|"
-                      style="font-size:15px; color:var(--muted); font-weight:600;"></span>
+                      style="font-size:13px; color:var(--muted); font-weight:600;"></span>
                 <button type="button" th:onclick="|location.href='@{/member/logout}'|"
-                        style="background:#fff; color:#be123c; border:1.5px solid #be123c; border-radius:0.5rem; padding:0.35rem 1rem; font-size:14px; font-weight:700; cursor:pointer; transition:background 0.15s;"
-                        onmouseover="this.style.background='#ffe4e6'"
-                        onmouseout="this.style.background='#fff'">로그아웃</button>
+                        style="background:var(--surface); color:#E11D48; border:1.5px solid rgba(225,29,72,0.3); border-radius:999px; padding:0.3rem 1rem; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s;"
+                        onmouseover="this.style.background='#FEE2E2'"
+                        onmouseout="this.style.background='var(--surface)'">로그아웃</button>
             </div>
 
             <div th:if="${session.loginMember == null}" class="flex items-center gap-2">
                 <button type="button" th:onclick="|location.href='@{/member/login}'|"
-                        class="btn-ghost" style="width:auto; padding:0.35rem 1rem; font-size:14px;">로그인</button>
+                        class="btn-ghost" style="width:auto; padding:0.3rem 1rem; font-size:13px;">로그인</button>
                 <button type="button" th:onclick="|location.href='@{/member/register}'|"
-                        class="btn-gold" style="width:auto; padding:0.35rem 1rem; font-size:14px;">회원가입</button>
+                        class="btn-gold" style="width:auto; padding:0.3rem 1rem; font-size:13px;">회원가입</button>
             </div>
         </div>
     </header>
@@ -66,9 +87,7 @@
             document.getElementById('oc-panel').classList.remove('open');
             document.body.style.overflow = '';
         }
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeOffcanvas();
-        });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOffcanvas(); });
     </script>
 
 </th:block>

@@ -7,27 +7,27 @@
 <div class="mx-auto max-w-md">
     <div class="glass-card p-8">
         <div class="text-center mb-6">
-            <div class="brand-logo-text mb-3" style="font-size:24px;">EDUMGT</div>
-            <h1 class="text-2xl font-black text-[#F2F2F2]">로그인</h1>
-            <p class="mt-2 text-sm text-[#888]">모의투자 서비스를 이용하려면 로그인하세요.</p>
+            <div class="brand-logo-text mb-3" style="font-size:26px; display:block;">EDUMGT</div>
+            <h1 class="text-2xl font-black" style="color:var(--fg);">로그인</h1>
+            <p class="mt-2 text-sm" style="color:var(--muted);">모의투자 서비스를 이용하려면 로그인하세요.</p>
         </div>
 
         <form action="/member/login" th:action th:object="${memberLoginForm}" method="post" class="space-y-4">
             <div th:if="${#fields.hasGlobalErrors()}"
-                 style="background:rgba(190,18,60,0.12); border:1px solid rgba(190,18,60,0.35); border-radius:0.625rem; padding:0.75rem 1rem; font-size:15px; color:#fb7185;">
+                 style="background:rgba(225,29,72,0.07); border:1px solid rgba(225,29,72,0.25); border-radius:var(--radius-xs); padding:.75rem 1rem; font-size:14px; color:#E11D48;">
                 <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">전체 오류 메시지</p>
             </div>
 
             <div>
-                <label style="display:block; font-size:14px; font-weight:700; color:#888; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.06em;" for="email">Email</label>
+                <label style="display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em;" for="email">Email</label>
                 <input type="email" th:field="*{email}" id="email" class="dark-input" placeholder="이메일 주소"/>
-                <div class="mt-1 text-xs text-[#fb7185]" th:errors="*{email}">email 오류</div>
+                <div class="mt-1 text-xs" style="color:#E11D48;" th:errors="*{email}">email 오류</div>
             </div>
 
             <div>
-                <label style="display:block; font-size:14px; font-weight:700; color:#888; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.06em;" for="password">Password</label>
+                <label style="display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em;" for="password">Password</label>
                 <input type="password" th:field="*{password}" id="password" class="dark-input" placeholder="비밀번호"/>
-                <div class="mt-1 text-xs text-[#fb7185]" th:errors="*{password}">password 오류</div>
+                <div class="mt-1 text-xs" style="color:#E11D48;" th:errors="*{password}">password 오류</div>
             </div>
 
             <div class="pt-2 space-y-3">
