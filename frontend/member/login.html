@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 — EDUMGT</title>
+  <link rel="icon" href="/img/favicon.png">
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:600; font-display:swap; src:url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:900; font-display:swap; src:url('/fonts/Pretendard-Black.woff2') format('woff2'); }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="auth-page">
+
+  <!-- Logo & tagline -->
+  <div class="text-center mb-8">
+    <span class="auth-logo mb-3">EDUMGT</span>
+    <p class="mt-3 text-sm" style="color:rgba(255,255,255,0.45);">코인 · 주식 모의투자 플랫폼</p>
+  </div>
+
+  <!-- Auth card -->
+  <div class="auth-card">
+    <h1 class="text-xl font-black text-center mb-1" style="color:#fff;">로그인</h1>
+    <p class="text-sm text-center mb-6" style="color:rgba(255,255,255,0.4);">계정에 로그인하세요</p>
+
+    <div id="globalError" style="display:none;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:10px;padding:.75rem 1rem;font-size:14px;color:#F87171;margin-bottom:1rem;"></div>
+
+    <form class="space-y-4" onsubmit="handleLogin(event)">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.07em;">Email</label>
+        <input type="email" id="email" class="dark-input" placeholder="이메일 주소" autocomplete="email" required>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.07em;">Password</label>
+        <input type="password" id="password" class="dark-input" placeholder="비밀번호" autocomplete="current-password" required>
+      </div>
+      <div class="pt-1 space-y-3">
+        <button type="submit" id="submitBtn" class="btn-gold">로그인</button>
+        <button type="button" onclick="location.href='/member/register.html'" class="btn-ghost" style="font-size:14px;">계정이 없으신가요? 회원가입</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Back link -->
+  <div class="mt-6 text-center">
+    <a href="/index.html" style="font-size:13px;color:rgba(255,255,255,0.3);text-decoration:none;transition:color .15s;"
+       onmouseover="this.style.color='rgba(255,255,255,0.6)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">
+      ← 메인으로 돌아가기
+    </a>
+  </div>
+
+</div>
+
+<script src="/js/config.js"></script>
+<script src="/js/common.js"></script>
+<script>
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '로그인 중...';
+  document.getElementById('globalError').style.display = 'none';
+
+  const res = await apiFetch('/api/member/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value,
+    }),
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    location.href = '/trade/order.html';
+  } else {
+    const el = document.getElementById('globalError');
+    el.textContent = data.error ?? '로그인에 실패했습니다.';
+    el.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '로그인';
+  }
+}
+</script>
+</body>
+</html>

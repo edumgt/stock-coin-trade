@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>보유자산 — EDUMGT</title>
+  <link rel="icon" href="/img/favicon.png">
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:600; font-display:swap; src:url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','Apple SD Gothic Neo','Malgun Gothic','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://code.highcharts.com/11.1.0/highcharts.js"></script>
+  <style>
+    #site-footer { position:fixed; bottom:0; left:0; right:0; z-index:50; margin-top:0; }
+    body { padding-bottom: 40px; }
+  </style>
+</head>
+<body class="min-h-screen">
+<div id="header-mount"></div>
+<main class="mx-auto w-full max-w-[1640px] px-4 py-6">
+
+<div class="space-y-6">
+
+  <!-- Summary -->
+  <section class="glass-card p-6">
+    <h2 class="text-center text-2xl font-black mb-6" style="color:var(--fg);">보유자산 현황</h2>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="stat-card">
+            <div class="stat-label">보유 KRW</div>
+            <div class="stat-value"><span id="member_asset">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div>
+          </div>
+          <div class="stat-card gold-stat">
+            <div class="stat-label">총 보유자산</div>
+            <div class="stat-value"><span id="total_member_asset">-</span><span style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.7);margin-left:4px;">KRW</span></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="stat-card">
+            <div class="stat-label">총매수금액</div>
+            <div style="font-size:17px;font-weight:700;color:var(--fg);margin-top:.25rem;"><span id="total_buy_krw">-</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">총평가손익</div>
+            <div style="font-size:17px;font-weight:700;margin-top:.25rem;"><span id="total_krw_of_return">-</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="stat-card">
+            <div class="stat-label">총평가금액</div>
+            <div style="font-size:17px;font-weight:700;color:var(--fg);margin-top:.25rem;"><span id="total_evaluation_krw">-</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">총평가수익률</div>
+            <div style="font-size:21px;font-weight:800;margin-top:.25rem;"><span id="total_evaluation_rate_of_return">-</span><span style="font-size:12px;color:var(--muted);margin-left:2px;">%</span></div>
+          </div>
+        </div>
+      </div>
+      <div id="hold_asset_chart" class="min-h-[320px]"></div>
+    </div>
+  </section>
+
+  <!-- Holdings table -->
+  <section class="glass-card overflow-hidden">
+    <div class="px-5 py-4" style="border-bottom:1px solid var(--border);">
+      <h3 class="text-base font-black" style="color:var(--fg);">보유 코인</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="dark-table min-w-full">
+        <thead>
+          <tr>
+            <th class="text-left">보유자산</th>
+            <th class="text-right">보유수량</th>
+            <th class="text-right">매수평균가</th>
+            <th class="text-right">매수금액</th>
+            <th class="text-right">평가금액</th>
+            <th class="text-right">평가손익 (%)</th>
+          </tr>
+        </thead>
+        <tbody id="holdCryptoTableBody">
+          <tr><td colspan="6" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+</main>
+<footer id="site-footer">
+  <div class="mx-auto w-full max-w-[1640px] px-4 py-4 flex items-center justify-between">
+    <span class="brand-logo-text" style="font-size:13px;letter-spacing:1.5px;">EDUMGT</span>
+      <p style="font-size:12px;color:var(--muted);">(주)에듀엠지티 &nbsp;|&nbsp; <a href="https://www.edumgt.co.kr" target="_blank" style="color:var(--accent-dark);text-decoration:none;font-weight:600;">www.edumgt.co.kr</a> &nbsp;|&nbsp; © 2025</p>
+  </div>
+</footer>
+<script src="/js/config.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/hold_crypto.js"></script>
+</body>
+</html>

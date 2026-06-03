@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_PROPS="$ROOT_DIR/src/main/resources/application.properties"
-SQL_FILE="$ROOT_DIR/db.sql"
+APP_PROPS="$ROOT_DIR/java-backend/src/main/resources/application.properties"
+SQL_FILE="$ROOT_DIR/database/db.sql"
 
 CONTAINER_NAME="${DB_CONTAINER_NAME:-crypto-mariadb}"
 ROOT_PASSWORD="${DB_ROOT_PASSWORD:-123456}"

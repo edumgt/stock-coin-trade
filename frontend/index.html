@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDUMGT 모의투자</title>
+  <link rel="icon" href="/img/favicon.png">
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:500; font-display:swap; src:url('/fonts/Pretendard-Medium.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:600; font-display:swap; src:url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+    #site-footer { position:fixed; bottom:0; left:0; right:0; z-index:50; margin-top:0; }
+    body { padding-bottom: 44px; }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','Apple SD Gothic Neo','Malgun Gothic','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="min-h-screen">
+<div id="header-mount"></div>
+<main class="mx-auto w-full max-w-[1640px] px-4 py-6">
+
+  <!-- Hero cards -->
+  <section class="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+    <article class="glow-card p-8 relative overflow-hidden">
+      <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(124,92,252,0.12) 0%,transparent 70%);pointer-events:none;"></div>
+      <div class="badge badge-gold mb-4" style="width:fit-content;">실시간 시세</div>
+      <h1 class="text-[28px] font-black leading-tight" style="color:var(--fg);">코인 거래 실습</h1>
+      <p class="mt-3 text-sm leading-relaxed" style="color:var(--muted);">업비트 기반 실시간 시세로 코인 실습을 제공합니다.<br>KRW 마켓 매수/매도 및 보유자산 관리를 사용할 수 있습니다.</p>
+      <button onclick="location.href='/trade/order.html'" type="button" class="btn-gold mt-6" style="width:fit-content;padding:0.65rem 1.75rem;">코인 거래 시작 →</button>
+    </article>
+    <article class="glass-card p-8 relative overflow-hidden">
+      <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(124,92,252,0.07) 0%,transparent 70%);pointer-events:none;"></div>
+      <div class="badge badge-muted mb-4" style="width:fit-content;">KOSPI · KOSDAQ</div>
+      <h1 class="text-[28px] font-black leading-tight" style="color:var(--fg);">주식 거래 실습</h1>
+      <p class="mt-3 text-sm leading-relaxed" style="color:var(--muted);">파이썬 기반 백엔드에서 시세/주문/포지션을 처리합니다.<br>KOSPI · KOSDAQ 가상 잔고로 매수/매도 실습을 진행할 수 있습니다.</p>
+      <button onclick="location.href='/trade/stock.html'" type="button" class="btn-ghost mt-6" style="width:fit-content;padding:0.65rem 1.75rem;">주식 실습 시작 →</button>
+    </article>
+  </section>
+
+  <!-- 실시간 Top 10 카드 (2열) -->
+  <section class="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+
+    <!-- 코인 Top 10 (업비트 WebSocket 실시간) -->
+    <div class="glass-card overflow-hidden">
+      <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+        <h2 class="text-base font-black" style="color:var(--fg);">코인 Top 10</h2>
+        <span class="badge badge-gold">Upbit KRW</span>
+        <span class="live-dot ml-auto" title="실시간 WebSocket"></span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:var(--surface-2);">
+            <th style="padding:6px 12px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;">코인</th>
+            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:10px;font-weight:700;">현재가</th>
+            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:10px;font-weight:700;">등락</th>
+            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:10px;font-weight:700;">거래대금</th>
+          </tr>
+        </thead>
+        <tbody id="cryptoTop10Body">
+          <tr><td colspan="4" style="padding:16px;text-align:center;color:var(--muted);">로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- KOSPI 상위 10 (5초 폴링) -->
+    <div class="glass-card overflow-hidden">
+      <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+        <h2 class="text-base font-black" style="color:var(--fg);">주식 Top 10</h2>
+        <span class="badge badge-muted">KOSPI · KOSDAQ</span>
+        <span class="live-dot ml-auto" title="5초 갱신"></span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:var(--surface-2);">
+            <th style="padding:6px 12px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;">종목</th>
+            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:10px;font-weight:700;">현재가</th>
+            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:10px;font-weight:700;">등락</th>
+            <th style="padding:6px 12px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;">시장</th>
+          </tr>
+        </thead>
+        <tbody id="stockTop10Body">
+          <tr><td colspan="4" style="padding:16px;text-align:center;color:var(--muted);">로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <!-- 시가총액 Top 100 -->
+  <section class="glass-card overflow-hidden">
+    <div class="px-6 py-4 flex flex-wrap items-center justify-between gap-3" style="border-bottom:1px solid var(--border);">
+      <div class="flex items-center gap-3">
+        <h2 class="text-base font-bold" style="color:var(--fg);">시가총액 Top 100</h2>
+        <span class="badge badge-gold">CoinMarketCap</span>
+      </div>
+      <p class="text-xs" style="color:var(--muted);">매시 정각 업데이트</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="dark-table">
+        <thead>
+          <tr>
+            <th class="text-left">#</th>
+            <th class="text-left"></th>
+            <th class="text-left">이름</th>
+            <th class="text-right">가격 (USD)</th>
+            <th class="text-right">시가총액 (USD)</th>
+            <th class="text-right">변동률 24H</th>
+            <th class="text-right">변동률 7D</th>
+          </tr>
+        </thead>
+        <tbody id="rankingsBody">
+          <tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+<footer id="site-footer">
+  <div class="mx-auto w-full max-w-[1640px] px-4 py-3 flex items-center justify-between">
+    <span class="brand-logo-text" style="font-size:13px;letter-spacing:1.5px;">EDUMGT</span>
+      <p style="font-size:12px;color:var(--muted);">(주)에듀엠지티 &nbsp;|&nbsp; <a href="https://www.edumgt.co.kr" target="_blank" style="color:var(--accent-dark);text-decoration:none;font-weight:600;">www.edumgt.co.kr</a> &nbsp;|&nbsp; © 2025</p>
+  </div>
+</footer>
+<script src="/js/config.js"></script>
+<script src="/js/common.js"></script>
+<script>
+(async () => {
+  await initPage();
+
+  /* ── 코인 Top 10 (업비트 WebSocket) ────────────────────────── */
+  const cryptoRes = await apiFetch('/api/crypto/market-list');
+  let marketCodes = [];
+  if (cryptoRes.ok) {
+    const ml = await cryptoRes.json();
+    const markets = (ml.markets ?? []).slice(0, 10);
+    marketCodes = ml.marketCodes ?? [];
+
+    const tbody = document.getElementById('cryptoTop10Body');
+    tbody.innerHTML = markets.map(m => `
+      <tr style="border-bottom:1px solid var(--border);cursor:pointer;" onclick="location.href='/trade/order.html'">
+        <td style="padding:8px 12px;">
+          <div style="font-weight:700;color:var(--fg);">${m.koreanName}</div>
+          <div style="font-size:10px;color:var(--muted);">${m.market}</div>
+        </td>
+        <td id="${m.market}-idx-price" style="padding:8px 12px;text-align:right;font-weight:700;color:var(--fg);">-</td>
+        <td id="${m.market}-idx-rate"  style="padding:8px 12px;text-align:right;font-size:12px;font-weight:700;">-</td>
+        <td id="${m.market}-idx-vol"   style="padding:8px 12px;text-align:right;font-size:11px;color:var(--muted);">-</td>
+      </tr>`).join('');
+
+    // WebSocket
+    const top10Codes = markets.map(m => m.market);
+    const ws = new WebSocket('wss://api.upbit.com/websocket/v1');
+    ws.onopen = () => ws.send(JSON.stringify([
+      { ticket: 'edumgt-index' },
+      { type: 'ticker', codes: top10Codes },
+    ]));
+    ws.onmessage = async (e) => {
+      try {
+        const r = JSON.parse(await e.data.text());
+        if (r.type !== 'ticker') return;
+        const code  = r.code;
+        const price = new Intl.NumberFormat('ko-KR').format(r.trade_price);
+        let rate    = (r.signed_change_rate * 100).toFixed(2);
+        const color = rate > 0 ? '#E11D48' : rate < 0 ? '#2563EB' : 'var(--muted)';
+        if (rate > 0) rate = '+' + rate;
+
+        let vol = Math.round(r.acc_trade_price_24h);
+        vol = Math.round(vol / 1_000_000) * 1_000_000;
+        const volStr = (vol / 1_000_000).toLocaleString('ko-KR') + '백만';
+
+        const pEl = document.getElementById(code + '-idx-price');
+        const rEl = document.getElementById(code + '-idx-rate');
+        const vEl = document.getElementById(code + '-idx-vol');
+        if (pEl) { pEl.textContent = price; pEl.style.color = color; }
+        if (rEl) { rEl.textContent = rate + '%'; rEl.style.color = color; }
+        if (vEl) { vEl.textContent = volStr; }
+      } catch {}
+    };
+  }
+
+  /* ── 주식 Top 10 (5초 폴링) ─────────────────────────────────── */
+  async function loadStockTop10() {
+    try {
+      const res  = await apiFetch('/api/stocks/prices');
+      if (!res.ok) return;
+      const data = await res.json();
+      const prices = data.prices ?? {};
+
+      const sorted = Object.entries(prices)
+        .map(([sym, p]) => ({ sym, ...p }))
+        .sort((a, b) => Math.abs(b.changeRate) - Math.abs(a.changeRate))
+        .slice(0, 10);
+
+      const tbody = document.getElementById('stockTop10Body');
+      tbody.innerHTML = sorted.map(s => {
+        const rate  = Number(s.changeRate);
+        const color = rate > 0 ? '#E11D48' : rate < 0 ? '#2563EB' : 'var(--muted)';
+        const rateStr = (rate >= 0 ? '+' : '') + rate.toFixed(2) + '%';
+        const mktColor = s.market === 'KOSPI' ? 'color:var(--accent-dark);' : 'color:#059669;';
+        return `<tr style="border-bottom:1px solid var(--border);cursor:pointer;" onclick="location.href='/trade/stock.html'">
+          <td style="padding:8px 12px;font-weight:700;color:var(--fg);">${s.name}</td>
+          <td style="padding:8px 12px;text-align:right;font-weight:700;color:var(--fg);">${Number(s.price).toLocaleString('ko-KR')}</td>
+          <td style="padding:8px 12px;text-align:right;font-size:12px;font-weight:700;color:${color};">${rateStr}</td>
+          <td style="padding:8px 12px;font-size:10px;font-weight:700;${mktColor}">${s.market}</td>
+        </tr>`;
+      }).join('');
+    } catch {}
+  }
+
+  await loadStockTop10();
+  setInterval(loadStockTop10, 5000);
+
+  /* ── 시가총액 Top 100 ────────────────────────────────────────── */
+  const rankRes = await apiFetch('/api/crypto/rankings');
+  const list = rankRes.ok ? await rankRes.json() : [];
+  const tbody = document.getElementById('rankingsBody');
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">데이터가 없습니다.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(c => {
+    const p24 = c.quote?.usd?.percentChange24h ?? 0;
+    const p7d  = c.quote?.usd?.percentChange7d  ?? 0;
+    const price = (c.quote?.usd?.price ?? 0).toLocaleString('en-US', { maximumFractionDigits: 4 });
+    const mcap  = '$' + Math.round(c.quote?.usd?.marketCap ?? 0).toLocaleString('en-US');
+    const fmt = (v) => (v > 0 ? '+' : '') + v.toFixed(2) + '%';
+    const color24 = p24 > 0 ? '#E11D48' : '#2563EB';
+    const color7d  = p7d  > 0 ? '#E11D48' : '#2563EB';
+    return `<tr>
+      <td class="font-semibold" style="color:var(--muted);">${c.id}</td>
+      <td><img class="h-8 w-8 rounded-full" src="https://s2.coinmarketcap.com/static/img/coins/32x32/${c.apiCryptoId}.png" alt=""></td>
+      <td class="font-bold" style="color:var(--fg);">${c.name} (${c.symbol})</td>
+      <td class="text-right" style="color:var(--fg);">${price}</td>
+      <td class="text-right font-bold" style="color:var(--fg);">${mcap}</td>
+      <td class="text-right font-semibold" style="color:${color24};">${fmt(p24)}</td>
+      <td class="text-right font-semibold" style="color:${color7d};">${fmt(p7d)}</td>
+    </tr>`;
+  }).join('');
+})();
+</script>
+</body>
+</html>

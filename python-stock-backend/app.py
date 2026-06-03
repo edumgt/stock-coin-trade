@@ -399,5 +399,33 @@ def movers():
     return jsonify({"gainers": gainers, "losers": losers})
 
 
+# ── Batch Prices (실시간 마켓 리스트용) ──────────────────────────────────────
+@app.get("/api/stocks/prices")
+def batch_prices():
+    result = {}
+    for symbol in STOCKS:
+        try:
+            q = get_quote_cached(symbol)
+            result[symbol] = {
+                "name":       q["name"],
+                "market":     q["market"],
+                "price":      q["price"],
+                "change":     q.get("change", 0),
+                "changeRate": q.get("changeRate", 0),
+                "volume":     q.get("volume", 0),
+            }
+        except Exception:
+            info = STOCKS[symbol]
+            result[symbol] = {
+                "name":       info["name"],
+                "market":     info["market"],
+                "price":      BASE_PRICES.get(symbol, 0),
+                "change":     0,
+                "changeRate": 0,
+                "volume":     0,
+            }
+    return jsonify({"prices": result})
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8200, debug=False)

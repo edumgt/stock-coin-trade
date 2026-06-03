@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회원가입 — EDUMGT</title>
+  <link rel="icon" href="/img/favicon.png">
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:600; font-display:swap; src:url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:900; font-display:swap; src:url('/fonts/Pretendard-Black.woff2') format('woff2'); }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="auth-page">
+
+  <!-- Logo & tagline -->
+  <div class="text-center mb-8">
+    <span class="auth-logo mb-3">EDUMGT</span>
+    <p class="mt-3 text-sm" style="color:rgba(255,255,255,0.45);">코인 · 주식 모의투자 플랫폼</p>
+  </div>
+
+  <!-- Auth card -->
+  <div class="auth-card">
+    <h1 class="text-xl font-black text-center mb-1" style="color:#fff;">회원가입</h1>
+    <p class="text-sm text-center mb-1" style="color:rgba(255,255,255,0.4);">가입 즉시 거래 가능 자금</p>
+    <p class="text-base font-black text-center mb-5" style="color:#FFCC00;">10,000,000 KRW 지급</p>
+
+    <div id="globalError" style="display:none;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:10px;padding:.75rem 1rem;font-size:14px;color:#F87171;margin-bottom:1rem;"></div>
+
+    <form class="space-y-4" onsubmit="handleRegister(event)">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.07em;">이름</label>
+        <input type="text" id="username" class="dark-input" placeholder="이름" required>
+        <div id="usernameError" class="mt-1 text-xs" style="color:#F87171;display:none;"></div>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.07em;">이메일</label>
+        <input type="email" id="email" class="dark-input" placeholder="이메일 주소" autocomplete="email" required>
+        <div id="emailError" class="mt-1 text-xs" style="color:#F87171;display:none;"></div>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.07em;">비밀번호</label>
+        <input type="password" id="password" class="dark-input" placeholder="비밀번호" autocomplete="new-password" required>
+        <div id="passwordError" class="mt-1 text-xs" style="color:#F87171;display:none;"></div>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.07em;">비밀번호 확인</label>
+        <input type="password" id="password2" class="dark-input" placeholder="비밀번호 재입력" autocomplete="new-password" required>
+        <div id="password2Error" class="mt-1 text-xs" style="color:#F87171;display:none;"></div>
+      </div>
+      <div class="pt-1 space-y-3">
+        <button type="submit" id="submitBtn" class="btn-gold">가입하기</button>
+        <button type="button" onclick="location.href='/member/login.html'" class="btn-ghost" style="font-size:14px;">이미 계정이 있으신가요? 로그인</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="mt-6 text-center">
+    <a href="/index.html" style="font-size:13px;color:rgba(255,255,255,0.3);text-decoration:none;transition:color .15s;"
+       onmouseover="this.style.color='rgba(255,255,255,0.6)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">
+      ← 메인으로 돌아가기
+    </a>
+  </div>
+
+</div>
+
+<script src="/js/config.js"></script>
+<script src="/js/common.js"></script>
+<script>
+function clearErrors() {
+  ['username','email','password','password2'].forEach(id => {
+    const el = document.getElementById(id + 'Error');
+    if (el) { el.style.display = 'none'; el.textContent = ''; }
+  });
+  const g = document.getElementById('globalError');
+  if (g) g.style.display = 'none';
+}
+function showFieldError(field, msg) {
+  const el = document.getElementById(field + 'Error');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  clearErrors();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '처리 중...';
+
+  const res = await apiFetch('/api/member/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: document.getElementById('username').value,
+      email:    document.getElementById('email').value,
+      password: document.getElementById('password').value,
+      password2: document.getElementById('password2').value,
+    }),
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    location.href = '/trade/order.html';
+  } else {
+    if (data.field) showFieldError(data.field, data.error);
+    else {
+      const el = document.getElementById('globalError');
+      el.textContent = data.error ?? '가입에 실패했습니다.';
+      el.style.display = 'block';
+    }
+    btn.disabled = false;
+    btn.textContent = '가입하기';
+  }
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 .git
 .github
 target
+java-backend/target
 captures
 docs
 scripts
