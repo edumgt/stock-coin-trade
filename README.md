@@ -1,8 +1,7 @@
 # 한국 코인·주식 모의투자 Web App
 
-Spring Boot REST API + Vanilla JS 기반의 가상 모의투자 웹 애플리케이션입니다.  
-코인 거래 화면에서 국내 4대 거래소(업비트/빗썸/코인원/코빗) 시세를 동시에 확인할 수 있고,  
-주식 거래는 Python Flask 백엔드를 통해 KOSPI·KOSDAQ 모의 투자를 지원합니다.
+Spring Boot REST API + Vanilla JS 기반의 코인·주식 통합 모의투자 웹 애플리케이션입니다.  
+업비트/빗썸/코인원/코빗 시세 비교와 KOSPI·KOSDAQ 주식 실습을 한 화면 흐름으로 제공합니다.
 
 ---
 
