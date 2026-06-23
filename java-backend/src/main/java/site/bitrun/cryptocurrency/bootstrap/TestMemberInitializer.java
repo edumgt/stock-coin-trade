@@ -22,18 +22,14 @@ public class TestMemberInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        createMemberIfNotExists("테스트회원1", "test1@test.com");
-        createMemberIfNotExists("테스트회원2", "test2@test.com");
+        createMemberIfNotExists("테스트회원1", "test1@test.com",  "123456",    10_000_000);
+        createMemberIfNotExists("테스트회원2", "test2@test.com",  "123456",    10_000_000);
+        createMemberIfNotExists("관리자",      "admin@admin.com", "admin1234", 999_999_999);
     }
 
-    private void createMemberIfNotExists(String username, String email) {
-        Member existingMember = memberRepository.findByEmail(email);
-        if (existingMember != null) {
-            return;
-        }
-
-        Member member = new Member(username, email, passwordEncoder.encode("123456"), 10_000_000);
-        memberRepository.save(member);
-        log.info("테스트 로그인 계정 생성 완료: {}", email);
+    private void createMemberIfNotExists(String username, String email, String rawPassword, long asset) {
+        if (memberRepository.findByEmail(email) != null) return;
+        memberRepository.save(new Member(username, email, passwordEncoder.encode(rawPassword), asset));
+        log.info("계정 생성: {} ({})", username, email);
     }
 }

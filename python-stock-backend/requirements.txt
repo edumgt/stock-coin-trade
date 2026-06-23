@@ -1,2 +1,4 @@
 Flask==3.0.3
 yfinance==0.2.54
+qdrant-client[fastembed]>=1.9.0
+kubernetes>=29.0.0

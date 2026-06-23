@@ -12,6 +12,7 @@ spec:
       labels:
         app: crypto-mock-python
     spec:
+      serviceAccountName: crypto-mock-monitor
       containers:
         - name: python
           image: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/python-crypto-mock:latest

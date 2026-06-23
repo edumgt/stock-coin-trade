@@ -11,6 +11,74 @@
     @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
     @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
     @font-face { font-family:'Pretendard'; font-weight:900; font-display:swap; src:url('/fonts/Pretendard-Black.woff2') format('woff2'); }
+
+    .login-tab-bar {
+      display: flex;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 1.5rem;
+    }
+    .login-tab {
+      flex: 1;
+      padding: .6rem .5rem;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all .18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.4);
+    }
+    .login-tab.active-user {
+      background: linear-gradient(135deg, rgba(41,98,255,0.22), rgba(41,98,255,0.12));
+      color: #93C5FD;
+      border-bottom: 2px solid #3B82F6;
+    }
+    .login-tab.active-admin {
+      background: linear-gradient(135deg, rgba(245,158,11,0.22), rgba(245,158,11,0.10));
+      color: #FCD34D;
+      border-bottom: 2px solid #F59E0B;
+    }
+    .login-tab:hover:not(.active-user):not(.active-admin) {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.65);
+    }
+
+    .hint-box {
+      border-radius: 8px;
+      padding: .6rem .85rem;
+      font-size: 12px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.5;
+    }
+    .hint-box.user-hint {
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.2);
+      color: #93C5FD;
+    }
+    .hint-box.admin-hint {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.2);
+      color: #FCD34D;
+    }
+    .credential-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: monospace;
+      font-size: 11.5px;
+      letter-spacing: .04em;
+    }
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','sans-serif']}}}}</script>
@@ -28,7 +96,27 @@
   <!-- Auth card -->
   <div class="auth-card">
     <h1 class="text-xl font-black text-center mb-1" style="color:#fff;">로그인</h1>
-    <p class="text-sm text-center mb-6" style="color:rgba(255,255,255,0.4);">계정에 로그인하세요</p>
+    <p class="text-sm text-center mb-5" style="color:rgba(255,255,255,0.4);">계정 유형을 선택하세요</p>
+
+    <!-- 탭 -->
+    <div class="login-tab-bar">
+      <button id="tab-user"  class="login-tab active-user"  onclick="switchTab('user')">
+        <span style="font-size:15px;">👤</span> 일반 사용자
+      </button>
+      <button id="tab-admin" class="login-tab"              onclick="switchTab('admin')">
+        <span style="font-size:15px;">🔐</span> 관리자
+      </button>
+    </div>
+
+    <!-- 힌트 박스 -->
+    <div id="hint-user" class="hint-box user-hint">
+      <span style="font-size:16px;flex-shrink:0;">ℹ️</span>
+      <span>테스트 계정 &nbsp;<span class="credential-badge">test1@test.com</span>&nbsp;/&nbsp;<span class="credential-badge">123456</span>&nbsp;이 자동으로 입력됩니다.</span>
+    </div>
+    <div id="hint-admin" class="hint-box admin-hint" style="display:none;">
+      <span style="font-size:16px;flex-shrink:0;">⚠️</span>
+      <span>관리자 계정 &nbsp;<span class="credential-badge">admin@admin.com</span>&nbsp;/&nbsp;<span class="credential-badge">admin1234</span>&nbsp;이 자동으로 입력됩니다.</span>
+    </div>
 
     <div id="globalError" style="display:none;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:10px;padding:.75rem 1rem;font-size:14px;color:#F87171;margin-bottom:1rem;"></div>
 
@@ -61,6 +149,35 @@
 <script src="/js/config.js"></script>
 <script src="/js/common.js"></script>
 <script>
+const PRESETS = {
+  user:  { email: 'test1@test.com',  password: '123456'    },
+  admin: { email: 'admin@admin.com', password: 'admin1234' },
+};
+
+let _activeTab = 'user';
+
+function switchTab(tab) {
+  _activeTab = tab;
+
+  // 탭 버튼 스타일
+  const tabUser  = document.getElementById('tab-user');
+  const tabAdmin = document.getElementById('tab-admin');
+  tabUser.className  = 'login-tab' + (tab === 'user'  ? ' active-user'  : '');
+  tabAdmin.className = 'login-tab' + (tab === 'admin' ? ' active-admin' : '');
+
+  // 힌트 표시
+  document.getElementById('hint-user').style.display  = tab === 'user'  ? 'flex' : 'none';
+  document.getElementById('hint-admin').style.display = tab === 'admin' ? 'flex' : 'none';
+
+  // 자격증명 자동 입력
+  const preset = PRESETS[tab];
+  document.getElementById('email').value    = preset.email;
+  document.getElementById('password').value = preset.password;
+
+  // 에러 초기화
+  document.getElementById('globalError').style.display = 'none';
+}
+
 async function handleLogin(e) {
   e.preventDefault();
   const btn = document.getElementById('submitBtn');
@@ -73,7 +190,7 @@ async function handleLogin(e) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: document.getElementById('email').value,
+        email:    document.getElementById('email').value,
         password: document.getElementById('password').value,
       }),
     });
@@ -96,6 +213,9 @@ async function handleLogin(e) {
     btn.textContent = '로그인';
   }
 }
+
+// 페이지 로드 시 일반 사용자 탭 기본값 세팅
+switchTab('user');
 </script>
 </body>
 </html>

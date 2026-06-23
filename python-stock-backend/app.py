@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 import threading
 import time
 import yfinance as yf
+import requests as _req
 
 app = Flask(__name__)
 lock = threading.Lock()
@@ -425,6 +426,293 @@ def batch_prices():
                 "volume":     0,
             }
     return jsonify({"prices": result})
+
+
+# ── Qdrant / RAG endpoints ────────────────────────────────────────────────────
+
+@app.post("/api/stocks/ai/qdrant/search")
+def ai_qdrant_search():
+    data  = request.get_json(silent=True) or {}
+    query = str(data.get("query", "")).strip()
+    limit = max(1, min(int(data.get("limit", 5)), 10))
+    if not query:
+        return jsonify({"error": "query is required"}), 400
+    try:
+        import qdrant_service as qs
+        return jsonify({"results": qs.search(query, limit)})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+@app.get("/api/stocks/ai/qdrant/stats")
+def ai_qdrant_stats():
+    try:
+        import qdrant_service as qs
+        return jsonify(qs.stats())
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+@app.get("/api/stocks/ai/qdrant/list")
+def ai_qdrant_list():
+    try:
+        import qdrant_service as qs
+        limit = max(1, min(int(request.args.get("limit", 30)), 100))
+        return jsonify({"documents": qs.list_docs(limit)})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+@app.post("/api/stocks/ai/qdrant/add")
+def ai_qdrant_add():
+    data     = request.get_json(silent=True) or {}
+    text     = str(data.get("text", "")).strip()
+    title    = str(data.get("title", "")).strip()
+    category = str(data.get("category", "custom")).strip() or "custom"
+    if not text:
+        return jsonify({"error": "text is required"}), 400
+    if len(text) > 2000:
+        return jsonify({"error": "text too long (max 2000 chars)"}), 400
+    try:
+        import qdrant_service as qs
+        doc_id = qs.add_doc(text, title, category)
+        return jsonify({"id": doc_id, "status": "added"})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+# ── KRX 보도자료 뉴스 ────────────────────────────────────────────────────────
+
+_KRX_API     = "https://open.krx.co.kr/contents/OPN/99/OPN99000001.jspx"
+_KRX_HEADERS = {
+    "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Content-Type":    "application/x-www-form-urlencoded; charset=UTF-8",
+    "Referer":         "https://open.krx.co.kr/contents/OPN/05/05000000/OPN05000000T1.jsp",
+    "X-Requested-With": "XMLHttpRequest",
+    "Accept":          "application/json, text/javascript, */*; q=0.01",
+}
+_KRX_FILE_BASE = "https://file.krx.co.kr"
+_KRX_PAGE_URL  = "https://open.krx.co.kr/contents/OPN/05/05000000/OPN05000000.jsp"
+
+_news_cache = {"ts": 0.0, "data": None}
+_news_lock  = threading.Lock()
+_NEWS_TTL   = 300  # 5분
+
+
+def _krx_pdf_url(noti_no: str) -> str:
+    # noti_no = YYYYMMDDNN  →  file = YYYYMMDD0000NN2.pdf
+    date   = noti_no[:8]
+    serial = noti_no[8:]
+    return f"{_KRX_FILE_BASE}/obk/dyn/noti/{date}0000{serial}2.pdf"
+
+
+@app.get("/api/stocks/news/krx")
+def krx_news():
+    now = time.time()
+    with _news_lock:
+        if _news_cache["data"] and now - _news_cache["ts"] < _NEWS_TTL:
+            return jsonify(_news_cache["data"])
+
+    try:
+        from datetime import datetime, timedelta
+        today    = datetime.now().strftime("%Y%m%d")
+        one_year = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
+        resp = _req.post(_KRX_API, headers=_KRX_HEADERS, data={
+            "bld":      "OPN/05/05000000/opn05000000t1_01",
+            "pagePath": "/contents/OPN/05/05000000/OPN05000000T1.jsp",
+            "pageSize": "20",
+            "sch_tp":   "title",
+            "sch_word": "",
+            "fromdate": one_year,
+            "todate":   today,
+        }, timeout=10)
+        items = resp.json().get("output", [])
+    except Exception as e:
+        return jsonify({"error": str(e), "news": []}), 503
+
+    news = []
+    for a in items:
+        noti_no = a.get("noti_no", "")
+        news.append({
+            "noti_no":  noti_no,
+            "title":    a.get("title", ""),
+            "date":     a.get("creat_ddtm", ""),
+            "view_cnt": a.get("inq_cnt", "0"),
+            "pdf_url":  _krx_pdf_url(noti_no) if len(noti_no) == 10 else None,
+            "page_url": _KRX_PAGE_URL,
+        })
+
+    result = {"news": news, "total": items[0].get("totCnt", "0") if items else "0"}
+
+    with _news_lock:
+        _news_cache["ts"]   = time.time()
+        _news_cache["data"] = result
+
+    return jsonify(result)
+
+
+# ── Admin: Kubernetes 클러스터 현황 ──────────────────────────────────────────
+
+def _cpu_to_m(s: str) -> int:
+    """CPU 문자열 → 밀리코어 정수"""
+    s = str(s).strip()
+    if s.endswith("m"):
+        return int(s[:-1])
+    return int(float(s) * 1000)
+
+
+def _mem_to_mib(s: str) -> int:
+    """메모리 문자열 → MiB 정수"""
+    s = str(s).strip()
+    if s.endswith("Ki"):
+        return int(s[:-2]) // 1024
+    if s.endswith("Mi"):
+        return int(s[:-2])
+    if s.endswith("Gi"):
+        return int(float(s[:-2]) * 1024)
+    if s.endswith("Ti"):
+        return int(float(s[:-2]) * 1024 * 1024)
+    if s.endswith("K") or s.endswith("k"):
+        return int(s[:-1]) // 1000
+    return int(s) // (1024 * 1024)
+
+
+@app.get("/api/admin/k8s/overview")
+def admin_k8s_overview():
+    try:
+        from kubernetes import client, config
+        config.load_incluster_config()
+    except Exception as e:
+        return jsonify({"error": f"k8s config: {e}"}), 503
+
+    v1     = client.CoreV1Api()
+    custom = client.CustomObjectsApi()
+
+    # ── 노드 목록 ──────────────────────────────────────────────────────────
+    nodes_raw = v1.list_node().items
+
+    # ── 노드 메트릭 ────────────────────────────────────────────────────────
+    try:
+        nm_items = custom.list_cluster_custom_object("metrics.k8s.io", "v1beta1", "nodes")["items"]
+        node_metrics = {m["metadata"]["name"]: m["usage"] for m in nm_items}
+    except Exception:
+        node_metrics = {}
+
+    # ── 전체 파드 목록 ─────────────────────────────────────────────────────
+    pods_raw = v1.list_pod_for_all_namespaces().items
+
+    # ── 파드 메트릭 (모든 네임스페이스) ────────────────────────────────────
+    pod_metrics = {}
+    try:
+        pm_items = custom.list_cluster_custom_object("metrics.k8s.io", "v1beta1", "pods")["items"]
+        for pm in pm_items:
+            ns   = pm["metadata"]["namespace"]
+            name = pm["metadata"]["name"]
+            total_cpu = sum(_cpu_to_m(c["usage"]["cpu"])    for c in pm["containers"])
+            total_mem = sum(_mem_to_mib(c["usage"]["memory"]) for c in pm["containers"])
+            pod_metrics[f"{ns}/{name}"] = {"cpu_m": total_cpu, "mem_mib": total_mem}
+    except Exception:
+        pass
+
+    # ── 노드별 파드 분류 ───────────────────────────────────────────────────
+    pods_by_node: dict[str, list] = {}
+    for pod in pods_raw:
+        node_name = pod.spec.node_name or "__unscheduled__"
+        key = f"{pod.metadata.namespace}/{pod.metadata.name}"
+        pm  = pod_metrics.get(key, {})
+
+        # 재시작 횟수 합산
+        restarts = 0
+        if pod.status.container_statuses:
+            for cs in pod.status.container_statuses:
+                restarts += cs.restart_count or 0
+
+        # 컨테이너 이미지 (짧게)
+        images = []
+        for c in (pod.spec.containers or []):
+            img = c.image or ""
+            images.append(img.split("/")[-1] if "/" in img else img)
+
+        import datetime
+        age_min = 0
+        if pod.metadata.creation_timestamp:
+            delta = datetime.datetime.now(datetime.timezone.utc) - pod.metadata.creation_timestamp
+            age_min = int(delta.total_seconds() // 60)
+
+        pod_info = {
+            "name":       pod.metadata.name,
+            "namespace":  pod.metadata.namespace,
+            "status":     pod.status.phase or "Unknown",
+            "ip":         pod.status.pod_ip or "",
+            "node":       node_name,
+            "images":     images,
+            "cpu_m":      pm.get("cpu_m", 0),
+            "mem_mib":    pm.get("mem_mib", 0),
+            "restarts":   restarts,
+            "age_min":    age_min,
+        }
+        pods_by_node.setdefault(node_name, []).append(pod_info)
+
+    # ── 노드 정보 조합 ─────────────────────────────────────────────────────
+    nodes = []
+    total_cpu_cap = 0
+    total_mem_cap = 0
+    total_cpu_use = 0
+    total_mem_use = 0
+
+    for node in nodes_raw:
+        n_name = node.metadata.name
+        labels = node.metadata.labels or {}
+
+        cap     = node.status.capacity or {}
+        alloc   = node.status.allocatable or {}
+        cpu_cap = _cpu_to_m(cap.get("cpu", "0"))
+        mem_cap = _mem_to_mib(cap.get("memory", "0"))
+
+        nm      = node_metrics.get(n_name, {})
+        cpu_use = _cpu_to_m(nm.get("cpu", "0m"))
+        mem_use = _mem_to_mib(nm.get("memory", "0Mi"))
+
+        conditions = {c.type: c.status for c in (node.status.conditions or [])}
+
+        nodes.append({
+            "name":          n_name,
+            "short_name":    n_name.split(".")[0],
+            "status":        "Ready" if conditions.get("Ready") == "True" else "NotReady",
+            "instance_type": labels.get("node.kubernetes.io/instance-type", "unknown"),
+            "os_image":      (node.status.node_info.os_image if node.status.node_info else ""),
+            "kernel":        (node.status.node_info.kernel_version if node.status.node_info else ""),
+            "cpu_cap_m":     cpu_cap,
+            "mem_cap_mib":   mem_cap,
+            "cpu_use_m":     cpu_use,
+            "mem_use_mib":   mem_use,
+            "cpu_pct":       round(cpu_use / cpu_cap * 100, 1) if cpu_cap else 0,
+            "mem_pct":       round(mem_use / mem_cap * 100, 1) if mem_cap else 0,
+            "pod_count":     len(pods_by_node.get(n_name, [])),
+            "pods":          sorted(pods_by_node.get(n_name, []),
+                                    key=lambda p: p["namespace"] + p["name"]),
+        })
+
+        total_cpu_cap += cpu_cap
+        total_mem_cap += mem_cap
+        total_cpu_use += cpu_use
+        total_mem_use += mem_use
+
+    import datetime
+    return jsonify({
+        "nodes":   nodes,
+        "cluster": {
+            "total_nodes":   len(nodes),
+            "total_pods":    sum(len(v) for v in pods_by_node.values()),
+            "cpu_cap_m":     total_cpu_cap,
+            "mem_cap_mib":   total_mem_cap,
+            "cpu_use_m":     total_cpu_use,
+            "mem_use_mib":   total_mem_use,
+            "cpu_pct":       round(total_cpu_use / total_cpu_cap * 100, 1) if total_cpu_cap else 0,
+            "mem_pct":       round(total_mem_use / total_mem_cap * 100, 1) if total_mem_cap else 0,
+            "fetched_at":    datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        },
+    })
 
 
 if __name__ == "__main__":

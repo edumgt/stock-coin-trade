@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EKS 클러스터 현황 — EDUMGT Admin</title>
+  <link rel="icon" href="/img/favicon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+    * { font-family: 'Pretendard', -apple-system, sans-serif; box-sizing: border-box; }
+    body { background: #0B0F1A; color: #E2E8F0; min-height: 100vh; margin: 0; }
+
+    /* ── 레이아웃 ── */
+    .page-wrap  { max-width: 1400px; margin: 0 auto; padding: 0 1rem 3rem; }
+    .top-bar    { display:flex; align-items:center; justify-content:space-between;
+                  padding: .75rem 1rem; border-bottom: 1px solid rgba(255,255,255,.06);
+                  background: rgba(255,255,255,.03); position: sticky; top: 0; z-index: 50;
+                  backdrop-filter: blur(10px); }
+
+    /* ── 클러스터 요약 카드 ── */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: .75rem; margin: 1.25rem 0; }
+    .summary-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+                    border-radius: 12px; padding: 1rem 1.1rem; }
+    .summary-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                     letter-spacing: .06em; color: rgba(255,255,255,.35); margin-bottom: .35rem; }
+    .summary-value { font-size: 22px; font-weight: 800; }
+
+    /* ── 노드 카드 ── */
+    .nodes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(640px,1fr)); gap: 1.25rem; }
+    .node-card  { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+                  border-radius: 16px; overflow: hidden; }
+    .node-header { padding: .9rem 1.2rem; background: rgba(255,255,255,.05);
+                   border-bottom: 1px solid rgba(255,255,255,.07);
+                   display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .node-name  { font-size: 14px; font-weight: 800; color: #93C5FD; font-family: monospace; }
+    .badge      { font-size: 10px; font-weight: 700; border-radius: 99px; padding: 2px 8px; }
+    .badge-ready    { background: rgba(16,185,129,.2); color: #6EE7B7; border: 1px solid rgba(16,185,129,.3); }
+    .badge-notready { background: rgba(239,68,68,.2);  color: #FCA5A5; border: 1px solid rgba(239,68,68,.3); }
+    .badge-type { background: rgba(139,92,246,.15); color: #C4B5FD; border: 1px solid rgba(139,92,246,.25); }
+
+    /* ── 게이지 행 ── */
+    .gauge-row  { display: flex; gap: 1.5rem; padding: .85rem 1.2rem; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .gauge-item { flex: 1; }
+    .gauge-label { font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,.4);
+                   text-transform: uppercase; letter-spacing: .05em; margin-bottom: .4rem; }
+    .gauge-bar-wrap { height: 7px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; margin-bottom: .3rem; }
+    .gauge-bar  { height: 100%; border-radius: 99px; transition: width .6s ease; }
+    .gauge-text { font-size: 11px; color: rgba(255,255,255,.5); display: flex; justify-content: space-between; }
+    .gauge-pct  { font-size: 15px; font-weight: 800; }
+
+    /* ── 파드 테이블 ── */
+    .pods-section { padding: .7rem 1.2rem 1.2rem; }
+    .pods-title { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.35);
+                  text-transform: uppercase; letter-spacing: .06em; margin-bottom: .65rem;
+                  display: flex; align-items: center; gap: 6px; }
+    .pod-table  { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .pod-table th { color: rgba(255,255,255,.3); font-size: 10px; font-weight: 700;
+                    text-transform: uppercase; letter-spacing: .05em;
+                    padding: .3rem .5rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .pod-table td { padding: .45rem .5rem; border-bottom: 1px solid rgba(255,255,255,.04);
+                    vertical-align: middle; }
+    .pod-table tr:last-child td { border-bottom: none; }
+    .pod-table tr:hover td { background: rgba(255,255,255,.025); }
+
+    .ns-badge   { font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 700;
+                  background: rgba(99,102,241,.15); color: #A5B4FC; border: 1px solid rgba(99,102,241,.2); }
+    .status-run { color: #6EE7B7; font-weight: 700; font-size: 11px; }
+    .status-pen { color: #FCD34D; font-weight: 700; font-size: 11px; }
+    .status-err { color: #FCA5A5; font-weight: 700; font-size: 11px; }
+
+    /* ── mini bar ── */
+    .mini-bar-wrap { display: flex; align-items: center; gap: 5px; }
+    .mini-bar-bg   { flex: 1; max-width: 70px; height: 5px; background: rgba(255,255,255,.08);
+                     border-radius: 99px; overflow: hidden; }
+    .mini-bar-fill { height: 100%; border-radius: 99px; }
+    .mini-val      { font-size: 11px; font-weight: 600; white-space: nowrap; min-width: 38px; }
+
+    /* ── 차트 캔버스 ── */
+    .chart-section { padding: .7rem 1.2rem 1rem; border-top: 1px solid rgba(255,255,255,.05); }
+    .chart-title   { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.35);
+                     text-transform: uppercase; letter-spacing: .06em; margin-bottom: .6rem; }
+    .chart-grid    { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .chart-box     { background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.06);
+                     border-radius: 10px; padding: .75rem; }
+    .chart-sub     { font-size: 11px; color: rgba(255,255,255,.3); margin-bottom: .5rem; font-weight: 600; }
+
+    /* ── 공통 ── */
+    .spin { animation: spin 1s linear infinite; display:inline-block; }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    .refresh-btn { background: rgba(99,102,241,.15); border: 1px solid rgba(99,102,241,.3);
+                   color: #A5B4FC; border-radius: 7px; padding: .35rem .9rem; font-size: 12px;
+                   font-weight: 700; cursor: pointer; transition: all .15s; }
+    .refresh-btn:hover { background: rgba(99,102,241,.28); }
+    .error-box { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25);
+                 border-radius: 10px; padding: 1rem 1.25rem; color: #FCA5A5; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- 상단 바 -->
+<div class="top-bar">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="/index.html" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:12px;">← 홈</a>
+    <span style="color:rgba(255,255,255,.15);">|</span>
+    <span style="font-size:13px;font-weight:800;color:#C4B5FD;">🛡 Admin</span>
+    <span style="font-size:13px;font-weight:800;color:#E2E8F0;">EKS 클러스터 현황</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span id="fetchedAt" style="font-size:11px;color:rgba(255,255,255,.25);"></span>
+    <button class="refresh-btn" onclick="loadOverview()">↻ 새로고침</button>
+    <span id="autoTick" style="font-size:11px;color:rgba(255,255,255,.2);"></span>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- 로딩 / 에러 -->
+  <div id="loadingBlock" style="text-align:center;padding:4rem 0;color:rgba(255,255,255,.35);font-size:14px;">
+    <span class="spin">⟳</span>&nbsp; 클러스터 데이터를 불러오는 중...
+  </div>
+  <div id="errorBlock" style="display:none;margin:2rem 0;"></div>
+
+  <!-- 클러스터 요약 -->
+  <div id="summarySection" style="display:none;">
+    <div class="summary-grid" id="summaryGrid"></div>
+
+    <!-- 노드 목록 -->
+    <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;
+                letter-spacing:.06em;margin:.5rem 0 .75rem;">노드 목록</div>
+    <div class="nodes-grid" id="nodesGrid"></div>
+  </div>
+
+</div>
+
+<script src="/js/config.js"></script>
+<script src="/js/common.js"></script>
+<script>
+// ── 관리자 확인 ──────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    const r = await apiFetch('/api/admin/me');
+    if (!r.ok) { location.href = '/member/login.html'; }
+  } catch { location.href = '/member/login.html'; }
+})();
+
+// ── 차트 인스턴스 저장 (재렌더 시 destroy) ───────────────────────────────────
+const _charts = {};
+
+// ── 데이터 로드 ──────────────────────────────────────────────────────────────
+async function loadOverview() {
+  document.getElementById('loadingBlock').style.display = 'block';
+  document.getElementById('summarySection').style.display = 'none';
+  document.getElementById('errorBlock').style.display = 'none';
+
+  try {
+    const r    = await apiFetch('/api/admin/k8s/overview');
+    const data = await r.json();
+
+    if (!r.ok || data.error) {
+      showError(data.error ?? `HTTP ${r.status}`);
+      return;
+    }
+
+    renderSummary(data.cluster);
+    renderNodes(data.nodes, data.cluster);
+
+    document.getElementById('fetchedAt').textContent =
+      '업데이트: ' + new Date(data.cluster.fetched_at).toLocaleTimeString('ko-KR');
+    document.getElementById('loadingBlock').style.display = 'none';
+    document.getElementById('summarySection').style.display = 'block';
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
+function showError(msg) {
+  document.getElementById('loadingBlock').style.display = 'none';
+  const el = document.getElementById('errorBlock');
+  el.style.display = 'block';
+  el.innerHTML = `<div class="error-box">⚠️ ${msg}</div>`;
+}
+
+// ── 클러스터 요약 ─────────────────────────────────────────────────────────────
+function renderSummary(c) {
+  const items = [
+    { label: '노드',      value: c.total_nodes,   color: '#93C5FD', unit: '' },
+    { label: '파드',      value: c.total_pods,    color: '#A5B4FC', unit: '' },
+    { label: 'CPU 사용', value: c.cpu_pct + '%', color: _pctColor(c.cpu_pct), unit: `${c.cpu_use_m}m / ${c.cpu_cap_m}m` },
+    { label: 'MEM 사용', value: c.mem_pct + '%', color: _pctColor(c.mem_pct), unit: `${_mib(c.mem_use_mib)} / ${_mib(c.mem_cap_mib)}` },
+  ];
+  document.getElementById('summaryGrid').innerHTML = items.map(i => `
+    <div class="summary-card">
+      <div class="summary-label">${i.label}</div>
+      <div class="summary-value" style="color:${i.color};">${i.value}</div>
+      ${i.unit ? `<div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:.2rem;">${i.unit}</div>` : ''}
+    </div>`).join('');
+}
+
+// ── 노드 카드 ─────────────────────────────────────────────────────────────────
+function renderNodes(nodes, cluster) {
+  // 기존 차트 destroy
+  Object.values(_charts).forEach(c => c.destroy());
+  Object.keys(_charts).forEach(k => delete _charts[k]);
+
+  document.getElementById('nodesGrid').innerHTML = nodes.map(n => nodeCardHtml(n, cluster)).join('');
+
+  // 차트 생성 (DOM 삽입 후)
+  nodes.forEach(n => buildNodeCharts(n));
+}
+
+function nodeCardHtml(n, cluster) {
+  const statusBadge = n.status === 'Ready'
+    ? '<span class="badge badge-ready">Ready</span>'
+    : '<span class="badge badge-notready">NotReady</span>';
+
+  const cpuBar = _barHtml(n.cpu_pct, _pctColor(n.cpu_pct));
+  const memBar = _barHtml(n.mem_pct, _pctColor(n.mem_pct));
+
+  const podRows = n.pods.map(p => podRowHtml(p, n)).join('');
+
+  const shortName = n.short_name;
+
+  return `
+  <div class="node-card">
+    <div class="node-header">
+      <span class="node-name">${shortName}</span>
+      ${statusBadge}
+      <span class="badge badge-type">${n.instance_type}</span>
+      <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-left:auto;">${n.os_image.replace('Amazon Linux ','AL')}</span>
+    </div>
+
+    <!-- CPU / MEM 게이지 -->
+    <div class="gauge-row">
+      <div class="gauge-item">
+        <div class="gauge-label">CPU</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" style="width:${n.cpu_pct}%;background:${_pctColor(n.cpu_pct)};"></div></div>
+        <div class="gauge-text">
+          <span>${n.cpu_use_m}m / ${n.cpu_cap_m}m</span>
+          <span class="gauge-pct" style="color:${_pctColor(n.cpu_pct)};">${n.cpu_pct}%</span>
+        </div>
+      </div>
+      <div class="gauge-item">
+        <div class="gauge-label">Memory</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" style="width:${n.mem_pct}%;background:${_pctColor(n.mem_pct)};"></div></div>
+        <div class="gauge-text">
+          <span>${_mib(n.mem_use_mib)} / ${_mib(n.mem_cap_mib)}</span>
+          <span class="gauge-pct" style="color:${_pctColor(n.mem_pct)};">${n.mem_pct}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 파드 테이블 -->
+    <div class="pods-section">
+      <div class="pods-title">
+        파드 <span style="background:rgba(99,102,241,.2);color:#A5B4FC;border-radius:99px;
+                         padding:0 7px;font-size:10px;">${n.pod_count}</span>
+      </div>
+      <table class="pod-table">
+        <thead>
+          <tr>
+            <th>파드명</th>
+            <th>네임스페이스</th>
+            <th>상태</th>
+            <th>CPU</th>
+            <th>MEM</th>
+            <th>재시작</th>
+            <th>업타임</th>
+          </tr>
+        </thead>
+        <tbody>${podRows}</tbody>
+      </table>
+    </div>
+
+    <!-- 차트 영역 -->
+    <div class="chart-section">
+      <div class="chart-title">파드 리소스 시각화</div>
+      <div class="chart-grid">
+        <div class="chart-box">
+          <div class="chart-sub">CPU (millicores)</div>
+          <canvas id="cpu-chart-${n.short_name}" height="160"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-sub">Memory (MiB)</div>
+          <canvas id="mem-chart-${n.short_name}" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function podRowHtml(p, n) {
+  const statusClass = p.status === 'Running' ? 'status-run'
+    : (p.status === 'Pending' ? 'status-pen' : 'status-err');
+
+  // CPU mini bar (기준: 노드 cap의 20% = 최대로 표시)
+  const cpuPct = n.cpu_cap_m ? Math.min(100, p.cpu_m / (n.cpu_cap_m * 0.2) * 100) : 0;
+  const memPct = n.mem_cap_mib ? Math.min(100, p.mem_mib / (n.mem_cap_mib * 0.3) * 100) : 0;
+
+  const age = p.age_min < 60
+    ? `${p.age_min}분`
+    : p.age_min < 1440
+      ? `${Math.floor(p.age_min/60)}시간`
+      : `${Math.floor(p.age_min/1440)}일`;
+
+  const shortPod = p.name.length > 32 ? p.name.substring(0, 30) + '…' : p.name;
+
+  return `
+  <tr>
+    <td style="font-family:monospace;font-size:11px;color:#E2E8F0;" title="${p.name}">${shortPod}</td>
+    <td><span class="ns-badge">${p.namespace}</span></td>
+    <td><span class="${statusClass}">${p.status}</span></td>
+    <td>
+      <div class="mini-bar-wrap">
+        <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${cpuPct}%;background:${_pctColor(cpuPct)};"></div></div>
+        <span class="mini-val" style="color:rgba(255,255,255,.6);">${p.cpu_m}m</span>
+      </div>
+    </td>
+    <td>
+      <div class="mini-bar-wrap">
+        <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${memPct}%;background:#818CF8;"></div></div>
+        <span class="mini-val" style="color:rgba(255,255,255,.6);">${p.mem_mib}Mi</span>
+      </div>
+    </td>
+    <td style="color:${p.restarts > 0 ? '#FCD34D' : 'rgba(255,255,255,.4)'};">${p.restarts}</td>
+    <td style="color:rgba(255,255,255,.4);">${age}</td>
+  </tr>`;
+}
+
+// ── 노드별 bar 차트 ───────────────────────────────────────────────────────────
+function buildNodeCharts(n) {
+  // crypto-mock 파드만 필터 (kube-system 등 제외)
+  const appPods = n.pods.filter(p => p.cpu_m > 0 || p.mem_mib > 0);
+  if (!appPods.length) return;
+
+  const labels = appPods.map(p => {
+    const parts = p.name.split('-');
+    return parts.slice(0, Math.min(3, parts.length)).join('-');
+  });
+  const cpuData = appPods.map(p => p.cpu_m);
+  const memData = appPods.map(p => p.mem_mib);
+
+  const cpuColors = cpuData.map((v, i) => _barColor(i));
+  const memColors = memData.map((v, i) => _barColor(i, .7));
+
+  const opts = (unit) => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: { label: ctx => ` ${ctx.raw}${unit}` },
+        backgroundColor: 'rgba(15,23,42,.9)',
+        titleColor: '#E2E8F0',
+        bodyColor: '#94A3B8',
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: 'rgba(255,255,255,.35)', font: { size: 9 }, maxRotation: 30 },
+        grid: { color: 'rgba(255,255,255,.04)' },
+      },
+      y: {
+        ticks: { color: 'rgba(255,255,255,.35)', font: { size: 9 } },
+        grid: { color: 'rgba(255,255,255,.06)' },
+        beginAtZero: true,
+      },
+    },
+  });
+
+  const cpuCtx = document.getElementById(`cpu-chart-${n.short_name}`)?.getContext('2d');
+  const memCtx = document.getElementById(`mem-chart-${n.short_name}`)?.getContext('2d');
+
+  if (cpuCtx) {
+    _charts[`cpu-${n.short_name}`] = new Chart(cpuCtx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ label: 'CPU(m)', data: cpuData, backgroundColor: cpuColors,
+                     borderRadius: 5, borderSkipped: false }],
+      },
+      options: opts('m'),
+    });
+  }
+
+  if (memCtx) {
+    _charts[`mem-${n.short_name}`] = new Chart(memCtx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ label: 'MEM(Mi)', data: memData, backgroundColor: memColors,
+                     borderRadius: 5, borderSkipped: false }],
+      },
+      options: opts('Mi'),
+    });
+  }
+}
+
+// ── 헬퍼 ─────────────────────────────────────────────────────────────────────
+function _pctColor(pct) {
+  if (pct >= 80) return '#F87171';
+  if (pct >= 55) return '#FCD34D';
+  return '#34D399';
+}
+function _barHtml(pct, color) {
+  return `<div class="gauge-bar-wrap">
+    <div class="gauge-bar" style="width:${pct}%;background:${color};"></div>
+  </div>`;
+}
+function _mib(mib) {
+  if (mib >= 1024) return (mib / 1024).toFixed(1) + 'Gi';
+  return mib + 'Mi';
+}
+function _barColor(i, alpha = .8) {
+  const palette = ['#6366F1','#8B5CF6','#06B6D4','#10B981','#F59E0B','#EF4444','#EC4899','#3B82F6'];
+  const hex = palette[i % palette.length];
+  return hex + Math.round(alpha * 255).toString(16).padStart(2,'0');
+}
+
+// ── 자동 새로고침 (30초) ──────────────────────────────────────────────────────
+let _countdown = 30;
+function _tick() {
+  _countdown--;
+  document.getElementById('autoTick').textContent = `다음 갱신: ${_countdown}초`;
+  if (_countdown <= 0) {
+    _countdown = 30;
+    loadOverview();
+  }
+}
+setInterval(_tick, 1000);
+
+// ── 초기 로드 ─────────────────────────────────────────────────────────────────
+loadOverview();
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ namespace: crypto-mock
 
 resources:
   - namespace.yaml
+  - admin-rbac.yaml
   - configmap.yaml
   - secret.yaml
   - frontend-deployment.yaml

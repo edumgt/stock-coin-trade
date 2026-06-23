@@ -89,6 +89,35 @@ public class StockApiProxyController {
         return callBackend("GET", "/api/stocks/prices", null);
     }
 
+    // ── KRX 뉴스 proxy ──────────────────────────────────────────────────────
+
+    @GetMapping("/api/stocks/news/krx")
+    public ResponseEntity<String> krxNews() {
+        return callBackend("GET", "/api/stocks/news/krx", null);
+    }
+
+    // ── Qdrant / RAG proxy ──────────────────────────────────────────────────
+
+    @PostMapping("/api/stocks/ai/qdrant/search")
+    public ResponseEntity<String> qdrantSearch(@RequestBody String body) {
+        return callBackend("POST", "/api/stocks/ai/qdrant/search", body);
+    }
+
+    @GetMapping("/api/stocks/ai/qdrant/stats")
+    public ResponseEntity<String> qdrantStats() {
+        return callBackend("GET", "/api/stocks/ai/qdrant/stats", null);
+    }
+
+    @GetMapping("/api/stocks/ai/qdrant/list")
+    public ResponseEntity<String> qdrantList(@RequestParam(defaultValue = "30") int limit) {
+        return callBackend("GET", "/api/stocks/ai/qdrant/list?limit=" + limit, null);
+    }
+
+    @PostMapping("/api/stocks/ai/qdrant/add")
+    public ResponseEntity<String> qdrantAdd(@RequestBody String body) {
+        return callBackend("POST", "/api/stocks/ai/qdrant/add", body);
+    }
+
     private ResponseEntity<String> callBackend(String method, String path, String requestBody) {
         try {
             HttpRequest.Builder builder = HttpRequest.newBuilder()
