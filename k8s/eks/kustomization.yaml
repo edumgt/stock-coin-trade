@@ -6,9 +6,10 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - secret.yaml
-  - mariadb-pvc.yaml
-  - mariadb-deployment.yaml
-  - mariadb-service.yaml
+  - frontend-deployment.yaml
+  - frontend-service.yaml
+  - python-deployment.yaml
+  - python-service.yaml
   - app-deployment.yaml
   - app-service.yaml
   - ingress-alb.yaml

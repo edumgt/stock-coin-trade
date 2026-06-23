@@ -6,17 +6,24 @@ metadata:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-    alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/healthcheck-path: /index.html
     alb.ingress.kubernetes.io/load-balancer-name: crypto-mock-alb
 spec:
   ingressClassName: alb
   rules:
     - http:
         paths:
-          - path: /
+          - path: /api
             pathType: Prefix
             backend:
               service:
                 name: crypto-mock-app
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: crypto-mock-frontend
                 port:
                   number: 80

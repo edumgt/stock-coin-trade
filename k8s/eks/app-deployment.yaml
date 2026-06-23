@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/java-crypto-mock:latest
+          image: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/java-crypto-mock:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -39,15 +39,22 @@ spec:
                 secretKeyRef:
                   name: crypto-mock-secret
                   key: SPRING_DATASOURCE_PASSWORD
+            - name: PYTHON_STOCK_API_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: crypto-mock-config
+                  key: PYTHON_STOCK_API_BASE_URL
           readinessProbe:
             httpGet:
-              path: /
+              path: /api/member/me
               port: 8080
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 10
+            failureThreshold: 5
           livenessProbe:
             httpGet:
-              path: /
+              path: /api/member/me
               port: 8080
-            initialDelaySeconds: 40
+            initialDelaySeconds: 60
             periodSeconds: 20
+            failureThreshold: 3

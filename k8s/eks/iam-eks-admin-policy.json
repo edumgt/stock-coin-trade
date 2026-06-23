@@ -1,0 +1,22 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EKSFullAccess",
+      "Effect": "Allow",
+      "Action": [
+        "eks:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SSMForEKS",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters"
+      ],
+      "Resource": "arn:aws:ssm:*:*:parameter/aws/service/eks/*"
+    }
+  ]
+}

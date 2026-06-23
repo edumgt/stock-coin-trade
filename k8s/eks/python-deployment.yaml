@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crypto-mock-python
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crypto-mock-python
+  template:
+    metadata:
+      labels:
+        app: crypto-mock-python
+    spec:
+      containers:
+        - name: python
+          image: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/python-crypto-mock:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8200
+          readinessProbe:
+            httpGet:
+              path: /api/stocks/list
+              port: 8200
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /api/stocks/list
+              port: 8200
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            failureThreshold: 3

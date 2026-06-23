@@ -8,3 +8,4 @@ data:
   SPRING_JPA_HIBERNATE_DDL_AUTO: update
   MARIADB_DATABASE: mockinv
   MARIADB_USER: mockinv
+  PYTHON_STOCK_API_BASE_URL: http://crypto-mock-python:8200

@@ -1,0 +1,42 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: crypto-mock
+  region: ap-northeast-2
+  version: "1.30"
+  tags:
+    project: crypto-mock
+    env: prod
+
+# eksctl이 VPC + 서브넷을 자동 생성 (기존 서브넷이 다른 VPC에 있어 사용 불가)
+vpc:
+  cidr: 10.0.0.0/16
+  nat:
+    gateway: Single   # 비용 최소화
+
+managedNodeGroups:
+  - name: ng-app
+    instanceType: t3.medium
+    minSize: 1
+    maxSize: 3
+    desiredCapacity: 2
+    volumeSize: 20
+    privateNetworking: true
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      withAddonPolicies:
+        awsLoadBalancerController: true
+        ebs: true
+
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
+  - name: aws-ebs-csi-driver
+
+iam:
+  withOIDC: true
