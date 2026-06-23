@@ -93,27 +93,35 @@ async function handleRegister(e) {
   btn.disabled = true;
   btn.textContent = '처리 중...';
 
-  const res = await apiFetch('/api/member/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: document.getElementById('username').value,
-      email:    document.getElementById('email').value,
-      password: document.getElementById('password').value,
-      password2: document.getElementById('password2').value,
-    }),
-  });
-  const data = await res.json();
+  try {
+    const res = await apiFetch('/api/member/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value,
+        email:    document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        password2: document.getElementById('password2').value,
+      }),
+    });
 
-  if (res.ok) {
-    location.href = '/trade/order.html';
-  } else {
+    if (res.ok) {
+      location.href = '/trade/order.html';
+      return;
+    }
+
+    const data = await res.json();
     if (data.field) showFieldError(data.field, data.error);
     else {
       const el = document.getElementById('globalError');
       el.textContent = data.error ?? '가입에 실패했습니다.';
       el.style.display = 'block';
     }
+  } catch {
+    const el = document.getElementById('globalError');
+    el.textContent = '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+    el.style.display = 'block';
+  } finally {
     btn.disabled = false;
     btn.textContent = '가입하기';
   }

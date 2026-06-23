@@ -68,22 +68,30 @@ async function handleLogin(e) {
   btn.textContent = '로그인 중...';
   document.getElementById('globalError').style.display = 'none';
 
-  const res = await apiFetch('/api/member/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: document.getElementById('email').value,
-      password: document.getElementById('password').value,
-    }),
-  });
-  const data = await res.json();
+  try {
+    const res = await apiFetch('/api/member/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+      }),
+    });
 
-  if (res.ok) {
-    location.href = '/trade/order.html';
-  } else {
+    if (res.ok) {
+      location.href = '/trade/order.html';
+      return;
+    }
+
+    const data = await res.json();
     const el = document.getElementById('globalError');
     el.textContent = data.error ?? '로그인에 실패했습니다.';
     el.style.display = 'block';
+  } catch {
+    const el = document.getElementById('globalError');
+    el.textContent = '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+    el.style.display = 'block';
+  } finally {
     btn.disabled = false;
     btn.textContent = '로그인';
   }

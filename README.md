@@ -488,7 +488,97 @@ sequenceDiagram
 
 ![AWS EKS Architecture](docs/architecture-eks.svg)
 
+---
 
+## 15) MariaDB EC2 배포 플로우
+
+### 환경 정보
+
+| 항목 | 값 |
+|---|---|
+| **EC2 IP** | `13.125.166.5` |
+| **도메인** | `dbms.edumgt.co.kr` |
+| **OS** | Amazon Linux 2023 |
+| **MariaDB** | 11.4.x (LTS) |
+| **포트** | 3306 |
+| **접속 계정** | `root / 12345678!!` |
+
+### 배포 플로우
+
+```mermaid
+flowchart TD
+    A(["로컬 개발 머신"])
+    B["AWS IAM 인증"]
+    C["EC2 13.125.166.5\nAmazon Linux 2023 / t3.medium"]
+    D["MariaDB 11.4 repo 등록\ndlm.mariadb.com"]
+    E["MariaDB 11.4.12 설치 완료"]
+    F["systemctl enable --now mariadb"]
+    G["root 계정 설정\nALTER USER + GRANT ALL"]
+    H["EC2 Security Group\nTCP 3306 오픈 확인"]
+    I["Docker MariaDB Client\nmariadb -h dbms.edumgt.co.kr\n-u root -p"]
+    J(["MariaDB 11.4.12\ndbms.edumgt.co.kr:3306"])
+
+    A -->|"1. aws configure\nAccess Key + Secret Key"| B
+    B -->|"2. EC2 인스턴스 조회"| C
+    A -->|"3. SSH 접속 ai-agent.pem"| C
+    C -->|"4. yum repo 파일 생성"| D
+    D -->|"5. dnf install MariaDB-server"| E
+    E -->|"6. 서비스 활성화"| F
+    F -->|"7. root 비밀번호 설정"| G
+    G -->|"8. 0.0.0.0:3306 리스닝 확인"| H
+    H -->|"9. 연결 테스트"| I
+    I -->|"✅ Connection OK"| J
+
+    style A fill:#4A90D9,color:#fff
+    style J fill:#27AE60,color:#fff
+    style I fill:#8E44AD,color:#fff
+    style H fill:#E67E22,color:#fff
+```
+
+### 단계별 명령어 요약
+
+```bash
+# 1. AWS CLI 구성 (access key 기반)
+aws configure set aws_access_key_id     <ACCESS_KEY_ID>
+aws configure set aws_secret_access_key <SECRET_ACCESS_KEY>
+aws configure set region                ap-northeast-2
+
+# 2. EC2 인스턴스 확인
+aws ec2 describe-instances \
+  --filters "Name=ip-address,Values=13.125.166.5" \
+  --query 'Reservations[*].Instances[*].{ID:InstanceId,State:State.Name}'
+
+# 3. SSH 접속
+chmod 400 ai-agent.pem
+ssh -i ai-agent.pem ec2-user@13.125.166.5
+
+# 4. MariaDB 11.4 repo 등록 (EC2 내부)
+sudo tee /etc/yum.repos.d/mariadb.repo << 'EOF'
+[mariadb]
+name = MariaDB 11.4
+baseurl = https://dlm.mariadb.com/repo/mariadb-server/11.4/yum/rhel/9/x86_64
+gpgkey = https://downloads.mariadb.com/MariaDB/RPM-GPG-KEY-MariaDB
+gpgcheck = 1
+enabled = 1
+EOF
+
+# 5. 설치 및 서비스 시작
+sudo dnf install -y MariaDB-server MariaDB-client
+sudo systemctl enable --now mariadb
+
+# 6. root 계정 설정
+sudo mariadb -u root << 'SQL'
+ALTER USER 'root'@'localhost' IDENTIFIED BY '12345678!!';
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '12345678!!';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+SQL
+
+# 7. Docker MariaDB 클라이언트로 접속 테스트 (로컬에서)
+docker run --rm mariadb:11.4 \
+  mariadb -h dbms.edumgt.co.kr -u root -p'12345678!!' \
+  -e "SELECT VERSION(), NOW(), 'Connection OK' AS status;"
+```
 
 ---
 

@@ -32,9 +32,9 @@ services:
     expose:
       - "8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mariadb://crypto-mock-db:3306/mockinv?useUnicode=true&characterEncoding=utf8
-      SPRING_DATASOURCE_USERNAME: mockinv
-      SPRING_DATASOURCE_PASSWORD: mockinv1234
+      SPRING_DATASOURCE_URL: jdbc:mariadb://dbms.edumgt.co.kr:3306/mockinv?useUnicode=true&characterEncoding=utf8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: "12345678!!"
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       PYTHON_STOCK_API_BASE_URL: http://python-backend:8200
     depends_on:
