@@ -554,8 +554,12 @@ def krx_news():
 # ── Admin: Kubernetes 클러스터 현황 ──────────────────────────────────────────
 
 def _cpu_to_m(s: str) -> int:
-    """CPU 문자열 → 밀리코어 정수"""
+    """CPU 문자열 → 밀리코어 정수 (n=나노코어, m=밀리코어, 정수=코어)"""
     s = str(s).strip()
+    if s.endswith("n"):
+        return int(s[:-1]) // 1_000_000   # nanocores → millicores
+    if s.endswith("u"):
+        return int(s[:-1]) // 1_000       # microcores → millicores
     if s.endswith("m"):
         return int(s[:-1])
     return int(float(s) * 1000)
@@ -601,18 +605,20 @@ def admin_k8s_overview():
     # ── 전체 파드 목록 ─────────────────────────────────────────────────────
     pods_raw = v1.list_pod_for_all_namespaces().items
 
-    # ── 파드 메트릭 (모든 네임스페이스) ────────────────────────────────────
+    # ── 파드 메트릭 (네임스페이스별 수집) ──────────────────────────────────
     pod_metrics = {}
-    try:
-        pm_items = custom.list_cluster_custom_object("metrics.k8s.io", "v1beta1", "pods")["items"]
-        for pm in pm_items:
-            ns   = pm["metadata"]["namespace"]
-            name = pm["metadata"]["name"]
-            total_cpu = sum(_cpu_to_m(c["usage"]["cpu"])    for c in pm["containers"])
-            total_mem = sum(_mem_to_mib(c["usage"]["memory"]) for c in pm["containers"])
-            pod_metrics[f"{ns}/{name}"] = {"cpu_m": total_cpu, "mem_mib": total_mem}
-    except Exception:
-        pass
+    namespaces = list({p.metadata.namespace for p in pods_raw if p.metadata.namespace})
+    for ns in namespaces:
+        try:
+            pm_items = custom.list_namespaced_custom_object(
+                "metrics.k8s.io", "v1beta1", ns, "pods")["items"]
+            for pm in pm_items:
+                name = pm["metadata"]["name"]
+                total_cpu = sum(_cpu_to_m(c["usage"]["cpu"])      for c in pm["containers"])
+                total_mem = sum(_mem_to_mib(c["usage"]["memory"]) for c in pm["containers"])
+                pod_metrics[f"{ns}/{name}"] = {"cpu_m": total_cpu, "mem_mib": total_mem}
+        except Exception:
+            pass
 
     # ── 노드별 파드 분류 ───────────────────────────────────────────────────
     pods_by_node: dict[str, list] = {}
