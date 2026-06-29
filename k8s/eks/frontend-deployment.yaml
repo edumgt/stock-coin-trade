@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: crypto-mock-frontend
+  name: k-serve-frontend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: crypto-mock-frontend
+      app: k-serve-frontend
   template:
     metadata:
       labels:
-        app: crypto-mock-frontend
+        app: k-serve-frontend
     spec:
       containers:
         - name: frontend
-          image: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/frontend-crypto-mock:latest
+          image: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/frontend-k-serve:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80

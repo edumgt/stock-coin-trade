@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: crypto-mock-monitor
-  namespace: crypto-mock
+  name: k-serve-monitor
+  namespace: k-serve
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: crypto-mock-monitor
+  name: k-serve-monitor
 rules:
 - apiGroups: [""]
   resources: ["nodes", "pods", "namespaces"]
@@ -19,12 +19,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: crypto-mock-monitor
+  name: k-serve-monitor
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: crypto-mock-monitor
+  name: k-serve-monitor
 subjects:
 - kind: ServiceAccount
-  name: crypto-mock-monitor
-  namespace: crypto-mock
+  name: k-serve-monitor
+  namespace: k-serve

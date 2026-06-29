@@ -21,22 +21,22 @@ spec:
             - name: MARIADB_DATABASE
               valueFrom:
                 configMapKeyRef:
-                  name: crypto-mock-config
+                  name: k-serve-config
                   key: MARIADB_DATABASE
             - name: MARIADB_USER
               valueFrom:
                 configMapKeyRef:
-                  name: crypto-mock-config
+                  name: k-serve-config
                   key: MARIADB_USER
             - name: MARIADB_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: crypto-mock-secret
+                  name: k-serve-secret
                   key: MARIADB_ROOT_PASSWORD
             - name: MARIADB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: crypto-mock-secret
+                  name: k-serve-secret
                   key: MARIADB_PASSWORD
           volumeMounts:
             - name: mariadb-data

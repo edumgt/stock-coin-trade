@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: crypto-mock-python
+  name: k-serve-python
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: crypto-mock-python
+      app: k-serve-python
   template:
     metadata:
       labels:
-        app: crypto-mock-python
+        app: k-serve-python
     spec:
-      serviceAccountName: crypto-mock-monitor
+      serviceAccountName: k-serve-monitor
       containers:
         - name: python
-          image: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/python-crypto-mock:latest
+          image: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/python-k-serve:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8200

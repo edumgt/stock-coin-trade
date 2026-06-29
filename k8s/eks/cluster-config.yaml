@@ -2,11 +2,11 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: crypto-mock
+  name: k-serve
   region: ap-northeast-2
   version: "1.30"
   tags:
-    project: crypto-mock
+    project: k-serve
     env: prod
 
 # eksctl이 VPC + 서브넷을 자동 생성 (기존 서브넷이 다른 VPC에 있어 사용 불가)

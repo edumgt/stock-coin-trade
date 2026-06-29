@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: crypto-mock-app
+  name: k-serve-app
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: crypto-mock-app
+      app: k-serve-app
   template:
     metadata:
       labels:
-        app: crypto-mock-app
+        app: k-serve-app
     spec:
       containers:
         - name: app
-          image: java-crypto-mock-app:latest
+          image: java-k-serve-app:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -22,22 +22,22 @@ spec:
             - name: SPRING_DATASOURCE_URL
               valueFrom:
                 configMapKeyRef:
-                  name: crypto-mock-config
+                  name: k-serve-config
                   key: SPRING_DATASOURCE_URL
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 configMapKeyRef:
-                  name: crypto-mock-config
+                  name: k-serve-config
                   key: SPRING_DATASOURCE_USERNAME
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
               valueFrom:
                 configMapKeyRef:
-                  name: crypto-mock-config
+                  name: k-serve-config
                   key: SPRING_JPA_HIBERNATE_DDL_AUTO
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: crypto-mock-secret
+                  name: k-serve-secret
                   key: SPRING_DATASOURCE_PASSWORD
           readinessProbe:
             httpGet:

@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: crypto-mock-python
+  name: k-serve-python
 spec:
   selector:
-    app: crypto-mock-python
+    app: k-serve-python
   ports:
     - name: http
       port: 8200

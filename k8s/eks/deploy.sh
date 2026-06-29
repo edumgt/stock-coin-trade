@@ -5,10 +5,10 @@
 set -euo pipefail
 
 REGION="ap-northeast-2"
-CLUSTER_NAME="crypto-mock"
+CLUSTER_NAME="k-serve"
 ACCOUNT_ID="086015456585"
-ECR_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/java-crypto-mock"
-NAMESPACE="crypto-mock"
+ECR_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/java-k-serve"
+NAMESPACE="k-serve"
 
 echo "=== 1. EKS 클러스터 생성 ==="
 eksctl create cluster -f "$(dirname "$0")/cluster-config.yaml"
@@ -62,13 +62,13 @@ echo "=== 5. k8s 리소스 배포 ==="
 kubectl apply -k "$(dirname "$0")"
 
 echo "=== 6. 배포 완료 확인 ==="
-kubectl rollout status deployment/crypto-mock-app -n "${NAMESPACE}" --timeout=180s
+kubectl rollout status deployment/k-serve-app -n "${NAMESPACE}" --timeout=180s
 kubectl get all -n "${NAMESPACE}"
 kubectl get ingress -n "${NAMESPACE}"
 
 echo ""
 echo "=== ALB 주소 ==="
-kubectl get ingress crypto-mock-ingress -n "${NAMESPACE}" \
+kubectl get ingress k-serve-ingress -n "${NAMESPACE}" \
   -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
 echo ""
 echo "배포 완료!"
