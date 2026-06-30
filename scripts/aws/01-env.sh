@@ -7,7 +7,7 @@ REPO_ROOT=$(cd "${SCRIPT_DIR}/../.." && pwd)
 : "${AWS_REGION:=ap-northeast-2}"
 : "${CLUSTER_NAME:=crypto-mock-eks}"
 : "${APP_NAMESPACE:=crypto-mock}"
-: "${ECR_REPO:=java-crypto-mock}"
+: "${ECR_REPO:=python-crypto-mock}"
 : "${IMAGE_TAG:=$(date +%Y%m%d%H%M%S)}"
 : "${KUSTOMIZE_DIR:=k8s/eks}"
 

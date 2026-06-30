@@ -22,7 +22,7 @@ patches:
         value: 1
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: java-k-serve-app:dev
+        value: python-k-serve-app:dev
   - target:
       kind: PersistentVolumeClaim
       name: mariadb-pvc

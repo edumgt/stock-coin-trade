@@ -13,8 +13,7 @@ c.set_model('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'); \
 c.add('warmup', documents=['warmup']); \
 print('fastembed model ready')"
 
-COPY python-stock-backend/app.py .
-COPY python-stock-backend/qdrant_service.py .
+COPY python-stock-backend/*.py .
 
 EXPOSE 8200
 CMD ["python", "app.py"]

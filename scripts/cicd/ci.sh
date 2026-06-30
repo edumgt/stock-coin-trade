@@ -5,7 +5,7 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd "${SCRIPT_DIR}/../.." && pwd)
 TARGET_ENV="${1:-local}"
 ENV_FILE="${SCRIPT_DIR}/env/${TARGET_ENV}.sh"
-MVN_CMD="${MVN_CMD:-mvn}"
+PYTHON_CMD="${PYTHON_CMD:-python3}"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
     echo "unknown environment: ${TARGET_ENV}" >&2
@@ -14,14 +14,13 @@ fi
 
 source "${ENV_FILE}"
 
-command -v "${MVN_CMD}" >/dev/null 2>&1 || {
-    echo "missing command: ${MVN_CMD}" >&2
+command -v "${PYTHON_CMD}" >/dev/null 2>&1 || {
+    echo "missing command: ${PYTHON_CMD}" >&2
     exit 1
 }
 
 pushd "${REPO_ROOT}" >/dev/null
-"${MVN_CMD}" -q test
-"${MVN_CMD}" -q -DskipTests package
+"${PYTHON_CMD}" -m py_compile python-stock-backend/*.py
 
 case "${DEPLOY_MODE}" in
     docker-compose)

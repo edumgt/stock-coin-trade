@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>물타기 계산기 — EDUMGT</title>
+  <link rel="icon" href="/img/favicon.png">
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:600; font-display:swap; src:url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','Apple SD Gothic Neo','Malgun Gothic','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    #site-footer { position:fixed; bottom:0; left:0; right:0; z-index:50; margin-top:0; }
+    body { padding-bottom: 40px; }
+    .calc-label { font-size:13px; font-weight:700; color:var(--fg-2); margin-bottom:.35rem; display:block; }
+    .calc-row { margin-bottom:14px; }
+    .result-row { display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--border); }
+    .result-row:last-child { border-bottom:none; }
+    .result-label { font-size:13px; color:var(--muted); font-weight:600; }
+    .result-value { font-size:16px; font-weight:800; color:var(--fg); }
+  </style>
+</head>
+<body class="min-h-screen">
+<div id="header-mount"></div>
+<main class="mx-auto w-full max-w-[1100px] px-4 py-6">
+
+<div class="space-y-6">
+
+  <section class="text-center">
+    <h2 class="text-2xl font-black mb-1" style="color:var(--fg);">🧮 물타기 계산기</h2>
+    <p class="text-sm" style="color:var(--muted);">추가 매수 시 평균 매수가가 얼마나 낮아지는지, 목표 평균가에 도달하려면 얼마를 더 매수해야 하는지 계산합니다.</p>
+  </section>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+    <!-- 입력 카드 -->
+    <section class="glass-card p-6">
+      <h3 class="text-base font-black mb-4" style="color:var(--fg);">현재 보유 정보</h3>
+
+      <div class="calc-row">
+        <label class="calc-label">보유 수량</label>
+        <input type="text" inputmode="decimal" id="holdQty" class="dark-input" placeholder="예: 10">
+      </div>
+      <div class="calc-row">
+        <label class="calc-label">보유 평균 매수가 (KRW)</label>
+        <input type="text" inputmode="decimal" id="holdAvgPrice" class="dark-input" placeholder="예: 50000">
+      </div>
+
+      <div class="oc-divider" style="margin:18px 0;"></div>
+
+      <h3 class="text-base font-black mb-4" style="color:var(--fg);">추가 매수 정보</h3>
+
+      <div class="calc-row">
+        <label class="calc-label">추가 매수가 (KRW)</label>
+        <input type="text" inputmode="decimal" id="buyPrice" class="dark-input" placeholder="예: 35000">
+      </div>
+
+      <div class="calc-row">
+        <div class="flex gap-4 mb-2">
+          <label class="flex items-center gap-1.5 text-sm" style="color:var(--fg-2);">
+            <input type="radio" name="buyInputMode" value="qty" checked onchange="onBuyInputModeChange()"> 수량으로 입력
+          </label>
+          <label class="flex items-center gap-1.5 text-sm" style="color:var(--fg-2);">
+            <input type="radio" name="buyInputMode" value="amount" onchange="onBuyInputModeChange()"> 금액으로 입력
+          </label>
+        </div>
+        <input type="text" inputmode="decimal" id="buyQty" class="dark-input" placeholder="추가 매수 수량">
+        <input type="text" inputmode="decimal" id="buyAmount" class="dark-input" placeholder="추가 매수 금액 (KRW)" style="display:none;margin-top:8px;">
+      </div>
+
+      <div class="oc-divider" style="margin:18px 0;"></div>
+
+      <h3 class="text-base font-black mb-4" style="color:var(--fg);">목표 평균가 역산 <span class="badge badge-muted" style="font-size:10px;">선택</span></h3>
+      <div class="calc-row" style="margin-bottom:0;">
+        <label class="calc-label">목표 평균 매수가 (KRW)</label>
+        <input type="text" inputmode="decimal" id="targetAvgPrice" class="dark-input" placeholder="도달하고 싶은 평균가를 입력하세요">
+      </div>
+    </section>
+
+    <!-- 결과 카드 -->
+    <div class="space-y-6">
+      <section class="glass-card p-6">
+        <h3 class="text-base font-black mb-2" style="color:var(--fg);">물타기 결과</h3>
+        <div id="forwardResult">
+          <div class="result-row"><span class="result-label">추가 매수 금액</span><span class="result-value" id="r_buyAmount">-</span></div>
+          <div class="result-row"><span class="result-label">추가 매수 수량</span><span class="result-value" id="r_buyQty">-</span></div>
+          <div class="result-row"><span class="result-label">총 보유 수량</span><span class="result-value" id="r_totalQty">-</span></div>
+          <div class="result-row"><span class="result-label">총 매수 금액</span><span class="result-value" id="r_totalAmount">-</span></div>
+          <div class="result-row"><span class="result-label">신규 평균 매수가</span><span class="result-value" id="r_newAvg" style="color:var(--accent-dark);font-size:19px;">-</span></div>
+          <div class="result-row"><span class="result-label">평균가 변동</span><span class="result-value" id="r_avgChange">-</span></div>
+        </div>
+      </section>
+
+      <section class="glass-card p-6">
+        <h3 class="text-base font-black mb-2" style="color:var(--fg);">목표 평균가 도달 조건</h3>
+        <div id="reverseResult">
+          <p style="color:var(--muted);font-size:13px;">목표 평균 매수가를 입력하면 추가 매수가 기준으로 필요한 매수 수량과 금액을 계산합니다.</p>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+</div>
+</main>
+<footer id="site-footer">
+  <div class="mx-auto w-full max-w-[1640px] px-4 py-4 flex items-center justify-between">
+    <span class="brand-logo-text" style="font-size:13px;letter-spacing:1.5px;">EDUMGT</span>
+      <p style="font-size:12px;color:var(--muted);">(주)에듀엠지티 &nbsp;|&nbsp; <a href="https://www.edumgt.co.kr" target="_blank" style="color:var(--accent-dark);text-decoration:none;font-weight:600;">www.edumgt.co.kr</a> &nbsp;|&nbsp; © 2025</p>
+  </div>
+</footer>
+<script src="/js/config.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/avg_down.js"></script>
+</body>
+</html>

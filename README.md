@@ -1,6 +1,6 @@
 # 한국 코인·주식 모의투자 Web App
 
-Spring Boot REST API + Vanilla JS 기반의 코인·주식 통합 모의투자 웹 애플리케이션입니다.  
+Flask REST API + Vanilla JS 기반의 코인·주식 통합 모의투자 웹 애플리케이션입니다.  
 업비트/빗썸/코인원/코빗 시세 비교와 KOSPI·KOSDAQ 주식 실습을 한 화면 흐름으로 제공합니다.
 
 ---
@@ -19,19 +19,16 @@ Browser
   ▼
 Nginx (Frontend · :3000)
   ├── /          → 정적 HTML/JS/CSS 서빙
-  └── /api/      → Java Backend 프록시
+  └── /api/      → Python Backend 프록시
         │
-        ├── Java Backend (Spring Boot REST API · :8080 내부)
-        │     └── MariaDB (external shared-net)
-        │
-        └── Python Backend (Flask · :8200 내부)
+        └── Python Backend (Flask REST API · :8200 내부)
+              └── MariaDB (external shared-net)
 ```
 
 | 레이어 | 기술 | 역할 |
 |---|---|---|
 | **Frontend** | Vanilla JS + Tailwind CSS + Nginx | 정적 HTML 페이지, fetch API 호출 |
-| **Java BE** | Spring Boot 3 · Spring Data JPA · BCrypt | 코인 매수/매도, 회원 인증, 시세 API |
-| **Python BE** | Flask · yfinance | 주식 시세, 주문, 포지션 관리 |
+| **Python BE** | Flask · SQLAlchemy · bcrypt · yfinance · APScheduler | 회원 인증, 코인 매수/매도, 시세 API, 주식 시세/주문, AI 분석 스트리밍 |
 | **DB** | MariaDB | 회원, 보유 코인, 업비트 마켓 |
 
 ---
@@ -76,7 +73,7 @@ Nginx (Frontend · :3000)
 - 보유자산(평가금액/수익률) 실시간 계산
 - 업비트 WebSocket 실시간 시세
 - 국내 4대 거래소 시세 비교 (`GET /api/crypto/{code}/domestic-prices`)
-- Docker Compose 3-컨테이너 구성 (Nginx + Java + Python)
+- Docker Compose 3-컨테이너 구성 (Nginx + Python + MariaDB)
 - Kubernetes / Amazon EKS 배포 구성
 
 ---
@@ -95,11 +92,10 @@ Nginx (Frontend · :3000)
 | 분류 | 기술 |
 |---|---|
 | **Frontend** | Vanilla JS, Tailwind CSS (CDN), Highcharts, ApexCharts, TradingView Widget |
-| **Java Backend** | Java 17, Spring Boot 3.1.2, Spring Data JPA, Spring Security |
-| **Python Backend** | Python 3.11, Flask, yfinance |
+| **Backend** | Python 3.11, Flask, SQLAlchemy, PyMySQL, bcrypt, APScheduler, yfinance |
 | **DB** | MariaDB |
 | **Infra** | Docker, Docker Compose, Nginx, Kubernetes, Amazon EKS |
-| **Security** | BCrypt + HTTP Session |
+| **Security** | BCrypt + 서명된 쿠키 세션(Flask session) |
 | **External API** | Upbit REST/WebSocket, Bithumb REST, Coinone REST, Korbit REST, CoinMarketCap REST |
 
 ---
@@ -127,19 +123,16 @@ stock-coin-trade/
 │   ├── fonts/
 │   └── img/
 │
-├── java-backend/                # Spring Boot REST API
-│   ├── pom.xml
-│   └── src/main/java/.../
-│       ├── controller/api/
-│       │   ├── MemberApiController.java      # 로그인/회원가입/me
-│       │   ├── CryptoMarketApiController.java # 랭킹/마켓 목록
-│       │   ├── TradeApiController.java        # 매수/매도/보유자산
-│       │   ├── ApiController.java             # 코인 상세, 국내 시세
-│       │   └── StockApiProxyController.java   # Python BE 프록시
-│       └── ...
-│
-├── python-stock-backend/        # Flask 주식 API
-│   ├── app.py
+├── python-stock-backend/        # Flask REST API (회원/코인/주식/관리자/AI 전부)
+│   ├── app.py                   # 앱 진입점, 블루프린트 등록, 주식 시세/RAG/뉴스 라우트
+│   ├── members.py                # /api/member/* — 회원가입/로그인/세션
+│   ├── crypto.py                 # /api/crypto/*, /api/trade/* — 시세/매수/매도
+│   ├── admin.py                  # /api/admin/* — 관리자 전용 (k8s 현황 등)
+│   ├── ai.py                     # /api/ai/analyze — Claude 스트리밍 분석
+│   ├── scheduler.py              # CoinMarketCap/Upbit 주기 동기화
+│   ├── db.py / models.py         # SQLAlchemy 세션 / 테이블 매핑
+│   ├── k8s_overview.py           # EKS 클러스터 현황 조회 로직
+│   ├── qdrant_service.py         # Qdrant RAG 연동
 │   └── requirements.txt
 │
 ├── database/
@@ -147,7 +140,6 @@ stock-coin-trade/
 │
 ├── docker/
 │   ├── frontend.Dockerfile
-│   ├── java-backend.Dockerfile
 │   ├── python-backend.Dockerfile
 │   └── nginx.conf
 │
@@ -186,7 +178,7 @@ stock-coin-trade/
 | `POST` | `/api/trade/order/buy`  | 코인 매수 |
 | `POST` | `/api/trade/order/sell` | 코인 매도 |
 
-### 주식 (Python 백엔드 프록시)
+### 주식
 
 | Method | Path | 설명 |
 |---|---|---|
@@ -208,31 +200,8 @@ stock-coin-trade/
 
 ### 7-1. 사전 요구사항
 
-MariaDB는 외부 Docker 네트워크 `shared-net`에서 실행 중이어야 합니다.
-
-```bash
-# shared-net 네트워크 생성 (최초 1회)
-docker network create shared-net
-
-# MariaDB 컨테이너 실행 (shared-net 연결)
-docker run -d \
-  --name crypto-mock-db \
-  --network shared-net \
-  -e MARIADB_ROOT_PASSWORD=root \
-  -e MARIADB_DATABASE=mockinv \
-  -e MARIADB_USER=mockinv \
-  -e MARIADB_PASSWORD=mockinv1234 \
-  mariadb:11.4
-
-# DB 초기 스키마 적용
-docker exec -i crypto-mock-db mariadb -umockinv -pmockinv1234 mockinv < database/db.sql
-```
-
-또는 로컬 MariaDB 빠른 설정 스크립트 사용:
-
-```bash
-bash scripts/setup-docker-db.sh
-```
+`docker-compose.yml`에 로컬 개발용 `mariadb` 컨테이너가 포함되어 있어 별도 준비 없이 바로 기동할 수 있습니다.
+최초 기동 시 `database/db.sql`이 `/docker-entrypoint-initdb.d/`로 마운트되어 스키마와 시드 데이터가 자동 적용됩니다.
 
 ### 7-2. 앱 실행
 
@@ -245,8 +214,7 @@ docker compose up -d --build
 | 서비스 | URL |
 |---|---|
 | 웹 서비스 (Nginx) | `http://localhost:3000` |
-| Java BE (내부용) | `http://localhost:3000/api/...` (nginx 프록시) |
-| Python BE | 내부 전용 (Java가 프록시) |
+| Python BE (내부용) | `http://localhost:3000/api/...` (nginx 프록시) |
 
 ### 7-4. 종료
 
@@ -261,29 +229,25 @@ docker compose down -v
 
 ```
 crypto-mock-frontend  (Nginx)         :3000 → :80
-crypto-mock-java      (Spring Boot)   expose 8080 (내부만)
+crypto-mock-mariadb   (MariaDB)       expose 3306 (내부만)
 crypto-mock-python    (Flask)         expose 8200 (내부만)
 ```
 
-Java BE와 Python BE는 외부 포트를 노출하지 않으며, Nginx가 `/api/` 요청을 내부 네트워크를 통해 `java-backend:8080`으로 프록시합니다.
+Python BE는 외부 포트를 노출하지 않으며, Nginx가 `/api/` 요청을 내부 네트워크를 통해 `python-backend:8200`으로 프록시합니다.
 
 ---
 
 ## 8) 로컬 개발 (Docker 없이)
 
-Frontend와 Java Backend를 분리 실행할 경우:
+Frontend와 Backend를 분리 실행할 경우:
 
 ```bash
-# 1. Java BE 실행
-cd java-backend
-mvn spring-boot:run
-
-# 2. Python BE 실행
+# 1. Python BE 실행 (DB_HOST 등은 로컬 MariaDB에 맞게 조정)
 cd python-stock-backend
 pip install -r requirements.txt
-python app.py
+DB_HOST=localhost DB_USER=mockinv DB_PASSWORD=12345678!! python app.py
 
-# 3. Frontend 서빙 (python 예시, 포트 임의)
+# 2. Frontend 서빙 (python 예시, 포트 임의)
 cd frontend
 python -m http.server 3000
 ```
@@ -293,7 +257,7 @@ python -m http.server 3000
 ```js
 // frontend/js/config.js
 window.APP_CONFIG = {
-  apiBase: 'http://localhost:8080',  // Java BE 주소
+  apiBase: 'http://localhost:8200',  // Python BE 주소
 };
 ```
 
@@ -304,17 +268,17 @@ window.APP_CONFIG = {
 ### 9-1. base 배포
 
 ```bash
-docker build -t java-crypto-mock-app:latest -f docker/java-backend.Dockerfile .
+docker build -t python-k-serve-app:latest -f docker/python-backend.Dockerfile .
 kubectl apply -k k8s/base
-kubectl -n crypto-mock port-forward svc/crypto-mock-app 8080:80
+kubectl -n k-serve port-forward svc/k-serve-app 8200:80
 ```
 
 ### 9-2. dev overlay 배포
 
 ```bash
-docker build -t java-crypto-mock-app:dev -f docker/java-backend.Dockerfile .
+docker build -t python-k-serve-app:dev -f docker/python-backend.Dockerfile .
 kubectl apply -k k8s/overlays/dev
-kubectl -n crypto-mock-dev port-forward svc/crypto-mock-app 8080:80
+kubectl -n k-serve-dev port-forward svc/k-serve-app 8200:80
 ```
 
 ---
@@ -336,16 +300,16 @@ kubectl -n crypto-mock-dev port-forward svc/crypto-mock-app 8080:80
 aws ecr get-login-password --region ap-northeast-2 | \
   docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com
 
-docker build -t java-crypto-mock:latest -f docker/java-backend.Dockerfile .
-docker tag java-crypto-mock:latest 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/java-crypto-mock:latest
-docker push 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/java-crypto-mock:latest
+docker build -t python-crypto-mock:latest -f docker/python-backend.Dockerfile .
+docker tag python-crypto-mock:latest 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/python-crypto-mock:latest
+docker push 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/python-crypto-mock:latest
 ```
 
 ### 10-3. 배포
 
 ```bash
 kubectl apply -k k8s/eks
-kubectl -n crypto-mock get ingress crypto-mock-ingress
+kubectl -n k-serve get ingress k-serve-ingress
 ```
 
 ### 10-4. 배포 스크립트
@@ -353,7 +317,7 @@ kubectl -n crypto-mock get ingress crypto-mock-ingress
 ```bash
 export AWS_REGION=ap-northeast-2
 export CLUSTER_NAME=crypto-mock-stage
-export ECR_REPO=java-crypto-mock-stage
+export ECR_REPO=python-crypto-mock-stage
 
 ./scripts/aws/01-env.sh
 ./scripts/aws/02-create-infra.sh
@@ -390,9 +354,9 @@ export ECR_REPO=java-crypto-mock-stage
 
 | 환경 | 동작 |
 |---|---|
-| `local` | Maven build + docker compose 검증 후 로컬 기동 |
-| `dev` | Maven build + k8s/overlays/dev 검증 후 일반 k8s 배포 |
-| `stage/prod` | Maven build + ECR push + EKS 배포 |
+| `local` | Python 컴파일 체크 + docker compose 검증 후 로컬 기동 |
+| `dev` | Python 컴파일 체크 + k8s/overlays/dev 검증 후 일반 k8s 배포 |
+| `stage/prod` | Python 컴파일 체크 + ECR push + EKS 배포 |
 
 ---
 
@@ -420,15 +384,13 @@ flowchart LR
 flowchart TD
     USER[Browser :3000]
     NGINX[Nginx Frontend]
-    JAVA[Java BE :8080]
     PY[Python BE :8200]
     DB[(MariaDB<br/>shared-net)]
 
     USER -->|정적 파일| NGINX
     USER -->|/api/ 요청| NGINX
-    NGINX -->|proxy_pass| JAVA
-    JAVA -->|주식 API 프록시| PY
-    JAVA -->|JPA| DB
+    NGINX -->|proxy_pass| PY
+    PY -->|SQLAlchemy| DB
 ```
 
 ### 13-3. 매수 처리 시퀀스
@@ -437,20 +399,17 @@ flowchart TD
 sequenceDiagram
     participant U as User
     participant FE as Browser (JS)
-    participant API as TradeApiController
-    participant S as HoldCryptoServiceImpl
+    participant API as crypto.py (trade_bp)
     participant UAPI as Upbit REST API
     participant DB as MariaDB
 
     U->>FE: 매수 금액 입력 후 클릭
     FE->>API: POST /api/trade/order/buy (JSON)
     API->>API: 세션 회원 조회 및 입력 검증
-    API->>S: buyCrypto(memberId, marketCode, buyKrw)
-    S->>UAPI: GET /v1/ticker?markets=KRW-BTC
-    UAPI-->>S: 현재가 응답
-    S->>DB: HoldCrypto insert/update
-    S->>DB: Member.asset 차감
-    S-->>API: 완료
+    API->>UAPI: GET /v1/ticker?markets=KRW-BTC
+    UAPI-->>API: 현재가 응답
+    API->>DB: HoldCrypto insert/update
+    API->>DB: Member.asset 차감
     API-->>FE: { success: true, asset: 잔여금액 }
     FE-->>U: 보유자산 표시 업데이트
 ```
@@ -460,24 +419,21 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant B as Browser
-    participant API as ApiController
-    participant D as DomesticExchangePriceServiceImpl
+    participant API as crypto.py (market_bp)
     participant U as Upbit
     participant BH as Bithumb
     participant C as Coinone
     participant K as Korbit
 
     B->>API: GET /api/crypto/{code}/domestic-prices
-    API->>D: getDomesticPrices(code)
-    D->>U: 현재가 조회
-    D->>BH: 현재가 조회
-    D->>C: 현재가 조회
-    D->>K: 현재가 조회
-    U-->>D: KRW price
-    BH-->>D: KRW price
-    C-->>D: KRW price
-    K-->>D: KRW price
-    D-->>API: DomesticExchangePriceResponseDto
+    API->>U: 현재가 조회
+    API->>BH: 현재가 조회
+    API->>C: 현재가 조회
+    API->>K: 현재가 조회
+    U-->>API: KRW price
+    BH-->>API: KRW price
+    C-->>API: KRW price
+    K-->>API: KRW price
     API-->>B: JSON 응답 (5초 주기 polling)
 ```
 
@@ -586,8 +542,7 @@ docker run --rm mariadb:11.4 \
 | 분류 | 경로 |
 |---|---|
 | **프론트엔드** | `frontend/` |
-| **Java 백엔드** | `java-backend/` |
-| **Python 백엔드** | `python-stock-backend/` |
+| **백엔드 (Python)** | `python-stock-backend/` |
 | **DB 스키마** | `database/db.sql` |
 | **Docker** | `docker-compose.yml`, `docker/` |
 | **Kubernetes(base)** | `k8s/base/` |

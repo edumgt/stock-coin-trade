@@ -3,9 +3,9 @@ kind: ConfigMap
 metadata:
   name: k-serve-config
 data:
-  SPRING_DATASOURCE_URL: jdbc:mariadb://dbms.edumgt.co.kr:3306/mockinv?useUnicode=true&characterEncoding=utf8
-  SPRING_DATASOURCE_USERNAME: root
-  SPRING_JPA_HIBERNATE_DDL_AUTO: update
+  DB_HOST: dbms.edumgt.co.kr
+  DB_PORT: "3306"
+  DB_NAME: mockinv
+  DB_USER: root
   MARIADB_DATABASE: mockinv
   MARIADB_USER: mockinv
-  PYTHON_STOCK_API_BASE_URL: http://k-serve-python:8200

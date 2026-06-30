@@ -20,9 +20,9 @@ case "${DEPLOY_MODE}" in
         docker compose up -d --build
         ;;
     k8s-dev)
-        docker build -t java-crypto-mock-app:dev .
+        docker build -t python-k-serve-app:dev -f docker/python-backend.Dockerfile .
         kubectl apply -k "${KUSTOMIZE_DIR}"
-        kubectl -n "${K8S_NAMESPACE}" rollout status deployment/crypto-mock-app --timeout=300s
+        kubectl -n "${K8S_NAMESPACE}" rollout status deployment/k-serve-app --timeout=300s
         ;;
     eks)
         export AWS_REGION

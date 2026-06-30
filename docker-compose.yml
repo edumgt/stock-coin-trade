@@ -17,39 +17,54 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - java-backend
+      - python-backend
     restart: unless-stopped
 
-  # ── Java 백엔드 (Spring Boot REST API) ──────────────────────
-  java-backend:
-    build:
-      context: .
-      dockerfile: docker/java-backend.Dockerfile
-    container_name: crypto-mock-java
+  # ── MariaDB (로컬 개발용 컨테이너 DB) ─────────────────────────
+  mariadb:
+    image: mariadb:11.4
+    container_name: crypto-mock-mariadb
     networks:
-      - shared-net
       - internal
-    expose:
-      - "8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mariadb://dbms.edumgt.co.kr:3306/mockinv?useUnicode=true&characterEncoding=utf8
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: "12345678!!"
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      PYTHON_STOCK_API_BASE_URL: http://python-backend:8200
-    depends_on:
-      python-backend:
-        condition: service_started
-    restart: on-failure
+      MARIADB_DATABASE: mockinv
+      MARIADB_USER: mockinv
+      MARIADB_PASSWORD: "12345678!!"
+      MARIADB_ROOT_PASSWORD: "12345678!!"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./database/db.sql:/docker-entrypoint-initdb.d/db.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
-  # ── Python 백엔드 (Flask 주식 API) ──────────────────────────
+  # ── Python 백엔드 (Flask REST API — 코인/주식/회원/관리자/AI 전부 처리) ──
   python-backend:
     build:
       context: .
       dockerfile: docker/python-backend.Dockerfile
     container_name: crypto-mock-python
     networks:
+      - shared-net
       - internal
     expose:
       - "8200"
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: "3306"
+      DB_NAME: mockinv
+      DB_USER: mockinv
+      DB_PASSWORD: "12345678!!"
+      SECRET_KEY: "dev-secret-change-me"
+      CMC_API_KEY: "89a4ffe3-03a9-4184-87e0-49214b000b99"
+      ANTHROPIC_API_KEY: ""
+    depends_on:
+      mariadb:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  mariadb-data:

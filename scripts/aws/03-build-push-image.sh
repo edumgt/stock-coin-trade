@@ -7,7 +7,7 @@ source "${SCRIPT_DIR}/01-env.sh"
 aws ecr get-login-password --region "${AWS_REGION}" | \
 docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
-docker build -t "${ECR_REPO}:${IMAGE_TAG}" "${REPO_ROOT}"
+docker build -t "${ECR_REPO}:${IMAGE_TAG}" -f "${REPO_ROOT}/docker/python-backend.Dockerfile" "${REPO_ROOT}"
 docker tag "${ECR_REPO}:${IMAGE_TAG}" "${ECR_URI}:${IMAGE_TAG}"
 docker tag "${ECR_REPO}:${IMAGE_TAG}" "${ECR_URI}:latest"
 docker push "${ECR_URI}:${IMAGE_TAG}"

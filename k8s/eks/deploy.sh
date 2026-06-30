@@ -7,7 +7,7 @@ set -euo pipefail
 REGION="ap-northeast-2"
 CLUSTER_NAME="k-serve"
 ACCOUNT_ID="086015456585"
-ECR_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/java-k-serve"
+ECR_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/python-k-serve"
 NAMESPACE="k-serve"
 
 echo "=== 1. EKS 클러스터 생성 ==="
@@ -55,7 +55,7 @@ kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --
 echo "=== 4. ECR 이미지 최신화 ==="
 aws ecr get-login-password --region "${REGION}" | \
   docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
-docker build -t "${ECR_URI}:latest" -f docker/java-backend.Dockerfile .
+docker build -t "${ECR_URI}:latest" -f docker/python-backend.Dockerfile .
 docker push "${ECR_URI}:latest"
 
 echo "=== 5. k8s 리소스 배포 ==="

@@ -17,49 +17,65 @@ spec:
       labels:
         app: k-serve-app
     spec:
+      serviceAccountName: k-serve-monitor
       containers:
         - name: app
-          image: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/java-k-serve:latest
+          image: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/python-k-serve:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 8080
+            - containerPort: 8200
           env:
-            - name: SPRING_DATASOURCE_URL
+            - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
                   name: k-serve-config
-                  key: SPRING_DATASOURCE_URL
-            - name: SPRING_DATASOURCE_USERNAME
+                  key: DB_HOST
+            - name: DB_PORT
               valueFrom:
                 configMapKeyRef:
                   name: k-serve-config
-                  key: SPRING_DATASOURCE_USERNAME
-            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+                  key: DB_PORT
+            - name: DB_NAME
               valueFrom:
                 configMapKeyRef:
                   name: k-serve-config
-                  key: SPRING_JPA_HIBERNATE_DDL_AUTO
-            - name: SPRING_DATASOURCE_PASSWORD
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: k-serve-config
+                  key: DB_USER
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: k-serve-secret
-                  key: SPRING_DATASOURCE_PASSWORD
-            - name: PYTHON_STOCK_API_BASE_URL
+                  key: DB_PASSWORD
+            - name: SECRET_KEY
               valueFrom:
-                configMapKeyRef:
-                  name: k-serve-config
-                  key: PYTHON_STOCK_API_BASE_URL
+                secretKeyRef:
+                  name: k-serve-secret
+                  key: SECRET_KEY
+            - name: CMC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: k-serve-secret
+                  key: CMC_API_KEY
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: k-serve-secret
+                  key: ANTHROPIC_API_KEY
           readinessProbe:
             httpGet:
               path: /api/member/me
-              port: 8080
+              port: 8200
             initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 5
           livenessProbe:
             httpGet:
               path: /api/member/me
-              port: 8080
+              port: 8200
             initialDelaySeconds: 60
             periodSeconds: 20
             failureThreshold: 3

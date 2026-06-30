@@ -26,6 +26,7 @@ function renderHeader(user) {
     { href: '/trade/order.html', label: '코인',    icon: '💹' },
     { href: '/trade/stock.html', label: '주식',    icon: '📈' },
     { href: '/trade/hold.html',  label: '보유자산', icon: '💼' },
+    { href: '/trade/avg-down.html', label: '물타기 계산기', icon: '🧮' },
   ];
 
   const userSection = user?.loggedIn
