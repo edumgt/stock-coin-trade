@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open API 명세 — EDUMGT</title>
+  <link rel="icon" href="/img/favicon.png">
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:600; font-display:swap; src:url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:900; font-display:swap; src:url('/fonts/Pretendard-Black.woff2') format('woff2'); }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','Apple SD Gothic Neo','Malgun Gothic','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    #site-footer { position:fixed; bottom:0; left:0; right:0; z-index:50; margin-top:0; }
+    body { padding-bottom: 40px; }
+    .endpoint-table th, .endpoint-table td { padding:8px 12px; font-size:13px; }
+    .endpoint-table th { text-align:left; color:var(--muted); font-weight:700; border-bottom:1px solid var(--border); }
+    .endpoint-table td { border-bottom:1px solid var(--border); color:var(--fg); vertical-align:top; }
+    .method-badge { display:inline-block; font-size:11px; font-weight:800; padding:1px 8px; border-radius:99px; }
+    .method-get   { background:rgba(37,99,235,0.12); color:#2563EB; }
+    .method-post  { background:rgba(225,29,72,0.12); color:#E11D48; }
+    pre.code-block {
+      background:#0F172A; color:#E2E8F0; border-radius:10px; padding:14px 16px;
+      font-size:12.5px; line-height:1.65; overflow-x:auto; white-space:pre;
+    }
+    code.inline-code { background:var(--surface-2); border:1px solid var(--border); border-radius:5px; padding:1px 6px; font-size:12.5px; }
+  </style>
+</head>
+<body class="min-h-screen">
+<div id="header-mount"></div>
+<main class="mx-auto w-full max-w-[1000px] px-4 py-6">
+
+<div class="space-y-6">
+
+  <section class="glass-card p-6">
+    <div class="flex flex-wrap items-center gap-3 mb-2">
+      <h1 class="text-2xl font-black" style="color:var(--fg);">Open API — 가상 주식 매매</h1>
+      <span class="badge" style="font-size:11px;background:rgba(37,99,235,0.12);color:#2563EB;">v1</span>
+    </div>
+    <p style="font-size:13.5px;color:var(--muted);line-height:1.7;">
+      외부 시스템(봇, 트레이딩 프로그램 등)이 EDUMGT 모의투자 플랫폼의 주식 계좌를 API Key로 인증해 조회·매매할 수 있는 REST API입니다.
+      웹에서 로그인해 매매한 것과 동일한 예수금(KRW 캐시)·보유종목을 그대로 공유합니다.
+    </p>
+    <div class="mt-4">
+      <button onclick="location.href='/member/api-keys.html'"
+        style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.55rem 1.1rem;font-size:13.5px;font-weight:700;cursor:pointer;">
+        🔑 API 키 발급받기
+      </button>
+    </div>
+  </section>
+
+  <section class="glass-card p-6">
+    <h2 class="text-base font-black mb-3" style="color:var(--fg);">인증 (Authentication)</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:10px;">
+      모든 요청은 <code class="inline-code">Authorization</code> 헤더에 발급받은 API 키를 Bearer 토큰 형식으로 담아 전송합니다.
+      키는 발급 시 1회만 원문으로 표시되며, 서버에는 해시값만 저장됩니다. 유출이 의심되면 즉시 폐기(revoke) 후 재발급하세요.
+    </p>
+    <pre class="code-block">Authorization: Bearer eduapi_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px;">
+      Base URL: <code class="inline-code">https://&lt;서비스 도메인&gt;/openapi/v1</code> &nbsp;|&nbsp;
+      요청 제한: 키당 분당 <strong>60회</strong> (초과 시 <code class="inline-code">429</code>)
+    </p>
+  </section>
+
+  <section class="glass-card p-6 overflow-hidden">
+    <h2 class="text-base font-black mb-3" style="color:var(--fg);">엔드포인트</h2>
+    <div class="overflow-x-auto">
+      <table class="endpoint-table min-w-full">
+        <thead>
+          <tr><th>Method</th><th>Path</th><th>설명</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="method-badge method-get">GET</span></td><td><code class="inline-code">/stocks</code></td><td>매매 가능 종목 목록</td></tr>
+          <tr><td><span class="method-badge method-get">GET</span></td><td><code class="inline-code">/quote/&lt;symbol&gt;</code></td><td>실시간(캐시 60초) 시세 조회</td></tr>
+          <tr><td><span class="method-badge method-get">GET</span></td><td><code class="inline-code">/account</code></td><td>예수금(cash), 총자산, 손익률</td></tr>
+          <tr><td><span class="method-badge method-get">GET</span></td><td><code class="inline-code">/positions</code></td><td>보유 종목 목록 및 평가손익</td></tr>
+          <tr><td><span class="method-badge method-post">POST</span></td><td><code class="inline-code">/orders</code></td><td>주문 실행 (시장가 매수/매도)</td></tr>
+          <tr><td><span class="method-badge method-get">GET</span></td><td><code class="inline-code">/orders?limit=50</code></td><td>주문/체결 내역 조회</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="glass-card p-6">
+    <h2 class="text-base font-black mb-3" style="color:var(--fg);">사용 예시</h2>
+
+    <p style="font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px;">1. 계좌 조회</p>
+    <pre class="code-block">curl https://&lt;서비스 도메인&gt;/openapi/v1/account \
+  -H "Authorization: Bearer eduapi_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# 응답
+{ "cash": 9852296, "totalAsset": 10000000, "totalPnlRate": 0.0 }</pre>
+
+    <p style="font-size:12.5px;font-weight:700;color:var(--muted);margin:14px 0 6px;">2. 삼성전자(005930) 1주 시장가 매수</p>
+    <pre class="code-block">curl -X POST https://&lt;서비스 도메인&gt;/openapi/v1/orders \
+  -H "Authorization: Bearer eduapi_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "005930", "side": "BUY", "quantity": 1}'
+
+# 응답
+{ "status": "ok", "symbol": "005930", "side": "BUY", "quantity": 1, "price": 73852, "amount": 73852 }</pre>
+
+    <p style="font-size:12.5px;font-weight:700;color:var(--muted);margin:14px 0 6px;">3. 보유 종목 조회</p>
+    <pre class="code-block">curl https://&lt;서비스 도메인&gt;/openapi/v1/positions \
+  -H "Authorization: Bearer eduapi_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# 응답
+{ "positions": [
+  { "symbol": "005930", "name": "삼성전자", "quantity": 3, "avgPrice": 73852,
+    "currentPrice": 73852, "evalAmount": 221556, "pnl": 0 }
+] }</pre>
+  </section>
+
+  <section class="glass-card p-6">
+    <h2 class="text-base font-black mb-3" style="color:var(--fg);">오류 응답</h2>
+    <div class="overflow-x-auto">
+      <table class="endpoint-table min-w-full">
+        <thead>
+          <tr><th>HTTP</th><th>error</th><th>의미</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>400</td><td><code class="inline-code">INVALID_REQUEST</code></td><td>파라미터 오류, 잔고/보유수량 부족 등</td></tr>
+          <tr><td>401</td><td><code class="inline-code">UNAUTHORIZED</code></td><td>API 키 누락·오류·폐기됨</td></tr>
+          <tr><td>404</td><td><code class="inline-code">NOT_FOUND</code></td><td>존재하지 않는 종목 코드</td></tr>
+          <tr><td>429</td><td><code class="inline-code">RATE_LIMITED</code></td><td>분당 요청 한도(60회) 초과</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+</main>
+<footer id="site-footer">
+  <div class="mx-auto w-full max-w-[1640px] px-4 py-4 flex items-center justify-between">
+    <span class="brand-logo-text" style="font-size:13px;letter-spacing:1.5px;">EDUMGT</span>
+    <p style="font-size:12px;color:var(--muted);">(주)에듀엠지티 &nbsp;|&nbsp; <a href="https://www.edumgt.co.kr" target="_blank" style="color:var(--accent-dark);text-decoration:none;font-weight:600;">www.edumgt.co.kr</a> &nbsp;|&nbsp; © 2025</p>
+  </div>
+</footer>
+<script src="/js/config.js"></script>
+<script src="/js/common.js"></script>
+<script>
+  (async () => { await initPage(); })();
+</script>
+</body>
+</html>

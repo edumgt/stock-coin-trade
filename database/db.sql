@@ -190,6 +190,50 @@ INSERT INTO `upbit_market` (`upbit_market_id`, `english_name`, `korean_name`, `m
 	(1027, 'Ethereum', '이더리움', 'KRW-ETH');
 /*!40000 ALTER TABLE `upbit_market` ENABLE KEYS */;
 
+-- 테이블 mockinv.stock_position 구조 내보내기
+CREATE TABLE IF NOT EXISTS `stock_position` (
+  `stock_position_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `member_id` bigint(20) NOT NULL,
+  `symbol` varchar(20) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `avg_price` bigint(20) NOT NULL,
+  PRIMARY KEY (`stock_position_id`),
+  UNIQUE KEY `uq_stock_position_member_symbol` (`member_id`,`symbol`),
+  CONSTRAINT `FK_stock_position_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 테이블 mockinv.stock_order 구조 내보내기
+CREATE TABLE IF NOT EXISTS `stock_order` (
+  `stock_order_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `member_id` bigint(20) NOT NULL,
+  `symbol` varchar(20) NOT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `order_type` varchar(4) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `price` bigint(20) NOT NULL,
+  `amount` bigint(20) NOT NULL,
+  `source` varchar(20) NOT NULL DEFAULT 'WEB',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`stock_order_id`),
+  KEY `idx_stock_order_member_created` (`member_id`,`created_at`),
+  CONSTRAINT `FK_stock_order_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 테이블 mockinv.api_key 구조 내보내기
+CREATE TABLE IF NOT EXISTS `api_key` (
+  `api_key_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `member_id` bigint(20) NOT NULL,
+  `label` varchar(100) DEFAULT NULL,
+  `key_prefix` varchar(16) NOT NULL,
+  `key_hash` char(64) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_used_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`api_key_id`),
+  UNIQUE KEY `uq_api_key_hash` (`key_hash`),
+  CONSTRAINT `FK_api_key_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

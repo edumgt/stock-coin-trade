@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open API 키 관리 — EDUMGT</title>
+  <link rel="icon" href="/img/favicon.png">
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:600; font-display:swap; src:url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','Apple SD Gothic Neo','Malgun Gothic','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    #site-footer { position:fixed; bottom:0; left:0; right:0; z-index:50; margin-top:0; }
+    body { padding-bottom: 40px; }
+    #keyModalOverlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500;
+      align-items:center; justify-content:center;
+    }
+    #keyModal {
+      background:var(--surface); border:1px solid var(--border); border-radius:12px;
+      padding:1.5rem; width:520px; max-width:92vw; box-shadow:0 12px 40px rgba(0,0,0,0.25);
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+<div id="header-mount"></div>
+<main class="mx-auto w-full max-w-[900px] px-4 py-6">
+
+<div class="space-y-6">
+
+  <section class="glass-card p-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+      <h1 class="text-2xl font-black" style="color:var(--fg);">Open API 키 관리</h1>
+      <button id="createKeyBtn" onclick="createKey()"
+        style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.55rem 1.1rem;font-size:13.5px;font-weight:700;cursor:pointer;">
+        + 새 키 발급
+      </button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;">
+      발급된 키로 외부 시스템에서 <code style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:12.5px;">/openapi/v1/*</code> 를 호출해 이 계정의 가상 주식 계좌를 조회·매매할 수 있습니다.
+      자세한 사용법은 <a href="/openapi.html" style="color:var(--accent-dark);font-weight:700;text-decoration:underline;">Open API 명세</a>를 참고하세요.
+    </p>
+  </section>
+
+  <section class="glass-card overflow-hidden">
+    <div class="px-5 py-4" style="border-bottom:1px solid var(--border);">
+      <h3 class="text-base font-black" style="color:var(--fg);">발급된 키</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="dark-table min-w-full">
+        <thead>
+          <tr>
+            <th class="text-left">라벨</th>
+            <th class="text-left">키 (마스킹)</th>
+            <th class="text-left">발급일</th>
+            <th class="text-left">최근 사용</th>
+            <th class="text-center">상태</th>
+            <th class="text-center">관리</th>
+          </tr>
+        </thead>
+        <tbody id="keysTableBody">
+          <tr><td colspan="6" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<!-- 발급 직후 원문 키 1회 노출 모달 -->
+<div id="keyModalOverlay">
+  <div id="keyModal">
+    <h3 class="text-lg font-black mb-2" style="color:var(--fg);">API 키가 발급되었습니다</h3>
+    <p style="font-size:12.5px;color:#E11D48;font-weight:700;margin-bottom:10px;">⚠ 이 키는 지금 한 번만 표시됩니다. 안전한 곳에 복사해 보관하세요.</p>
+    <div style="display:flex;gap:6px;margin-bottom:14px;">
+      <input id="newKeyValue" readonly
+        style="flex:1;background:var(--surface-2);border:1.5px solid var(--border);color:var(--fg);border-radius:6px;padding:.5rem .7rem;font-size:12.5px;font-family:monospace;"/>
+      <button onclick="copyNewKey()" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;font-size:13px;font-weight:700;cursor:pointer;">복사</button>
+    </div>
+    <button onclick="closeKeyModal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:.5rem;font-size:13px;font-weight:700;color:var(--fg);cursor:pointer;">닫기</button>
+  </div>
+</div>
+
+<footer id="site-footer">
+  <div class="mx-auto w-full max-w-[1640px] px-4 py-4 flex items-center justify-between">
+    <span class="brand-logo-text" style="font-size:13px;letter-spacing:1.5px;">EDUMGT</span>
+    <p style="font-size:12px;color:var(--muted);">(주)에듀엠지티 &nbsp;|&nbsp; <a href="https://www.edumgt.co.kr" target="_blank" style="color:var(--accent-dark);text-decoration:none;font-weight:600;">www.edumgt.co.kr</a> &nbsp;|&nbsp; © 2025</p>
+  </div>
+</footer>
+<script src="/js/config.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/api-keys.js"></script>
+</body>
+</html>
