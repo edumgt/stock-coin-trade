@@ -670,8 +670,8 @@ function renderOrderBook(price) {
   else if (price >=   1000) tick = 10;
 
   const qty = (p, o) => Math.max(50, ((p * 7 + o) % 2900) + 100);
-  const askRows = Array.from({ length: 5 }, (_, i) => ({ price: price + tick * (5 - i), qty: qty(price + tick * (5 - i), 13) }));
-  const bidRows = Array.from({ length: 5 }, (_, i) => ({ price: price - tick * (i + 1), qty: qty(price - tick * (i + 1), 31) }));
+  const askRows = Array.from({ length: 5 }, (_, i) => ({ price: price + tick * (i + 1), qty: qty(price + tick * (i + 1), 13) }));
+  const bidRows = Array.from({ length: 5 }, (_, i) => ({ price: price - tick * (5 - i), qty: qty(price - tick * (5 - i), 31) }));
 
   askBody.innerHTML = askRows.map(r => `<tr style="background:rgba(37,99,235,0.04);">
     <td style="padding:7px 12px;text-align:right;color:#60A5FA;font-weight:700;font-size:14px;">${Number(r.price).toLocaleString('ko-KR')}</td>
