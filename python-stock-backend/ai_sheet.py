@@ -1,22 +1,29 @@
-"""URL content to editable spreadsheet data.
+"""URL content to editable spreadsheet data, and sector stock-price sheets.
 
 The crawler deliberately accepts only public HTTP(S) endpoints.  It is not a
 general purpose proxy: local/private addresses and non-HTML responses are
 rejected to keep this endpoint safe to expose to browsers.
 """
 import ipaddress
+import random
 import socket
+from datetime import datetime
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 
 import requests
 from flask import Blueprint, jsonify, request
 
+import stock_market
+
 
 ai_sheet_bp = Blueprint("ai_sheet", __name__, url_prefix="/api/ai-sheet")
 MAX_BYTES = 2_000_000
 MAX_ROWS = 100
 MAX_COLUMNS = 20
+
+SECTOR_SHEET_STOCK_LIMIT = 20
+SECTOR_SHEET_MONTHS = 24
 
 
 def _is_public_url(value):
@@ -124,3 +131,91 @@ def crawl_to_sheet():
                             "notice": "공개 페이지에서 추출한 결과입니다. 숫자와 원문은 저장 전 확인하세요."})
     except requests.RequestException as exc:
         return jsonify({"message": f"페이지를 가져오지 못했습니다: {exc}"}), 502
+
+
+def _month_labels(months: int) -> list[str]:
+    """가장 오래된 달부터 이번 달까지 'yyyy-mm' 라벨을 만든다."""
+    anchor = datetime.utcnow()
+    labels = []
+    for offset in range(months - 1, -1, -1):
+        year, month = anchor.year, anchor.month - offset
+        while month <= 0:
+            month += 12
+            year -= 1
+        labels.append(f"{year:04d}-{month:02d}")
+    return labels
+
+
+def _monthly_closes_from_yfinance(ticker: str) -> dict[str, float]:
+    import yfinance as yf
+
+    hist = yf.Ticker(ticker).history(period="2y", interval="1mo")
+    if hist.empty:
+        raise ValueError("empty monthly history")
+    return {timestamp.strftime("%Y-%m"): round(float(row["Close"]), 2) for timestamp, row in hist.iterrows()}
+
+
+def _monthly_closes_simulated(symbol: str, labels: list[str]) -> dict[str, float]:
+    """외부 시세를 가져오지 못할 때 종목별로 결정적인(deterministic) 모의 월별 종가를 만든다."""
+    base = stock_market.BASE_PRICES.get(symbol, 10_000 + (abs(hash(symbol)) % 490_000))
+    rng = random.Random(symbol)
+    price = float(base)
+    closes = {}
+    for label in labels:
+        price = max(500.0, price * (1 + rng.uniform(-0.08, 0.09)))
+        closes[label] = round(price, 2)
+    return closes
+
+
+@ai_sheet_bp.get("/sectors")
+def list_sectors():
+    counts: dict[str, int] = {}
+    for stock in stock_market.get_krx_stocks():
+        sector = stock.get("sector") or "기타"
+        if sector == "기타":
+            continue
+        counts[sector] = counts.get(sector, 0) + 1
+    sectors = sorted(
+        ({"sector": sector, "count": count} for sector, count in counts.items()),
+        key=lambda item: (-item["count"], item["sector"]),
+    )
+    return jsonify({"sectors": sectors})
+
+
+@ai_sheet_bp.post("/sector-sheet")
+def build_sector_sheet():
+    body = request.get_json(silent=True) or {}
+    sector = (body.get("sector") or "").strip()
+    if not sector:
+        return jsonify({"message": "섹터를 선택해주세요."}), 400
+
+    stocks = [stock for stock in stock_market.get_krx_stocks() if stock.get("sector") == sector]
+    if not stocks:
+        return jsonify({"message": "해당 섹터에 종목이 없습니다."}), 404
+    stocks = stocks[:SECTOR_SHEET_STOCK_LIMIT]
+
+    labels = _month_labels(SECTOR_SHEET_MONTHS)
+    rows = []
+    simulated_count = 0
+    for stock in stocks:
+        try:
+            closes = _monthly_closes_from_yfinance(stock["ticker"])
+            if len(closes) < SECTOR_SHEET_MONTHS // 2:
+                raise ValueError("insufficient monthly history")
+        except Exception:
+            closes = _monthly_closes_simulated(stock["symbol"], labels)
+            simulated_count += 1
+        rows.append([stock["name"]] + [
+            (f"{closes[label]:,.0f}" if label in closes else "") for label in labels
+        ])
+
+    notice = f"{sector} 섹터 {len(stocks)}개 종목의 최근 {SECTOR_SHEET_MONTHS}개월 월별 종가입니다."
+    if simulated_count:
+        notice += f" 이 중 {simulated_count}개 종목은 실시간 데이터를 가져오지 못해 모의 값으로 표시했습니다."
+    return jsonify({
+        "title": f"{sector} 섹터 · 월별 종가",
+        "sourceType": "섹터 시세",
+        "columns": ["종목명"] + labels,
+        "rows": rows,
+        "notice": notice,
+    })
