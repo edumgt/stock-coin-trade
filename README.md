@@ -17,6 +17,8 @@ Flask REST API와 Vanilla JavaScript로 만든 주식·암호화폐 모의투자
 - KRX 주식 시세·차트·검색, 코인 시세·국내 거래소 가격 비교
 - 대체자산(선물·옵션·금속·부동산 지분) 모의 주문
 - AI Sheet: 공개 웹페이지 표 가져오기, 섹터별 상위 20개 종목의 최근 24개월 월별 종가 시트(yyyy-mm × 종목명) 생성
+  - 퀀트분석: M-2까지의 월별 종가로 scikit-learn LinearRegression을 학습해 M-1을 예측하고 실제 값과 비교(종목명과 함께 고정 표시)
+  - LEAN: 선택한 종목의 월별 종가로 QuantConnect LEAN(Docker) 매수 후 보유 백테스트를 실행하는 테스트 버튼 — 자세한 내용은 아래 "운영 시 유의사항" 참고
 - 투자 분석 학습, Qdrant 기반 지식 검색 및 AI 분석 기능
 - 외부 시스템용 Open API 키 발급 및 가상 주식계좌 연동 API
 - 실전연습 학습 페이지
@@ -406,3 +408,4 @@ curl http://localhost:3000/api/alpaca-test/paper/account
 - Paper Trading은 실제 시장 충격, 슬리피지, 호가 대기 순서 등을 완전히 재현하지 않습니다.
 - 외부 API의 URL·인증 방식·호출 제한·이용 가능 국가와 상품은 변경될 수 있으므로 실제 연동 전 공식 문서를 확인하세요.
 - 배포 환경에서는 개발용 기본 비밀번호를 사용하지 말고, 비밀 관리 도구 또는 안전한 환경 변수 주입 방식을 사용하세요.
+- AI Sheet의 LEAN 백테스트 버튼은 `python-backend` 컨테이너에 호스트의 `/var/run/docker.sock`을 마운트해 QuantConnect LEAN 컨테이너를 직접 실행합니다(Docker-outside-of-Docker). 이는 해당 컨테이너에 사실상 호스트 Docker 데몬 전체에 대한 권한을 부여하는 것과 같으므로, 신뢰할 수 없는 사용자가 접근 가능한 배포 환경에서는 이 기능을 비활성화하거나 별도로 격리하는 것을 고려하세요. `docker/lean/`의 이미지를 미리 빌드해두어야 하며(`docker build -t stock-coin-trade-lean:latest docker/lean`), 없으면 최초 요청 시 자동으로 빌드합니다.

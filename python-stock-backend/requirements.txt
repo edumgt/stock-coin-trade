@@ -1,6 +1,7 @@
 Flask==3.0.3
 flask-cors==4.0.1
 yfinance==0.2.54
+scikit-learn==1.5.2
 qdrant-client[fastembed]==1.17.1
 SQLAlchemy==2.0.35
 PyMySQL==1.1.1
