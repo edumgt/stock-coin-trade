@@ -14,8 +14,9 @@ from ai_sheet import ai_sheet_bp
 from alpaca_test_api import alpaca_test_bp
 from api_keys import api_key_bp
 from broker_test_api import broker_test_bp
-from crypto import market_bp, trade_bp
+from crypto import ensure_crypto_tables, market_bp, trade_bp
 from demo_seed import seed_demo_investors
+from market_bots import ensure_bot_accounts
 from members import ensure_member_tables, member_bp
 from openapi import open_api_bp
 from quant import quant_bp
@@ -55,7 +56,9 @@ app.register_blueprint(alternative_bp)
 
 ensure_tables()
 ensure_member_tables()
+ensure_crypto_tables()
 seed_demo_investors()
+ensure_bot_accounts()
 start_scheduler()
 
 

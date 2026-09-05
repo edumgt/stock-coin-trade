@@ -95,9 +95,12 @@ def ensure_tables() -> None:
           alternative_order_id BIGINT AUTO_INCREMENT PRIMARY KEY, member_id BIGINT NOT NULL,
           symbol VARCHAR(30) NOT NULL, name VARCHAR(100) NOT NULL, category VARCHAR(20) NOT NULL,
           order_type VARCHAR(4) NOT NULL, quantity INT NOT NULL, price BIGINT NOT NULL,
-          multiplier INT NOT NULL DEFAULT 1, amount BIGINT NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          multiplier INT NOT NULL DEFAULT 1, amount BIGINT NOT NULL, source VARCHAR(20) NOT NULL DEFAULT 'WEB',
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
           KEY idx_alternative_order_member_created (member_id, created_at),
           CONSTRAINT fk_alternative_order_member FOREIGN KEY (member_id) REFERENCES member(member_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""",
+        # 이미 배포된 DB에는 컬럼만 추가한다(MariaDB 10.0.2+ IF NOT EXISTS 지원).
+        "ALTER TABLE alternative_order ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'WEB'",
     )
     with engine.begin() as conn:
         for statement in statements:
@@ -140,7 +143,36 @@ def history():
         rows = db.query(AlternativeOrder).filter(AlternativeOrder.member_id == session["member_id"]).order_by(AlternativeOrder.created_at.desc()).limit(100).all()
         return jsonify({"history": [{"symbol": row.symbol, "name": row.name, "category": row.category,
           "type": row.order_type, "quantity": row.quantity, "price": row.price, "amount": row.amount,
-          "ts": int(row.created_at.timestamp() * 1000)} for row in rows]})
+          "source": row.source, "ts": int(row.created_at.timestamp() * 1000)} for row in rows]})
+
+
+def execute_alternative_order(db, member: Member, symbol: str, side: str, quantity: int, source: str = "WEB") -> dict:
+    """대체자산 주문 체결. 라우트와 봇 거래 스케줄러가 함께 사용하는 단일 진입점이다."""
+    if symbol not in CATALOG or side not in {"BUY", "SELL"} or quantity <= 0:
+        raise ValueError("상품, 매수/매도 구분, 1 이상의 수량을 확인해주세요.")
+    quote = _quote(symbol)
+    amount = quote["tradeAmountPerUnit"] * quantity
+    position = db.query(AlternativePosition).filter_by(member_id=member.member_id, symbol=symbol).first()
+    if side == "BUY":
+        if member.asset < amount:
+            raise ValueError("보유 현금이 부족합니다.")
+        member.asset -= amount
+        if position is None:
+            position = AlternativePosition(member_id=member.member_id, symbol=symbol, category=quote["category"], quantity=quantity, avg_price=quote["price"])
+            db.add(position)
+        else:
+            total_qty = position.quantity + quantity
+            position.avg_price = round((position.avg_price * position.quantity + quote["price"] * quantity) / total_qty)
+            position.quantity = total_qty
+    else:
+        if position is None or position.quantity < quantity:
+            raise ValueError("매도 가능한 보유 수량이 부족합니다.")
+        position.quantity -= quantity
+        member.asset += amount
+        if position.quantity == 0:
+            db.delete(position)
+    db.add(AlternativeOrder(member_id=member.member_id, symbol=symbol, name=quote["name"], category=quote["category"], order_type=side, quantity=quantity, price=quote["price"], multiplier=quote["multiplier"], amount=amount, source=source))
+    return {"status": "ok", "cash": member.asset, "price": quote["price"], "amount": amount}
 
 
 @alternative_bp.post("/orders")
@@ -151,31 +183,10 @@ def order():
         quantity = int(data.get("quantity", 0))
     except (TypeError, ValueError):
         quantity = 0
-    if symbol not in CATALOG or side not in {"BUY", "SELL"} or quantity <= 0:
-        return jsonify({"message": "상품, 매수/매도 구분, 1 이상의 수량을 확인해주세요."}), 400
-    quote = _quote(symbol)
-    amount = quote["tradeAmountPerUnit"] * quantity
     with session_scope() as db:
         # 현금 확인과 차감을 하나의 잠금 단위로 묶어 동시 주문으로 인한 음수 잔액을 막는다.
         member = db.query(Member).filter(Member.member_id == session["member_id"]).with_for_update().one()
-        position = db.query(AlternativePosition).filter_by(member_id=member.member_id, symbol=symbol).first()
-        if side == "BUY":
-            if member.asset < amount:
-                return jsonify({"message": "보유 현금이 부족합니다."}), 400
-            member.asset -= amount
-            if position is None:
-                position = AlternativePosition(member_id=member.member_id, symbol=symbol, category=quote["category"], quantity=quantity, avg_price=quote["price"])
-                db.add(position)
-            else:
-                total_qty = position.quantity + quantity
-                position.avg_price = round((position.avg_price * position.quantity + quote["price"] * quantity) / total_qty)
-                position.quantity = total_qty
-        else:
-            if position is None or position.quantity < quantity:
-                return jsonify({"message": "매도 가능한 보유 수량이 부족합니다."}), 400
-            position.quantity -= quantity
-            member.asset += amount
-            if position.quantity == 0:
-                db.delete(position)
-        db.add(AlternativeOrder(member_id=member.member_id, symbol=symbol, name=quote["name"], category=quote["category"], order_type=side, quantity=quantity, price=quote["price"], multiplier=quote["multiplier"], amount=amount))
-        return jsonify({"status": "ok", "cash": member.asset, "price": quote["price"], "amount": amount})
+        try:
+            return jsonify(execute_alternative_order(db, member, symbol, side, quantity))
+        except ValueError as exc:
+            return jsonify({"message": str(exc)}), 400

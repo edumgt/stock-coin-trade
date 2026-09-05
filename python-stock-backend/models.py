@@ -49,6 +49,22 @@ class HoldCrypto(Base):
     upbit_market_id = Column(BigInteger, ForeignKey("upbit_market.upbit_market_id"))
 
 
+class CryptoOrder(Base):
+    """코인 모의 매수·매도 체결 내역. HoldCrypto(보유)와 별도로 거래내역 화면에 사용된다."""
+    __tablename__ = "crypto_order"
+
+    crypto_order_id = Column(BigInteger, primary_key=True, autoincrement=True)
+    member_id = Column(BigInteger, ForeignKey("member.member_id"), nullable=False)
+    market_code = Column(String(30), nullable=False)
+    korean_name = Column(String(255))
+    order_type = Column(String(4), nullable=False)  # BUY | SELL
+    quantity = Column(Float, nullable=False)
+    price = Column(Float, nullable=False)
+    amount = Column(BigInteger, nullable=False)
+    source = Column(String(20), nullable=False, default="WEB")  # WEB | BOT
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
 class CryptoRank(Base):
     __tablename__ = "crypto_rank"
 
@@ -122,6 +138,7 @@ class AlternativeOrder(Base):
     name = Column(String(100), nullable=False)
     category = Column(String(20), nullable=False)
     order_type = Column(String(4), nullable=False)
+    source = Column(String(20), nullable=False, default="WEB")  # WEB | BOT
     quantity = Column(Integer, nullable=False)
     price = Column(BigInteger, nullable=False)
     multiplier = Column(Integer, nullable=False, default=1)

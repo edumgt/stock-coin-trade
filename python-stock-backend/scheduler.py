@@ -4,9 +4,11 @@ import os
 import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy import text
 
 from db import session_scope
+from market_bots import run_bot_trading_round
 from models import CryptoRank, UpbitMarket
 
 log = logging.getLogger(__name__)
@@ -65,5 +67,6 @@ def start_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone="Asia/Seoul")
     scheduler.add_job(sync_coinmarketcap_rankings, CronTrigger(minute=0, timezone="Asia/Seoul"))
     scheduler.add_job(sync_upbit_markets, CronTrigger(hour=18, minute=0, timezone="Asia/Seoul"))
+    scheduler.add_job(run_bot_trading_round, IntervalTrigger(minutes=10))
     scheduler.start()
     return scheduler

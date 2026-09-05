@@ -28,10 +28,10 @@
     <div class="flex flex-wrap items-center justify-between gap-4 px-6 py-5" style="border-bottom:1px solid var(--border);">
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-xl font-black" style="color:var(--fg);">내 주식 거래이력</h1>
+          <h1 class="text-xl font-black" style="color:var(--fg);">내 거래이력</h1>
           <span class="badge badge-muted">AG Grid Community</span>
         </div>
-        <p class="mt-1 text-xs" style="color:var(--muted);">매수·매도 체결 내역을 조회하고 정렬·필터링·CSV 저장을 할 수 있습니다.</p>
+        <p class="mt-1 text-xs" style="color:var(--muted);">주식·코인·대체자산의 매수·매도 체결 내역을 함께 조회하고 정렬·필터링·CSV 저장을 할 수 있습니다.</p>
       </div>
       <div class="flex items-center gap-2">
         <button id="historyRefreshBtn" type="button" class="btn-ghost" style="padding:.48rem .85rem;font-size:12px;">↻ 새로고침</button>
@@ -46,7 +46,7 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-3 px-4 pb-4">
-      <input id="historyQuickFilter" type="search" placeholder="종목명 · 종목코드 · 매수/매도 검색" class="dark-input" style="max-width:360px;padding:.5rem .75rem;font-size:13px;">
+      <input id="historyQuickFilter" type="search" placeholder="자산 · 종목명 · 종목코드 · 매수/매도 검색" class="dark-input" style="max-width:360px;padding:.5rem .75rem;font-size:13px;">
       <span id="historyStatus" class="text-xs" style="color:var(--muted);"></span>
     </div>
     <div class="px-4 pb-5">
@@ -57,6 +57,6 @@
 <footer id="site-footer"><div class="flex w-full items-center justify-between px-4 py-4"><span class="brand-logo-text" style="font-size:13px;letter-spacing:1.5px;">EDUMGT</span><p style="font-size:12px;color:var(--muted);">(주)에듀엠지티</p></div></footer>
 <script src="/js/config.js"></script>
 <script src="/js/common.js?v=20260813-common-menu-3"></script>
-<script src="/js/trade-history.js?v=20260802-1"></script>
+<script src="/js/trade-history.js?v=20260905-unified-1"></script>
 </body>
 </html>

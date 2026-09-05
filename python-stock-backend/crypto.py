@@ -2,12 +2,25 @@ import time
 
 import requests
 from flask import Blueprint, jsonify, request, session
+from sqlalchemy import text
 
-from db import session_scope
-from models import CryptoRank, HoldCrypto, Member, UpbitMarket
+from db import engine, session_scope
+from models import CryptoOrder, CryptoRank, HoldCrypto, Member, UpbitMarket
 
 market_bp = Blueprint("crypto_market", __name__, url_prefix="/api/crypto")
 trade_bp = Blueprint("trade", __name__, url_prefix="/api/trade")
+
+
+def ensure_crypto_tables() -> None:
+    # 기존 운영 DB에도 재배포만으로 코인 거래내역 기능을 사용할 수 있게 한다.
+    with engine.begin() as conn:
+        conn.execute(text("""CREATE TABLE IF NOT EXISTS crypto_order (
+          crypto_order_id BIGINT AUTO_INCREMENT PRIMARY KEY, member_id BIGINT NOT NULL,
+          market_code VARCHAR(30) NOT NULL, korean_name VARCHAR(255), order_type VARCHAR(4) NOT NULL,
+          quantity DOUBLE NOT NULL, price DOUBLE NOT NULL, amount BIGINT NOT NULL,
+          source VARCHAR(20) NOT NULL DEFAULT 'WEB', created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          KEY idx_crypto_order_member_created (member_id, created_at),
+          CONSTRAINT fk_crypto_order_member FOREIGN KEY (member_id) REFERENCES member(member_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"""))
 
 
 def _serialize_market(m: UpbitMarket) -> dict:
@@ -188,6 +201,42 @@ def hold():
         })
 
 
+def execute_crypto_buy(db, member: Member, market_code: str, buy_krw: int, source: str = "WEB") -> dict:
+    """매수 체결. 라우트와 봇 거래 스케줄러가 함께 사용하는 단일 진입점이다."""
+    if buy_krw > member.asset:
+        raise ValueError("매수 가능 금액보다 클 수 없습니다.")
+
+    market = db.query(UpbitMarket).filter(UpbitMarket.market_code == market_code).first()
+    if not market:
+        raise ValueError(f"존재하지 않는 마켓입니다: {market_code}")
+
+    now_price = _upbit_trade_price(market_code)
+    buy_crypto_count = round(buy_krw / now_price, 8)
+
+    held = (
+        db.query(HoldCrypto)
+        .filter(HoldCrypto.member_id == member.member_id, HoldCrypto.upbit_market_id == market.upbit_market_id)
+        .first()
+    )
+    if held is None:
+        db.add(HoldCrypto(
+            member_id=member.member_id, upbit_market_id=market.upbit_market_id,
+            buy_crypto_count=buy_crypto_count, buy_average=now_price, buy_total_krw=buy_krw,
+        ))
+    else:
+        before_avg, before_count = held.buy_average, held.buy_crypto_count
+        total_buy_krw = held.buy_total_krw + buy_krw
+        total_count = round(before_count + buy_crypto_count, 8)
+        held.buy_average = round((before_avg * before_count + buy_krw) / total_count, 8)
+        held.buy_crypto_count = total_count
+        held.buy_total_krw = total_buy_krw
+
+    member.asset -= buy_krw
+    db.add(CryptoOrder(member_id=member.member_id, market_code=market_code, korean_name=market.korean_name,
+                        order_type="BUY", quantity=buy_crypto_count, price=now_price, amount=buy_krw, source=source))
+    return {"success": True, "asset": member.asset}
+
+
 @trade_bp.post("/order/buy")
 def order_buy():
     member_id = session["member_id"]
@@ -206,51 +255,48 @@ def order_buy():
 
     with session_scope() as db:
         member = db.query(Member).filter(Member.member_id == member_id).with_for_update().one()
-        if buy_krw > member.asset:
-            return jsonify({"error": "매수 가능 금액보다 클 수 없습니다."}), 400
-
-        market = db.query(UpbitMarket).filter(UpbitMarket.market_code == market_code).first()
-        if not market:
-            return jsonify({"error": f"존재하지 않는 마켓입니다: {market_code}"}), 400
-
         try:
-            now_price = _upbit_trade_price(market_code)
+            result = execute_crypto_buy(db, member, market_code, buy_krw)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         except Exception:
             return jsonify({"error": "현재가를 가져오지 못했습니다."}), 503
+        return jsonify(result)
 
-        buy_crypto_count = round(buy_krw / now_price, 8)
 
-        held = (
-            db.query(HoldCrypto)
-            .filter(
-                HoldCrypto.member_id == member_id,
-                HoldCrypto.upbit_market_id == market.upbit_market_id,
-            )
-            .first()
-        )
+def execute_crypto_sell(db, member: Member, market_code: str, sell_count: float, source: str = "WEB") -> dict:
+    """매도 체결. 라우트와 봇 거래 스케줄러가 함께 사용하는 단일 진입점이다."""
+    market = db.query(UpbitMarket).filter(UpbitMarket.market_code == market_code).first()
+    if not market:
+        raise ValueError("암호화폐를 보유중이지 않습니다.")
 
-        if held is None:
-            db.add(HoldCrypto(
-                member_id=member_id,
-                upbit_market_id=market.upbit_market_id,
-                buy_crypto_count=buy_crypto_count,
-                buy_average=now_price,
-                buy_total_krw=buy_krw,
-            ))
-        else:
-            before_avg = held.buy_average
-            before_count = held.buy_crypto_count
-            total_buy_krw = held.buy_total_krw + buy_krw
-            total_count = round(before_count + buy_crypto_count, 8)
-            new_avg = round((before_avg * before_count + buy_krw) / total_count, 8)
-            held.buy_crypto_count = total_count
-            held.buy_average = new_avg
-            held.buy_total_krw = total_buy_krw
+    held = (
+        db.query(HoldCrypto)
+        .filter(HoldCrypto.member_id == member.member_id, HoldCrypto.upbit_market_id == market.upbit_market_id)
+        .with_for_update()
+        .first()
+    )
+    if held is None:
+        raise ValueError("암호화폐를 보유중이지 않습니다.")
+    if held.buy_crypto_count < sell_count:
+        raise ValueError("매도 가능 개수보다 클 수 없습니다.")
 
-        member.asset = member.asset - buy_krw
-        updated_asset = member.asset
+    now_price = _upbit_trade_price(market_code)
+    buy_crypto_count, buy_total_krw = held.buy_crypto_count, held.buy_total_krw
 
-    return jsonify({"success": True, "asset": updated_asset})
+    sell_to_krw = round(buy_total_krw / (buy_crypto_count / sell_count))
+    held.buy_total_krw = buy_total_krw - sell_to_krw
+    updated_count = round(buy_crypto_count - sell_count, 8)
+    held.buy_crypto_count = updated_count
+
+    sell_eval_krw = round(now_price * sell_count)
+    member.asset += sell_eval_krw
+    if updated_count == 0:
+        db.delete(held)
+
+    db.add(CryptoOrder(member_id=member.member_id, market_code=market_code, korean_name=market.korean_name,
+                        order_type="SELL", quantity=sell_count, price=now_price, amount=sell_eval_krw, source=source))
+    return {"success": True, "asset": member.asset}
 
 
 @trade_bp.post("/order/sell")
@@ -272,43 +318,32 @@ def order_sell():
     with session_scope() as db:
         # 동일 자산의 동시 매도/매수를 직렬화해 수량 또는 현금이 음수가 되는 것을 막는다.
         member = db.query(Member).filter(Member.member_id == member_id).with_for_update().one()
-        market = db.query(UpbitMarket).filter(UpbitMarket.market_code == market_code).first()
-        if not market:
-            return jsonify({"error": "암호화폐를 보유중이지 않습니다."}), 400
-
-        held = (
-            db.query(HoldCrypto)
-            .filter(
-                HoldCrypto.member_id == member_id,
-                HoldCrypto.upbit_market_id == market.upbit_market_id,
-            )
-            .with_for_update()
-            .first()
-        )
-        if held is None:
-            return jsonify({"error": "암호화폐를 보유중이지 않습니다."}), 400
-        if held.buy_crypto_count < sell_count:
-            return jsonify({"error": "매도 가능 개수보다 클 수 없습니다."}), 400
-
         try:
-            now_price = _upbit_trade_price(market_code)
+            result = execute_crypto_sell(db, member, market_code, sell_count)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         except Exception:
             return jsonify({"error": "현재가를 가져오지 못했습니다."}), 503
+        return jsonify(result)
 
-        buy_crypto_count = held.buy_crypto_count
-        buy_total_krw = held.buy_total_krw
 
-        sell_to_krw = round(buy_total_krw / (buy_crypto_count / sell_count))
-        held.buy_total_krw = buy_total_krw - sell_to_krw
-
-        updated_count = round(buy_crypto_count - sell_count, 8)
-        held.buy_crypto_count = updated_count
-
-        sell_eval_krw = round(now_price * sell_count)
-        member.asset = member.asset + sell_eval_krw
-        updated_asset = member.asset
-
-        if updated_count == 0:
-            db.delete(held)
-
-    return jsonify({"success": True, "asset": updated_asset})
+@trade_bp.get("/order/history")
+def order_history():
+    try:
+        limit = max(1, min(int(request.args.get("limit", 200)), 1000))
+    except (TypeError, ValueError):
+        limit = 200
+    member_id = session["member_id"]
+    with session_scope() as db:
+        rows = (
+            db.query(CryptoOrder)
+            .filter(CryptoOrder.member_id == member_id)
+            .order_by(CryptoOrder.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return jsonify({"history": [{
+            "marketCode": row.market_code, "koreanName": row.korean_name, "type": row.order_type,
+            "quantity": row.quantity, "price": row.price, "amount": row.amount, "source": row.source,
+            "ts": int(row.created_at.timestamp() * 1000),
+        } for row in rows]})
