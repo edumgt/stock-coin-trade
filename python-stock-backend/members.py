@@ -6,10 +6,13 @@ from flask import Blueprint, jsonify, request, session
 
 from sqlalchemy import text
 
+import stock_trading
 from db import engine, session_scope
 from models import HoldCrypto, HtsWatchMemo, Member, StockPosition, UpbitMarket
 from alternatives import get_positions as get_alternative_positions, position_value
 from stock_market import cached_price
+
+LEVERAGED_ALT_CATEGORIES = {"선물", "옵션", "파생상품"}
 
 member_bp = Blueprint("member", __name__, url_prefix="/api/member")
 INITIAL_ASSET = 100_000_000
@@ -102,7 +105,8 @@ def ensure_member_tables() -> None:
 
 @member_bp.get("/portfolio-analysis")
 def portfolio_analysis():
-    """현재 평가액을 바탕으로 한 교육용 자산배분 요약과 비개인화 조언."""
+    """여러 분석 기법(자산배분·분산도·레버리지 노출·손익 통계·업종 집중도)을 종합한
+    교육용 포트폴리오 어드바이저 리포트. 실제 투자 자문이나 개인별 권유가 아니다."""
     member_id = session.get("member_id")
     if not member_id:
         return jsonify({"error": "UNAUTHORIZED", "message": "로그인이 필요합니다."}), 401
@@ -111,8 +115,10 @@ def portfolio_analysis():
         member = db.get(Member, member_id)
         if not member:
             return jsonify({"error": "UNAUTHORIZED"}), 401
-        stock_value = sum(position.quantity * (cached_price(position.symbol) or position.avg_price)
-                          for position in db.query(StockPosition).filter(StockPosition.member_id == member_id))
+
+        stock_positions = stock_trading.get_positions(db, member_id)
+        stock_value = sum(p["evalAmount"] for p in stock_positions)
+
         crypto_rows = db.query(HoldCrypto, UpbitMarket).join(
             UpbitMarket, HoldCrypto.upbit_market_id == UpbitMarket.upbit_market_id
         ).filter(HoldCrypto.member_id == member_id).all()
@@ -125,12 +131,23 @@ def portfolio_analysis():
                 prices = {row["market"]: float(row["trade_price"]) for row in response.json()}
             except Exception:
                 prices = _crypto_price_cache.get("prices", {})
-        crypto_value = sum(holding.buy_crypto_count * prices.get(market.market_code, holding.buy_average)
-                           for holding, market in crypto_rows)
+        crypto_positions = []
+        for holding, market in crypto_rows:
+            price = prices.get(market.market_code, holding.buy_average)
+            eval_amount = holding.buy_crypto_count * price
+            crypto_positions.append({
+                "name": market.korean_name or market.market_code,
+                "evalAmount": eval_amount, "pnl": eval_amount - holding.buy_total_krw,
+            })
+        crypto_value = sum(p["evalAmount"] for p in crypto_positions)
+
         alternatives = get_alternative_positions(db, member_id)
         alternative_value = sum(row["evalAmount"] for row in alternatives)
+        leverage_value = sum(row["evalAmount"] for row in alternatives if row["category"] in LEVERAGED_ALT_CATEGORIES)
+
+        cash = round(member.asset)
         values = [
-            {"name": "현금", "value": round(member.asset), "color": "#64748B"},
+            {"name": "현금", "value": cash, "color": "#64748B"},
             {"name": "주식", "value": round(stock_value), "color": "#2563EB"},
             {"name": "코인", "value": round(crypto_value), "color": "#7C3AED"},
             {"name": "대체자산", "value": round(alternative_value), "color": "#D97706"},
@@ -139,25 +156,108 @@ def portfolio_analysis():
         for item in values:
             item["weight"] = round(item["value"] / total * 100, 1) if total else 0
 
+        # ── 포지션 손익 통계 (주식·코인·대체자산 통합) ──
+        all_positions = (
+            [{"name": p["name"], "evalAmount": p["evalAmount"], "pnl": p["pnl"]} for p in stock_positions]
+            + crypto_positions
+            + [{"name": row["name"], "evalAmount": row["evalAmount"], "pnl": row["pnl"]} for row in alternatives]
+        )
+        for p in all_positions:
+            cost = p["evalAmount"] - p["pnl"]
+            p["pnlRate"] = round(p["pnl"] / cost * 100, 2) if cost > 0 else 0.0
+
+        position_stats = None
+        if all_positions:
+            winners = [p for p in all_positions if p["pnl"] > 0]
+            best, worst = max(all_positions, key=lambda p: p["pnlRate"]), min(all_positions, key=lambda p: p["pnlRate"])
+            position_stats = {
+                "count": len(all_positions),
+                "winRate": round(len(winners) / len(all_positions) * 100, 1),
+                "avgPnlRate": round(sum(p["pnlRate"] for p in all_positions) / len(all_positions), 2),
+                "best": {"name": best["name"], "pnlRate": best["pnlRate"]},
+                "worst": {"name": worst["name"], "pnlRate": worst["pnlRate"]},
+            }
+
+        # ── 업종 집중도 (주식) ──
+        sector_totals = {}
+        for p in stock_positions:
+            sector_totals[p["sector"]] = sector_totals.get(p["sector"], 0) + p["evalAmount"]
+        top_sector = None
+        if sector_totals and stock_value > 0:
+            name, sector_value = max(sector_totals.items(), key=lambda kv: kv[1])
+            top_sector = {"name": name, "weight": round(sector_value / stock_value * 100, 1)}
+
+    # ── 분산도 (허핀달-허쉬만 지수 기반 0~100점) ──
+    hhi = sum((item["weight"] / 100) ** 2 for item in values)
+    min_hhi = 1 / len(values)
+    diversification_score = round(max(0, min(100, (1 - hhi) / (1 - min_hhi) * 100))) if total else 0
+    diversification_label = "양호" if diversification_score >= 70 else ("보통" if diversification_score >= 40 else "집중됨")
+
+    # ── 레버리지 노출 (선물·옵션·파생상품 vs 현금 버퍼) ──
+    leverage_ratio = round(leverage_value / total * 100, 1) if total else 0
+    cash_buffer_ratio = round(cash / leverage_value * 100, 1) if leverage_value else None
+
+    # ── 포트폴리오 건강도 점수 (교육용 heuristic: 분산 40% + 레버리지 억제 30% + 현금 버퍼 30%) ──
+    leverage_score = max(0, 100 - leverage_ratio * 2)
+    buffer_score = 100 if not leverage_value else min(100, cash_buffer_ratio)
+    health_score = round(diversification_score * 0.4 + leverage_score * 0.3 + buffer_score * 0.3) if total else 0
+    health_label = ("매우 양호" if health_score >= 80 else "양호" if health_score >= 60
+                    else "주의" if health_score >= 40 else "위험") if total else "-"
+
+    # ── 체크리스트 (기법별 점검 결과) ──
     weights = {item["name"]: item["weight"] for item in values}
-    invested = 100 - weights["현금"]
-    advice = []
-    if not total or invested == 0:
-        advice.append("아직 투자 자산이 없습니다. 상품별 변동성과 주문 단위를 먼저 살펴본 뒤 소액으로 연습해 보세요.")
+    checks = []
+    if not total:
+        checks.append({"title": "투자 시작 전", "status": "warn",
+                        "message": "아직 투자 자산이 없습니다. 상품별 변동성과 주문 단위를 먼저 살펴본 뒤 소액으로 연습해 보세요."})
     else:
         largest = max(values, key=lambda item: item["weight"])
-        if largest["weight"] >= 65:
-            advice.append(f"{largest['name']} 비중이 {largest['weight']}%로 높습니다. 자산군을 나누면 한 시장의 변동 영향이 줄어들 수 있습니다.")
-        if weights["코인"] >= 30:
-            advice.append("코인 비중이 높은 편입니다. 변동성이 큰 자산이므로 주문 규모와 손실 가능 범위를 함께 점검해 보세요.")
-        if weights["대체자산"] >= 35:
-            advice.append("대체자산에는 선물·옵션처럼 증거금과 만기 구조가 있는 상품이 포함될 수 있습니다. 현금 여유와 계약 조건을 확인하세요.")
+        checks.append({
+            "title": "자산군 분산",
+            "status": "good" if diversification_score >= 70 else "warn" if diversification_score >= 40 else "risk",
+            "message": f"분산 점수 {diversification_score}점({diversification_label}). " + (
+                "자산군이 고르게 나뉘어 있습니다." if diversification_score >= 70
+                else f"{largest['name']} 비중이 {largest['weight']}%로 가장 높습니다. 자산군을 나누면 한 시장의 변동 영향이 줄어들 수 있습니다."
+            ),
+        })
+        if leverage_value > 0:
+            checks.append({
+                "title": "레버리지 노출",
+                "status": "risk" if leverage_ratio >= 30 else "warn" if leverage_ratio >= 15 else "good",
+                "message": f"선물·옵션·파생상품 비중이 총자산의 {leverage_ratio}%이며, 현금은 이 노출의 {cash_buffer_ratio}% 수준입니다." + (
+                    " 증거금 추가 납부나 반대매매 위험에 대비할 현금 여력을 점검하세요." if leverage_ratio >= 15 else ""
+                ),
+            })
+        if top_sector and top_sector["weight"] >= 50:
+            checks.append({
+                "title": "업종 집중도",
+                "status": "risk" if top_sector["weight"] >= 70 else "warn",
+                "message": f"주식 포지션 중 {top_sector['name']} 업종이 {top_sector['weight']}%를 차지합니다. 업종 뉴스·실적 이벤트에 대한 민감도가 커질 수 있습니다.",
+            })
+        if position_stats:
+            checks.append({
+                "title": "손익 현황",
+                "status": "good" if position_stats["winRate"] >= 50 else "warn",
+                "message": (f"보유 {position_stats['count']}개 포지션 중 {position_stats['winRate']}%가 수익 구간이며 "
+                            f"평균 수익률은 {position_stats['avgPnlRate']:+.2f}%입니다. "
+                            f"최고 {position_stats['best']['name']} {position_stats['best']['pnlRate']:+.2f}% · "
+                            f"최저 {position_stats['worst']['name']} {position_stats['worst']['pnlRate']:+.2f}%."),
+            })
         if weights["현금"] >= 50:
-            advice.append("현금 비중이 높아 변동성 방어 여력은 큽니다. 투자 목적과 기간에 맞는 분할 진입 계획을 세워볼 수 있습니다.")
-        if len(advice) == 0:
-            advice.append("자산군이 비교적 나뉘어 있습니다. 각 상품의 변동성·유동성·주문 단위를 주기적으로 점검해 비중을 관리하세요.")
-    return jsonify({"totalAsset": round(total), "allocation": values, "advice": advice,
-                    "notice": "모의투자 교육용 분석이며 개인별 투자 권유가 아닙니다."})
+            checks.append({"title": "현금 비중", "status": "good",
+                            "message": f"현금 비중이 {weights['현금']}%로 높아 변동성 방어 여력이 큽니다. 투자 목적과 기간에 맞는 분할 진입 계획을 세워볼 수 있습니다."})
+        if len(checks) == 1:
+            checks.append({"title": "종합", "status": "good",
+                            "message": "자산군이 비교적 나뉘어 있습니다. 각 상품의 변동성·유동성·주문 단위를 주기적으로 점검해 비중을 관리하세요."})
+
+    return jsonify({
+        "totalAsset": round(total), "allocation": values,
+        "healthScore": health_score, "healthLabel": health_label,
+        "diversification": {"score": diversification_score, "label": diversification_label},
+        "leverage": {"value": round(leverage_value), "ratio": leverage_ratio, "cashBufferRatio": cash_buffer_ratio},
+        "positionStats": position_stats, "topSector": top_sector, "checks": checks,
+        "notice": "자산배분·분산도(HHI)·레버리지 노출·손익 통계 등 여러 기법을 함께 본 모의투자 교육용 리포트이며, 실제 투자 자문이나 개인별 권유가 아닙니다.",
+    })
 
 
 @member_bp.get("/investor-rankings")

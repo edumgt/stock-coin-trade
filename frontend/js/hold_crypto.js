@@ -101,7 +101,21 @@ async function loadAlternativePortfolio() {
   }
 }
 
-/* ── 포트폴리오 분석 모달 ───────────────────────────────────── */
+/* ── 포트폴리오 분석 모달 (어드바이저 리포트) ───────────────────────────────────── */
+const CHECK_STATUS_STYLE = {
+  good: { icon: '✓', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
+  warn: { icon: '⚠', color: '#92400E', bg: '#FFFBEB', border: '#FDE68A' },
+  risk: { icon: '✕', color: '#B91C1C', bg: '#FEF2F2', border: '#FECACA' },
+};
+function healthColor(score) {
+  if (score >= 80) return '#059669';
+  if (score >= 60) return '#2563EB';
+  if (score >= 40) return '#D97706';
+  return '#DC2626';
+}
+function pnlColor(rate) { return rate >= 0 ? '#E11D48' : '#2563EB'; }
+function signed(n, digits = 2) { return `${n >= 0 ? '+' : ''}${n.toFixed(digits)}`; }
+
 async function openPortfolioAnalysis() {
   const modal = document.getElementById('portfolioAnalysisModal');
   const content = document.getElementById('portfolioAnalysisContent');
@@ -112,9 +126,36 @@ async function openPortfolioAnalysis() {
     if (!res.ok) throw new Error('analysis unavailable');
     const data = await res.json();
     const allocation = data.allocation || [];
-    content.innerHTML = `<div class="rounded-xl p-4" style="background:linear-gradient(135deg,#EEF4FF,#F8FAFC);border:1px solid #D7E3FC;"><div class="text-xs font-bold" style="color:var(--muted);">총 평가자산</div><div class="mt-1 text-2xl font-black" style="color:var(--fg);">${fmt(data.totalAsset)}원</div></div>
+    const checks = data.checks || [];
+    const stats = data.positionStats;
+    const leverage = data.leverage || {};
+    const color = healthColor(data.healthScore || 0);
+
+    content.innerHTML = `
+      <div class="flex flex-wrap items-center gap-4 rounded-xl p-4" style="background:linear-gradient(135deg,#EEF4FF,#F8FAFC);border:1px solid #D7E3FC;">
+        <div style="width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${color}1A;border:3px solid ${color};">
+          <span style="font-size:22px;font-weight:900;color:${color};">${data.healthScore ?? '-'}</span>
+        </div>
+        <div>
+          <div class="text-xs font-bold" style="color:var(--muted);">포트폴리오 건강도 · <span style="color:${color};">${data.healthLabel || '-'}</span></div>
+          <div class="mt-1 text-2xl font-black" style="color:var(--fg);">${fmt(data.totalAsset)}원</div>
+          <div class="mt-1 text-xs" style="color:var(--muted);">분산도 ${data.diversification?.score ?? '-'}점(${data.diversification?.label || '-'}) 등 여러 기법을 종합한 점수입니다.</div>
+        </div>
+      </div>
+
       <div class="mt-5"><h3 class="text-sm font-black" style="color:var(--fg);">자산 배분</h3><div class="mt-3 space-y-3">${allocation.map(item => `<div><div class="flex items-center justify-between text-sm"><span class="font-bold" style="color:var(--fg);"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${item.color};margin-right:6px;"></span>${item.name}</span><span style="color:var(--muted);">${fmt(item.value)}원 · <strong style="color:var(--fg);">${item.weight}%</strong></span></div><div style="height:8px;margin-top:7px;border-radius:999px;background:var(--surface-2);overflow:hidden;"><div style="width:${item.weight}%;height:100%;border-radius:inherit;background:${item.color};"></div></div></div>`).join('')}</div></div>
-      <div class="mt-6 rounded-xl p-4" style="border:1px solid #FDE68A;background:#FFFBEB;"><h3 class="text-sm font-black" style="color:#92400E;">✦ 교육용 배분 조언</h3><ul class="mt-3 space-y-2 text-sm leading-relaxed" style="color:#78350F;">${(data.advice || []).map(item => `<li style="display:flex;gap:7px;"><span>•</span><span>${item}</span></li>`).join('')}</ul></div><p class="mt-4 text-xs" style="color:var(--muted);">${data.notice || ''}</p>`;
+
+      ${stats || leverage.value || data.topSector ? `<div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        ${stats ? `<div class="rounded-lg p-3" style="background:var(--surface-2);"><div class="text-xs font-bold" style="color:var(--muted);">승률 · 평균수익률</div><div class="mt-1 text-base font-black" style="color:var(--fg);">${stats.winRate}%</div><div class="text-xs" style="color:${pnlColor(stats.avgPnlRate)};">${signed(stats.avgPnlRate)}% 평균</div></div>` : ''}
+        ${stats ? `<div class="rounded-lg p-3" style="background:var(--surface-2);"><div class="text-xs font-bold" style="color:var(--muted);">최고 · 최저 포지션</div><div class="mt-1 text-sm font-bold" style="color:${pnlColor(stats.best.pnlRate)};">${stats.best.name} ${signed(stats.best.pnlRate)}%</div><div class="text-sm font-bold" style="color:${pnlColor(stats.worst.pnlRate)};">${stats.worst.name} ${signed(stats.worst.pnlRate)}%</div></div>` : ''}
+        ${leverage.value ? `<div class="rounded-lg p-3" style="background:var(--surface-2);"><div class="text-xs font-bold" style="color:var(--muted);">레버리지 노출 · 현금버퍼</div><div class="mt-1 text-base font-black" style="color:var(--fg);">${leverage.ratio}%</div><div class="text-xs" style="color:var(--muted);">현금/노출 ${leverage.cashBufferRatio}%</div></div>` : (data.topSector ? `<div class="rounded-lg p-3" style="background:var(--surface-2);"><div class="text-xs font-bold" style="color:var(--muted);">최대 업종 비중</div><div class="mt-1 text-base font-black" style="color:var(--fg);">${data.topSector.name}</div><div class="text-xs" style="color:var(--muted);">주식 내 ${data.topSector.weight}%</div></div>` : '')}
+      </div>` : ''}
+
+      <div class="mt-6"><h3 class="text-sm font-black" style="color:var(--fg);">✦ 어드바이저 체크리스트</h3><div class="mt-3 space-y-2">${checks.map(item => {
+        const style = CHECK_STATUS_STYLE[item.status] || CHECK_STATUS_STYLE.good;
+        return `<div class="rounded-xl p-3" style="border:1px solid ${style.border};background:${style.bg};"><div class="flex items-center gap-2 text-sm font-black" style="color:${style.color};"><span>${style.icon}</span><span>${item.title}</span></div><p class="mt-1 text-sm leading-relaxed" style="color:${style.color};opacity:.9;">${item.message}</p></div>`;
+      }).join('')}</div></div>
+      <p class="mt-4 text-xs" style="color:var(--muted);">${data.notice || ''}</p>`;
   } catch {
     content.innerHTML = '<p class="text-sm" style="color:#E11D48;">분석 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p>';
   }
