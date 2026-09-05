@@ -17,6 +17,21 @@
     .market-row { cursor:pointer; transition:background .15s; }.market-row:hover,.market-row.selected { background:var(--accent-light); }
     #alternativeChart, #propertyMap { height:400px; } .asset-view { display:none; }.asset-view.active { display:block; }
     .futures-guide { border:1px solid #BFDBFE; background:#F8FBFF; }.futures-guide summary { cursor:pointer; list-style:none; }.futures-guide summary::-webkit-details-marker { display:none; }.futures-guide summary::after { content:'＋'; float:right; color:var(--accent); font-size:18px; line-height:1; }.futures-guide[open] summary::after { content:'−'; }
+    /* 실제 거래화면 패턴 (frontend/trade/stock.html과 동일) — 상세 메뉴 + 탭 모달 */
+    .detail-launcher { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; padding:6px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow-sm); }
+    .detail-launcher-btn { min-height:50px; padding:7px; border:1px solid var(--border); border-radius:8px; color:var(--accent-dark); background:linear-gradient(180deg,#fff,#F5F8FD); font-family:inherit; font-size:12px; font-weight:850; cursor:pointer; transition:transform .15s,box-shadow .15s,border-color .15s; }
+    .detail-launcher-btn:hover { border-color:var(--accent); box-shadow:0 5px 14px rgba(41,98,255,.18); transform:translateY(-1px); }
+    .details-modal-backdrop { position:fixed; inset:0; z-index:110; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.5); backdrop-filter:blur(3px); }
+    .details-modal-backdrop.open { display:flex; }
+    .details-modal { width:min(760px, 97vw); max-height:calc(100dvh - 24px); overflow:hidden; border:1px solid var(--border); border-radius:16px; background:var(--surface); box-shadow:0 24px 64px rgba(15,23,42,.3); }
+    .details-modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--border); }
+    .details-modal-title { margin:0; color:var(--fg); font-size:22px; font-weight:900; }
+    .details-modal-close { width:38px; height:38px; border:0; border-radius:9px; color:var(--muted); background:var(--surface-2); font-size:26px; line-height:1; cursor:pointer; }
+    .details-modal-body { max-height:calc(100dvh - 150px); overflow:auto; font-size:15px; }
+    .trade-tabs { display:flex; gap:8px; padding:10px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,#F8FAFD 0%,#F2F6FC 100%); }
+    .trade-tab { position:relative; flex:1; padding:9px 10px; border:1px solid transparent; border-radius:9px; color:var(--muted); background:transparent; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; transition:background .15s,border-color .15s,color .15s; }
+    .trade-tab:hover { color:var(--accent-dark); background:rgba(255,255,255,.76); border-color:rgba(41,98,255,.18); }
+    .trade-tab.active { color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); border-color:var(--accent-dark); box-shadow:0 4px 12px rgba(41,98,255,.26); }
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -62,7 +77,10 @@
       <div class="overflow-x-auto"><table class="dark-table min-w-full"><thead><tr><th class="text-left">상품</th><th class="text-right">기준가격</th><th class="text-right">등락률</th><th class="text-right">주문금액</th><th class="text-right">단위 / 조건</th></tr></thead><tbody id="marketBody"></tbody></table></div>
       </div>
       <section class="glass-card overflow-hidden">
-        <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border);"><div><h2 id="viewTitle" class="font-black" style="color:var(--fg);">상품 차트</h2><p id="viewSubtitle" class="mt-1 text-xs" style="color:var(--muted);">선택한 상품의 일봉 기준 시세</p></div><span id="viewBadge" class="badge badge-muted">일봉</span></div>
+        <div class="px-5 py-4 flex items-center justify-between flex-wrap gap-2" style="border-bottom:1px solid var(--border);">
+          <div><h2 id="viewTitle" class="font-black" style="color:var(--fg);">상품 차트</h2><p id="viewSubtitle" class="mt-1 text-xs" style="color:var(--muted);">선택한 상품의 일봉 기준 시세</p></div>
+          <div class="flex items-baseline gap-2"><span id="viewPrice" class="font-black" style="font-size:20px;color:var(--accent-dark);">-</span><span id="viewChangeRate" class="text-sm font-bold">-</span><span id="viewBadge" class="badge badge-muted">일봉</span></div>
+        </div>
         <div id="chartView" class="asset-view active"><div id="alternativeChart"></div></div>
         <div id="mapView" class="asset-view"><div id="propertyMap"></div><p class="px-5 py-3 text-xs" style="color:var(--muted);">지도 핀을 선택하면 해당 부동산 지분 상품과 교육용 기준 시세를 확인할 수 있습니다.</p></div>
       </section>
@@ -71,12 +89,103 @@
       <section class="glass-card p-5"><div class="flex items-center justify-between"><h2 class="text-lg font-black" style="color:var(--fg);">주문</h2><span id="selectedCategory" class="badge badge-muted">상품 선택</span></div>
         <div class="mt-4"><div id="selectedName" class="font-bold" style="color:var(--fg);">좌측에서 상품을 선택하세요.</div><div id="selectedInfo" class="mt-1 text-xs" style="color:var(--muted);"></div><div id="futuresContractInfo" class="mt-2 hidden rounded-lg p-2 text-xs leading-relaxed" style="background:#EFF6FF;color:#1E3A8A;"></div></div>
         <label class="mt-5 block text-xs font-bold" style="color:var(--muted);">주문 수량</label><input id="quantity" type="number" min="1" value="1" class="dark-input mt-2 w-full" style="padding:.65rem .8rem;">
+        <div class="mt-3 grid grid-cols-2 gap-2">
+          <div><div class="text-[10px] font-bold" style="color:var(--muted);margin-bottom:4px;">매수 · 보유 현금 비율</div>
+            <div id="buyPercentBtns" class="grid grid-cols-4 gap-1">
+              <button type="button" data-order-side="buy" data-percent="10" class="order-percent-btn">10%</button>
+              <button type="button" data-order-side="buy" data-percent="25" class="order-percent-btn">25%</button>
+              <button type="button" data-order-side="buy" data-percent="50" class="order-percent-btn">50%</button>
+              <button type="button" data-order-side="buy" data-percent="100" class="order-percent-btn">전액</button>
+            </div>
+          </div>
+          <div><div class="text-[10px] font-bold" style="color:var(--muted);margin-bottom:4px;">매도 · 보유 수량 비율</div>
+            <div id="sellPercentBtns" class="grid grid-cols-3 gap-1">
+              <button type="button" data-order-side="sell" data-percent="25" class="order-percent-btn">25%</button>
+              <button type="button" data-order-side="sell" data-percent="50" class="order-percent-btn">50%</button>
+              <button type="button" data-order-side="sell" data-percent="100" class="order-percent-btn">전량</button>
+            </div>
+          </div>
+        </div>
         <div class="mt-3 rounded-lg p-3 text-sm" style="background:var(--surface-2);"><div class="flex justify-between"><span style="color:var(--muted);">예상 주문금액</span><strong id="orderAmount" style="color:var(--fg);">-</strong></div><div id="orderNote" class="mt-1 text-xs" style="color:var(--muted);"></div></div>
         <div class="mt-4 grid grid-cols-2 gap-2"><button id="buyBtn" class="btn-buy" type="button">매수</button><button id="sellBtn" class="btn-sell" type="button">매도</button></div><p id="orderMessage" class="mt-3 text-xs" aria-live="polite"></p>
       </section>
-      <section class="glass-card overflow-hidden"><div class="px-5 py-4" style="border-bottom:1px solid var(--border);"><h2 class="font-black" style="color:var(--fg);">내 대체자산 포지션</h2></div><div class="overflow-x-auto"><table class="dark-table min-w-full"><thead><tr><th class="text-left">상품</th><th class="text-right">수량</th><th class="text-right">평가금액</th><th class="text-right">손익</th></tr></thead><tbody id="positionBody"></tbody></table></div></section>
+      <div class="detail-launcher" aria-label="대체자산 상세 메뉴">
+        <button type="button" class="detail-launcher-btn" data-tab="positions" onclick="openDetailsModal('positions')">보유 포지션</button>
+        <button type="button" class="detail-launcher-btn" data-tab="history" onclick="openDetailsModal('history')">체결 내역</button>
+        <button type="button" class="detail-launcher-btn" data-tab="orderbook" onclick="openDetailsModal('orderbook')">호가창</button>
+      </div>
     </aside>
   </section>
+
+  <div id="detailsModal" class="details-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="detailsModalTitle" aria-hidden="true" onclick="if(event.target === this) closeDetailsModal()">
+    <section class="details-modal">
+      <header class="details-modal-header">
+        <h2 id="detailsModalTitle" class="details-modal-title">보유 포지션</h2>
+        <button type="button" class="details-modal-close" aria-label="닫기" onclick="closeDetailsModal()">×</button>
+      </header>
+      <div class="details-modal-body">
+        <div class="trade-tabs" role="tablist" aria-label="대체자산 상세 정보">
+          <button class="tab-btn trade-tab active" data-tab="positions" onclick="switchTab('positions')" role="tab" aria-selected="true" aria-controls="tab-positions">보유 포지션</button>
+          <button class="tab-btn trade-tab" data-tab="history" onclick="switchTab('history')" role="tab" aria-selected="false" aria-controls="tab-history">체결 내역</button>
+          <button class="tab-btn trade-tab" data-tab="orderbook" onclick="switchTab('orderbook')" role="tab" aria-selected="false" aria-controls="tab-orderbook">호가창</button>
+        </div>
+        <div id="tab-positions" style="max-height:60dvh;overflow-y:auto;">
+          <table class="dark-table min-w-full"><thead><tr><th class="text-left">상품</th><th class="text-right">수량</th><th class="text-right">평가금액</th><th class="text-right">손익</th></tr></thead><tbody id="positionBody"></tbody></table>
+        </div>
+        <div id="tab-history" style="max-height:60dvh;overflow-y:auto;display:none;">
+          <table class="dark-table min-w-full"><thead><tr><th class="text-left">체결시간</th><th class="text-left">상품</th><th class="text-center">구분</th><th class="text-right">수량</th><th class="text-right">거래금액</th></tr></thead><tbody id="altHistoryBody"></tbody></table>
+        </div>
+        <div id="tab-orderbook" style="display:none;">
+          <div style="display:grid;grid-template-rows:auto auto auto;font-size:15px;">
+            <div>
+              <div style="padding:7px 12px;font-size:13px;font-weight:700;color:#F87171;border-bottom:1px solid var(--border);">매수 호가 (Bid)</div>
+              <table style="width:100%;"><thead><tr style="background:rgba(225,29,72,0.04);"><th style="padding:7px 12px;text-align:right;font-size:12px;color:var(--muted);">가격</th><th style="padding:7px 12px;text-align:right;font-size:12px;color:var(--muted);">수량</th></tr></thead><tbody id="altBidBody"></tbody></table>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;padding:12px 14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);gap:10px;">
+              <span style="font-size:13px;color:var(--muted);">현재가</span><span id="altObCurrentPrice" style="font-size:18px;font-weight:900;color:var(--accent-dark);">-</span>
+              <span style="font-size:13px;color:var(--muted);margin-left:8px;">스프레드</span><span id="altObSpread" style="font-size:13px;font-weight:700;color:var(--muted);">-</span>
+            </div>
+            <div>
+              <div style="padding:7px 12px;font-size:13px;font-weight:700;color:#60A5FA;border-bottom:1px solid var(--border);">매도 호가 (Ask)</div>
+              <table style="width:100%;"><thead><tr style="background:rgba(37,99,235,0.04);"><th style="padding:7px 12px;text-align:right;font-size:12px;color:var(--muted);">가격</th><th style="padding:7px 12px;text-align:right;font-size:12px;color:var(--muted);">수량</th></tr></thead><tbody id="altAskBody"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </main><footer id="site-footer"><div class="w-full px-4 py-4 flex justify-between"><span class="brand-logo-text" style="font-size:13px;">EDUMGT</span><span style="font-size:12px;color:var(--muted);">모의투자 교육 서비스</span></div></footer>
-<script src="/js/config.js"></script><script src="/js/common.js?v=20260813-common-menu-3"></script><script src="/js/alternatives.js?v=20260809-3"></script>
+<script>
+function switchTab(name) {
+  ['positions','history','orderbook'].forEach(t => {
+    const el  = document.getElementById('tab-' + t);
+    const btn = document.querySelector(`.tab-btn[data-tab="${t}"]`);
+    if (!el || !btn) return;
+    if (t === name) {
+      el.style.display  = '';
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      document.getElementById('detailsModalTitle').textContent = btn.textContent.trim();
+    } else {
+      el.style.display  = 'none';
+      btn.classList.remove('active');
+      btn.setAttribute('aria-selected', 'false');
+    }
+  });
+}
+function openDetailsModal(name) {
+  switchTab(name);
+  const modal = document.getElementById('detailsModal');
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+function closeDetailsModal() {
+  const modal = document.getElementById('detailsModal');
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+}
+document.addEventListener('keydown', event => { if (event.key === 'Escape') closeDetailsModal(); });
+switchTab('positions');
+</script>
+<script src="/js/config.js"></script><script src="/js/common.js?v=20260813-common-menu-3"></script><script src="/js/alternatives.js?v=20260830-1"></script>
 </body></html>
