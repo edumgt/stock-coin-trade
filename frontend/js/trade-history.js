@@ -40,7 +40,7 @@ function createHistoryGrid() {
     { headerName:'수량', field:'quantity', width:120, type:'rightAligned', valueFormatter: params => `${Number(params.value).toLocaleString('ko-KR', { maximumFractionDigits: 8 })}${params.data.unit}` },
     { headerName:'체결가', field:'price', minWidth:125, type:'rightAligned', valueFormatter: params => krw(params.value) },
     { headerName:'거래금액', field:'amount', minWidth:145, type:'rightAligned', valueFormatter: params => krw(params.value), cellStyle:{ fontWeight:'800', color:'var(--accent-dark)' } },
-    { headerName:'주문경로', field:'source', minWidth:115, valueFormatter: params => ({ WEB:'웹', PINE:'Pine 전략', OPENAPI:'Open API', DEMO_SEED:'샘플', BOT:'시스템 봇' }[params.value] || params.value || '웹') },
+    { headerName:'주문경로', field:'source', minWidth:115, valueFormatter: params => ({ WEB:'웹', PINE:'Pine 전략', OPENAPI:'Open API', DEMO_SEED:'샘플', GANADA_DATASET:'가나다 예시 포트폴리오', BOT:'시스템 봇' }[params.value] || params.value || '웹') },
   ];
   return agGrid.createGrid(element, {
     columnDefs,

@@ -7,7 +7,16 @@ from datetime import datetime, timedelta
 import bcrypt
 
 from db import session_scope
-from models import HoldCrypto, Member, StockOrder, StockPosition, UpbitMarket
+from models import (
+    AlternativeOrder,
+    AlternativePosition,
+    CryptoOrder,
+    HoldCrypto,
+    Member,
+    StockOrder,
+    StockPosition,
+    UpbitMarket,
+)
 from stock_market import BASE_PRICES, STOCKS
 
 LOGGER = logging.getLogger(__name__)
@@ -33,6 +42,33 @@ CRYPTO_MARKETS = {
     "KRW-DOT": ("폴카닷", "Polkadot", 7_500),
     "KRW-TRX": ("트론", "TRON", 410),
 }
+
+# 운영 화면 시연에 사용할 계정의 포트폴리오다. 주문의 source 값으로 적용 여부를
+# 판별하므로, 재기동과 재배포 때 사용자가 만든 주문을 덮어쓰지 않는다.
+GANADA_USERNAME = "가나다"
+GANADA_DATASET_SOURCE = "GANADA_DATASET"
+GANADA_CASH = 44_300_000
+GANADA_STOCKS = (
+    ("005930", 80, 70_000),
+    ("000660", 25, 170_000),
+    ("035420", 30, 180_000),
+    ("005380", 20, 205_000),
+    ("005490", 14, 400_000),
+)
+GANADA_COINS = (
+    ("KRW-BTC", 3_450_000, 138_000_000),
+    ("KRW-ETH", 2_400_000, 4_000_000),
+    ("KRW-XRP", 1_950_000, 2_600),
+    ("KRW-SOL", 1_800_000, 225_000),
+    ("KRW-ADA", 1_400_000, 1_000),
+)
+GANADA_ALTERNATIVES = (
+    ("RE-SEOUL", "서울 강남 아파트 지분", "부동산", 1, 12_850_000, 1, 12_850_000),
+    ("MET-GOLD", "금 (순금 99.99%)", "금", 12, 175_000, 1, 2_100_000),
+    ("MET-SILVER", "은 (99.9%)", "은", 500, 2_480, 1, 1_240_000),
+    ("OPT-K200-C", "KOSPI 200 콜옵션", "옵션", 10, 12_800, 25, 3_200_000),
+    ("FUT-USD", "미국 달러 선물", "선물", 20, 13_850, 10, 332_400),
+)
 
 
 def _demo_email(index: int) -> str:
@@ -141,3 +177,79 @@ def seed_demo_investors() -> int:
         # 시드 실패가 서비스 기동 자체를 막지 않도록 하되, 원인은 컨테이너 로그에 남긴다.
         LOGGER.exception("Unable to seed sample investor portfolios")
         return 0
+
+
+def seed_ganada_dataset() -> bool:
+    """`가나다` 계정에 화면 시연용 분산 포트폴리오를 한 번만 준비한다."""
+    try:
+        with session_scope() as db:
+            member = (db.query(Member)
+                      .filter(Member.username == GANADA_USERNAME)
+                      .order_by(Member.member_id)
+                      .first())
+            if member is None:
+                LOGGER.info("Portfolio dataset skipped: %s account was not found.", GANADA_USERNAME)
+                return False
+            if (db.query(StockOrder)
+                    .filter(StockOrder.member_id == member.member_id,
+                            StockOrder.source == GANADA_DATASET_SOURCE)
+                    .first()):
+                return False
+
+            # 이 계정은 운영 시연 전용으로, 현금과 보유 자산을 함께 구성한다.
+            # 동일 종목 보유분이 있으면 수량과 평균 매입가를 합산해 보존한다.
+            member.asset = GANADA_CASH
+            now = datetime.now()
+            for index, (symbol, quantity, price) in enumerate(GANADA_STOCKS):
+                position = db.query(StockPosition).filter_by(member_id=member.member_id, symbol=symbol).first()
+                if position:
+                    total_quantity = position.quantity + quantity
+                    position.avg_price = round((position.avg_price * position.quantity + price * quantity) / total_quantity)
+                    position.quantity = total_quantity
+                else:
+                    db.add(StockPosition(member_id=member.member_id, symbol=symbol,
+                                         quantity=quantity, avg_price=price))
+                db.add(StockOrder(member_id=member.member_id, symbol=symbol, name=STOCKS[symbol]["name"],
+                                  order_type="BUY", quantity=quantity, price=price, amount=quantity * price,
+                                  source=GANADA_DATASET_SOURCE,
+                                  created_at=now - timedelta(days=35 - index * 5)))
+
+            for index, (code, amount, price) in enumerate(GANADA_COINS):
+                market = _get_or_create_market(db, code)
+                quantity = round(amount / price, 8)
+                holding = (db.query(HoldCrypto)
+                           .filter_by(member_id=member.member_id, upbit_market_id=market.upbit_market_id)
+                           .first())
+                if holding:
+                    total_quantity = holding.buy_crypto_count + quantity
+                    total_amount = holding.buy_total_krw + amount
+                    holding.buy_average = round(total_amount / total_quantity, 8)
+                    holding.buy_crypto_count = total_quantity
+                    holding.buy_total_krw = total_amount
+                else:
+                    db.add(HoldCrypto(member_id=member.member_id, upbit_market_id=market.upbit_market_id,
+                                      buy_average=price, buy_crypto_count=quantity, buy_total_krw=amount))
+                db.add(CryptoOrder(member_id=member.member_id, market_code=code, korean_name=market.korean_name,
+                                   order_type="BUY", quantity=quantity, price=price, amount=amount,
+                                   source=GANADA_DATASET_SOURCE,
+                                   created_at=now - timedelta(days=28 - index * 4)))
+
+            for index, (symbol, name, category, quantity, price, multiplier, amount) in enumerate(GANADA_ALTERNATIVES):
+                position = db.query(AlternativePosition).filter_by(member_id=member.member_id, symbol=symbol).first()
+                if position:
+                    total_quantity = position.quantity + quantity
+                    position.avg_price = round((position.avg_price * position.quantity + price * quantity) / total_quantity)
+                    position.quantity = total_quantity
+                else:
+                    db.add(AlternativePosition(member_id=member.member_id, symbol=symbol, category=category,
+                                               quantity=quantity, avg_price=price))
+                db.add(AlternativeOrder(member_id=member.member_id, symbol=symbol, name=name, category=category,
+                                        order_type="BUY", quantity=quantity, price=price, multiplier=multiplier,
+                                        amount=amount, source=GANADA_DATASET_SOURCE,
+                                        created_at=now - timedelta(days=20 - index * 3)))
+
+        LOGGER.info("Added diversified portfolio dataset for %s.", GANADA_USERNAME)
+        return True
+    except Exception:
+        LOGGER.exception("Unable to seed the %s portfolio dataset", GANADA_USERNAME)
+        return False
