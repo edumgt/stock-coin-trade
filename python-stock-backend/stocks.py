@@ -24,8 +24,9 @@ def account():
 @stock_bp.get("/positions")
 def positions():
     member_id = session["member_id"]
+    include_volatility = request.args.get("volatility") == "1"
     with session_scope() as db:
-        return jsonify({"positions": stock_trading.get_positions(db, member_id)})
+        return jsonify({"positions": stock_trading.get_positions(db, member_id, include_volatility=include_volatility)})
 
 
 @stock_bp.post("/orders/buy")

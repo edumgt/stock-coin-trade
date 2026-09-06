@@ -5,7 +5,7 @@
   const res = await apiFetch('/api/trade/hold');
   if (!res.ok) {
     document.getElementById('holdCryptoTableBody').innerHTML =
-      '<tr><td colspan="6" class="px-4 py-6 text-center" style="color:var(--muted);">데이터를 불러올 수 없습니다.</td></tr>';
+      '<tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">데이터를 불러올 수 없습니다.</td></tr>';
     return;
   }
 
@@ -17,6 +17,7 @@
 
   // 보유 코인 테이블 렌더
   renderHoldTable(holdCryptoList);
+  loadCryptoVolatility(holdCryptoList);
   await loadStockPortfolio();
   await loadAlternativePortfolio();
 
@@ -41,7 +42,7 @@
 async function loadStockPortfolio() {
   const tbody = document.getElementById('holdStockTableBody');
   try {
-    const res = await apiFetch('/api/stocks/positions');
+    const res = await apiFetch('/api/stocks/positions?volatility=1');
     if (!res.ok) throw new Error('stock positions unavailable');
     const { positions = [] } = await res.json();
 
@@ -54,7 +55,7 @@ async function loadStockPortfolio() {
     renderStockSectorSummary(positions, totalEval);
     renderStockPortfolioCharts(positions, totalEval);
     if (!positions.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">보유 주식이 없습니다.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--muted);">보유 주식이 없습니다.</td></tr>';
       return;
     }
 
@@ -73,10 +74,11 @@ async function loadStockPortfolio() {
         <td class="text-right" style="color:var(--fg);">${fmt(pos.currentPrice)}원</td>
         <td class="text-right font-bold" style="color:var(--accent);">${fmt(pos.evalAmount)}원</td>
         <td class="text-right font-bold" style="color:${color};">${pnl >= 0 ? '+' : ''}${fmt(pnl)}원</td>
+        <td class="text-right">${volatilityBadgeHtml(pos.volatility)}</td>
       </tr>`;
     }).join('');
   } catch {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">주식 포트폴리오를 불러올 수 없습니다.</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--muted);">주식 포트폴리오를 불러올 수 없습니다.</td></tr>';
   }
 }
 
@@ -85,19 +87,19 @@ async function loadAlternativePortfolio() {
   const tbody = document.getElementById('alternativePositionBody');
   if (!tbody) return;
   try {
-    const res = await apiFetch('/api/alternatives/positions');
+    const res = await apiFetch('/api/alternatives/positions?volatility=1');
     if (!res.ok) throw new Error('alternative positions unavailable');
     const { positions = [] } = await res.json();
     if (!positions.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center" style="color:var(--muted);">보유한 대체자산이 없습니다.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">보유한 대체자산이 없습니다.</td></tr>';
       return;
     }
     tbody.innerHTML = positions.map(pos => {
       const pnl = Number(pos.pnl || 0);
-      return `<tr><td><div class="font-bold" style="color:var(--fg);">${pos.name}</div><div class="text-xs" style="color:var(--accent);">${pos.symbol}</div></td><td><span class="badge badge-muted">${pos.category}</span></td><td class="text-right" style="color:var(--fg);">${Number(pos.quantity).toLocaleString('ko-KR')}${pos.unit}</td><td class="text-right" style="color:var(--fg);">${fmt(pos.avgPrice)}원</td><td class="text-right font-bold" style="color:var(--accent);">${fmt(pos.evalAmount)}원</td><td class="text-right font-bold" style="color:${pnl >= 0 ? '#E11D48' : '#2563EB'};">${pnl >= 0 ? '+' : ''}${fmt(pnl)}원</td></tr>`;
+      return `<tr><td><div class="font-bold" style="color:var(--fg);">${pos.name}</div><div class="text-xs" style="color:var(--accent);">${pos.symbol}</div></td><td><span class="badge badge-muted">${pos.category}</span></td><td class="text-right" style="color:var(--fg);">${Number(pos.quantity).toLocaleString('ko-KR')}${pos.unit}</td><td class="text-right" style="color:var(--fg);">${fmt(pos.avgPrice)}원</td><td class="text-right font-bold" style="color:var(--accent);">${fmt(pos.evalAmount)}원</td><td class="text-right font-bold" style="color:${pnl >= 0 ? '#E11D48' : '#2563EB'};">${pnl >= 0 ? '+' : ''}${fmt(pnl)}원</td><td class="text-right">${volatilityBadgeHtml(pos.volatility)}</td></tr>`;
     }).join('');
   } catch {
-    tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center" style="color:var(--muted);">대체자산 포트폴리오를 불러올 수 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">대체자산 포트폴리오를 불러올 수 없습니다.</td></tr>';
   }
 }
 
@@ -266,7 +268,7 @@ function renderStockPortfolioCharts(positions, totalEval) {
 function renderHoldTable(holdCryptoList) {
   const tbody = document.getElementById('holdCryptoTableBody');
   if (!holdCryptoList.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center" style="color:var(--muted);">보유 코인이 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">보유 코인이 없습니다.</td></tr>';
     return;
   }
   tbody.innerHTML = holdCryptoList.map(h => `
@@ -305,6 +307,9 @@ function renderHoldTable(holdCryptoList) {
           <span class="font-black text-base" id="${h.marketCode}-rate-of-return">-</span>
           <span class="ml-1 text-xs" style="color:var(--muted);">%</span>
         </p>
+      </td>
+      <td class="text-right" id="${h.marketCode}-volatility">
+        <span style="color:var(--muted);">불러오는 중…</span>
       </td>
     </tr>`).join('');
 }
@@ -404,6 +409,39 @@ async function renderPortfolioChart(holdCryptoList, marketArrayList, memberAsset
       series: [{ name:'비중', data:chartData }],
     });
   } catch {}
+}
+
+/* ── 변동성 (수익률의 연환산 표준편차) ─────────────────────────── */
+// 일별 종가 배열로부터 연환산 변동성(%)을 계산한다. tradingPeriods는 연 거래일수
+// (주식·대체자산 252, 코인은 연중무휴이므로 365).
+function annualizedVolatility(closes, tradingPeriods) {
+  const prices = closes.filter(p => Number.isFinite(p) && p > 0);
+  if (prices.length < 3) return null;
+  const returns = [];
+  for (let i = 1; i < prices.length; i++) returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+  const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+  const variance = returns.reduce((a, r) => a + (r - mean) ** 2, 0) / returns.length;
+  return Math.round(Math.sqrt(variance) * Math.sqrt(tradingPeriods) * 10000) / 100;
+}
+// 자산군마다 "정상적인" 변동성 범위가 달라 등급 기준값을 따로 둔다(코인이 훨씬 큼).
+function volatilityBadgeHtml(vol, [low, mid] = [20, 50]) {
+  if (vol == null) return '<span style="color:var(--muted);">-</span>';
+  const { label, color } = vol < low ? { label: '낮음', color: '#059669' }
+    : vol < mid ? { label: '보통', color: '#D97706' } : { label: '높음', color: '#DC2626' };
+  return `<span class="font-bold" style="color:${color};">${vol.toFixed(1)}%</span><br><span style="font-size:10px;color:${color};">${label}</span>`;
+}
+async function loadCryptoVolatility(holdCryptoList) {
+  await Promise.all(holdCryptoList.map(async h => {
+    const cell = document.getElementById(`${h.marketCode}-volatility`);
+    if (!cell) return;
+    try {
+      const res = await fetch(`/upbit-api/candles/days?market=${encodeURIComponent(h.marketCode)}&count=30`);
+      if (!res.ok) throw new Error('candles unavailable');
+      const candles = await res.json();
+      const closes = candles.map(c => c.trade_price).reverse(); // Upbit는 최신순으로 반환
+      cell.innerHTML = volatilityBadgeHtml(annualizedVolatility(closes, 365), [40, 90]);
+    } catch { cell.innerHTML = '<span style="color:var(--muted);">-</span>'; }
+  }));
 }
 
 /* ── 유틸 ────────────────────────────────────────────────────── */

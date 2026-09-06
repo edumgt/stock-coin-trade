@@ -1,7 +1,8 @@
 import time
 
 from models import StockOrder, StockPosition
-from stock_market import STOCKS, current_price, get_stock_info
+from stock_market import STOCKS, current_price, get_chart_cached, get_stock_info
+from volatility import annualized_volatility
 
 INITIAL_CASH = 100_000_000  # matches the seed deposit granted at registration (members.py)
 
@@ -17,7 +18,16 @@ def _get_position(db, member_id: int, symbol: str) -> StockPosition | None:
     )
 
 
-def get_positions(db, member_id: int) -> list[dict]:
+def _stock_volatility(symbol: str) -> float | None:
+    """최근 1개월 일봉 종가로 계산한 연환산(252거래일) 변동성(%)."""
+    try:
+        ohlcv, _ = get_chart_cached(symbol, "1m")
+        return annualized_volatility([candle["c"] for candle in ohlcv], trading_periods=252)
+    except Exception:
+        return None
+
+
+def get_positions(db, member_id: int, include_volatility: bool = False) -> list[dict]:
     rows = db.query(StockPosition).filter(StockPosition.member_id == member_id).all()
     result = []
     for pos in rows:
@@ -27,7 +37,7 @@ def get_positions(db, member_id: int) -> list[dict]:
         info = get_stock_info(pos.symbol) or {}
         name = info.get("name", pos.symbol)
         sector = info.get("sector", "기타")
-        result.append({
+        item = {
             "symbol":       pos.symbol,
             "name":         name,
             "sector":       sector,
@@ -36,7 +46,10 @@ def get_positions(db, member_id: int) -> list[dict]:
             "currentPrice": price,
             "evalAmount":   eval_amount,
             "pnl":          pnl,
-        })
+        }
+        if include_volatility:
+            item["volatility"] = _stock_volatility(pos.symbol)
+        result.append(item)
     return result
 
 

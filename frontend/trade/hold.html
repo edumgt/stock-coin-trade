@@ -94,9 +94,9 @@
     <div class="overflow-x-auto" style="border-top:1px solid var(--border);">
       <table class="dark-table min-w-full">
         <thead><tr>
-          <th class="text-left">종목</th><th class="text-left">섹터</th><th class="text-right">보유수량</th><th class="text-right">평균단가</th><th class="text-right">현재가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th>
+          <th class="text-left">종목</th><th class="text-left">섹터</th><th class="text-right">보유수량</th><th class="text-right">평균단가</th><th class="text-right">현재가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th><th class="text-right">수익률 변동성</th>
         </tr></thead>
-        <tbody id="holdStockTableBody"><tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr></tbody>
+        <tbody id="holdStockTableBody"><tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr></tbody>
       </table>
     </div>
   </section>
@@ -116,10 +116,11 @@
             <th class="text-right">매수금액</th>
             <th class="text-right">평가금액</th>
             <th class="text-right">평가손익 (%)</th>
+            <th class="text-right">수익률 변동성</th>
           </tr>
         </thead>
         <tbody id="holdCryptoTableBody">
-          <tr><td colspan="6" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr>
+          <tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr>
         </tbody>
       </table>
     </div>
@@ -130,7 +131,7 @@
       <div><h3 class="text-base font-black" style="color:var(--fg);">대체자산 포트폴리오</h3><p class="mt-1 text-xs" style="color:var(--muted);">선물 · 옵션 · 파생상품 · 금 · 은 · 부동산 지분</p></div>
       <a href="/trade/alternatives.html" class="text-xs font-bold" style="color:var(--accent);text-decoration:none;">거래하기 →</a>
     </div>
-    <div class="overflow-x-auto"><table class="dark-table min-w-full"><thead><tr><th class="text-left">상품</th><th class="text-left">분류</th><th class="text-right">보유수량</th><th class="text-right">평균단가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th></tr></thead><tbody id="alternativePositionBody"><tr><td colspan="6" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr></tbody></table></div>
+    <div class="overflow-x-auto"><table class="dark-table min-w-full"><thead><tr><th class="text-left">상품</th><th class="text-left">분류</th><th class="text-right">보유수량</th><th class="text-right">평균단가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th><th class="text-right">수익률 변동성</th></tr></thead><tbody id="alternativePositionBody"><tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr></tbody></table></div>
   </section>
 
 </div>
@@ -149,6 +150,6 @@
 </footer>
 <script src="/js/config.js"></script>
 <script src="/js/common.js?v=20260813-common-menu-3"></script>
-<script src="/js/hold_crypto.js?v=20260905-advisor-1"></script>
+<script src="/js/hold_crypto.js?v=20260906-volatility-1"></script>
 </body>
 </html>

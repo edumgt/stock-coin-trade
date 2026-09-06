@@ -11,6 +11,7 @@ from sqlalchemy import text
 
 from db import engine, session_scope
 from models import AlternativeOrder, AlternativePosition, Member
+from volatility import annualized_volatility
 
 alternative_bp = Blueprint("alternatives", __name__, url_prefix="/api/alternatives")
 
@@ -64,7 +65,7 @@ def get_chart(symbol: str, days: int = 120) -> list[dict]:
              "low": round(row[3] * scale), "close": round(row[4] * scale)} for row in raw]
 
 
-def get_positions(db, member_id: int) -> list[dict]:
+def get_positions(db, member_id: int, include_volatility: bool = False) -> list[dict]:
     rows = db.query(AlternativePosition).filter(AlternativePosition.member_id == member_id).all()
     result = []
     for row in rows:
@@ -72,10 +73,14 @@ def get_positions(db, member_id: int) -> list[dict]:
         # 선물은 계약 명목금액이 아니라 주문 시 납부한 증거금을 기준으로 손익을 표시한다.
         cost = round(row.avg_price * quote["multiplier"] * quote["marginRate"] / 100) * row.quantity
         value = quote["tradeAmountPerUnit"] * row.quantity
-        result.append({"symbol": row.symbol, "name": quote["name"], "category": row.category,
-                       "quantity": row.quantity, "avgPrice": row.avg_price, "currentPrice": quote["price"],
-                       "multiplier": quote["multiplier"], "unit": quote["unit"], "evalAmount": value,
-                       "pnl": value - cost, "marginRate": quote["marginRate"]})
+        item = {"symbol": row.symbol, "name": quote["name"], "category": row.category,
+                "quantity": row.quantity, "avgPrice": row.avg_price, "currentPrice": quote["price"],
+                "multiplier": quote["multiplier"], "unit": quote["unit"], "evalAmount": value,
+                "pnl": value - cost, "marginRate": quote["marginRate"]}
+        if include_volatility:
+            # 교육용 기준 시세의 최근 30일 종가로 계산한 연환산(252거래일) 변동성(%).
+            item["volatility"] = annualized_volatility([candle["close"] for candle in get_chart(row.symbol, 30)], trading_periods=252)
+        result.append(item)
     return result
 
 
@@ -132,8 +137,9 @@ def chart(symbol: str):
 
 @alternative_bp.get("/positions")
 def positions():
+    include_volatility = request.args.get("volatility") == "1"
     with session_scope() as db:
-        rows = get_positions(db, session["member_id"])
+        rows = get_positions(db, session["member_id"], include_volatility=include_volatility)
         return jsonify({"positions": rows, "totalEvalAmount": sum(row["evalAmount"] for row in rows)})
 
 
