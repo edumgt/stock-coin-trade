@@ -71,6 +71,39 @@ GANADA_ALTERNATIVES = (
 )
 
 
+# 변동성 기능 테스트용 계정. 주식 7종목(전 섹터 분산)·코인 6종·대체자산 6종
+# (선물·옵션·파생상품·금·은·부동산 각 1개씩)을 보유해, 보유자산 화면의 자산별
+# 수익률 변동성 배지를 자산군마다 다양하게 확인할 수 있게 한다.
+BABABA_USERNAME = "바바바"
+BABABA_DATASET_SOURCE = "BABABA_DATASET"
+BABABA_CASH = 37_275_100
+BABABA_STOCKS = (
+    ("005930", 60, 74_000),    # 삼성전자 · 반도체·IT
+    ("263750", 100, 28_000),   # 펄어비스 · 게임
+    ("373220", 15, 320_000),   # LG에너지솔루션 · 2차전지
+    ("035420", 25, 185_000),   # NAVER · 인터넷·플랫폼
+    ("005490", 10, 410_000),   # POSCO홀딩스 · 철강·소재
+    ("068270", 20, 178_000),   # 셀트리온 · 바이오·헬스케어
+    ("247540", 60, 92_000),    # 에코프로비엠 · 2차전지
+)
+BABABA_COINS = (
+    ("KRW-BTC", 4_500_000, 150_000_000),
+    ("KRW-ETH", 3_600_000, 5_000_000),
+    ("KRW-XRP", 2_800_000, 3_100),
+    ("KRW-SOL", 2_500_000, 240_000),
+    ("KRW-DOGE", 2_000_000, 260),
+    ("KRW-TRX", 1_600_000, 410),
+)
+BABABA_ALTERNATIVES = (
+    ("FUT-K200", "KOSPI 200 선물", "선물", 20, 372_500, 1, 1_117_500),
+    ("OPT-K200-P", "KOSPI 200 풋옵션", "옵션", 8, 10_400, 25, 2_080_000),
+    ("DRV-INV", "KOSPI 200 인버스", "파생상품", 100, 7_920, 1, 792_000),
+    ("MET-GOLD", "금 (순금 99.99%)", "금", 8, 178_300, 1, 1_426_400),
+    ("MET-SILVER", "은 (99.9%)", "은", 300, 2_480, 1, 744_000),
+    ("RE-PANGYO", "판교 아파트 지분", "부동산", 1, 9_720_000, 1, 9_720_000),
+)
+
+
 def _demo_email(index: int) -> str:
     return f"sample-investor-{index:02d}{DEMO_EMAIL_DOMAIN}"
 
@@ -252,4 +285,78 @@ def seed_ganada_dataset() -> bool:
         return True
     except Exception:
         LOGGER.exception("Unable to seed the %s portfolio dataset", GANADA_USERNAME)
+        return False
+
+
+def seed_bababa_dataset() -> bool:
+    """`바바바` 계정에 자산별 수익률 변동성 기능 테스트용 분산 포트폴리오를 한 번만 준비한다."""
+    try:
+        with session_scope() as db:
+            member = (db.query(Member)
+                      .filter(Member.username == BABABA_USERNAME)
+                      .order_by(Member.member_id)
+                      .first())
+            if member is None:
+                LOGGER.info("Portfolio dataset skipped: %s account was not found.", BABABA_USERNAME)
+                return False
+            if (db.query(StockOrder)
+                    .filter(StockOrder.member_id == member.member_id,
+                            StockOrder.source == BABABA_DATASET_SOURCE)
+                    .first()):
+                return False
+
+            member.asset = BABABA_CASH
+            now = datetime.now()
+            for index, (symbol, quantity, price) in enumerate(BABABA_STOCKS):
+                position = db.query(StockPosition).filter_by(member_id=member.member_id, symbol=symbol).first()
+                if position:
+                    total_quantity = position.quantity + quantity
+                    position.avg_price = round((position.avg_price * position.quantity + price * quantity) / total_quantity)
+                    position.quantity = total_quantity
+                else:
+                    db.add(StockPosition(member_id=member.member_id, symbol=symbol,
+                                         quantity=quantity, avg_price=price))
+                db.add(StockOrder(member_id=member.member_id, symbol=symbol, name=STOCKS[symbol]["name"],
+                                  order_type="BUY", quantity=quantity, price=price, amount=quantity * price,
+                                  source=BABABA_DATASET_SOURCE,
+                                  created_at=now - timedelta(days=35 - index * 4)))
+
+            for index, (code, amount, price) in enumerate(BABABA_COINS):
+                market = _get_or_create_market(db, code)
+                quantity = round(amount / price, 8)
+                holding = (db.query(HoldCrypto)
+                           .filter_by(member_id=member.member_id, upbit_market_id=market.upbit_market_id)
+                           .first())
+                if holding:
+                    total_quantity = holding.buy_crypto_count + quantity
+                    total_amount = holding.buy_total_krw + amount
+                    holding.buy_average = round(total_amount / total_quantity, 8)
+                    holding.buy_crypto_count = total_quantity
+                    holding.buy_total_krw = total_amount
+                else:
+                    db.add(HoldCrypto(member_id=member.member_id, upbit_market_id=market.upbit_market_id,
+                                      buy_average=price, buy_crypto_count=quantity, buy_total_krw=amount))
+                db.add(CryptoOrder(member_id=member.member_id, market_code=code, korean_name=market.korean_name,
+                                   order_type="BUY", quantity=quantity, price=price, amount=amount,
+                                   source=BABABA_DATASET_SOURCE,
+                                   created_at=now - timedelta(days=30 - index * 4)))
+
+            for index, (symbol, name, category, quantity, price, multiplier, amount) in enumerate(BABABA_ALTERNATIVES):
+                position = db.query(AlternativePosition).filter_by(member_id=member.member_id, symbol=symbol).first()
+                if position:
+                    total_quantity = position.quantity + quantity
+                    position.avg_price = round((position.avg_price * position.quantity + price * quantity) / total_quantity)
+                    position.quantity = total_quantity
+                else:
+                    db.add(AlternativePosition(member_id=member.member_id, symbol=symbol, category=category,
+                                               quantity=quantity, avg_price=price))
+                db.add(AlternativeOrder(member_id=member.member_id, symbol=symbol, name=name, category=category,
+                                        order_type="BUY", quantity=quantity, price=price, multiplier=multiplier,
+                                        amount=amount, source=BABABA_DATASET_SOURCE,
+                                        created_at=now - timedelta(days=18 - index * 3)))
+
+        LOGGER.info("Added diversified portfolio dataset for %s.", BABABA_USERNAME)
+        return True
+    except Exception:
+        LOGGER.exception("Unable to seed the %s portfolio dataset", BABABA_USERNAME)
         return False
