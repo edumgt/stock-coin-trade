@@ -23,11 +23,11 @@
     .detail-launcher-btn:hover { border-color:var(--accent); box-shadow:0 5px 14px rgba(41,98,255,.18); transform:translateY(-1px); }
     .details-modal-backdrop { position:fixed; inset:0; z-index:110; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.5); backdrop-filter:blur(3px); }
     .details-modal-backdrop.open { display:flex; }
-    .details-modal { width:min(760px, 97vw); max-height:calc(100dvh - 24px); overflow:hidden; border:1px solid var(--border); border-radius:16px; background:var(--surface); box-shadow:0 24px 64px rgba(15,23,42,.3); }
-    .details-modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--border); }
+    .details-modal { width:95vw; max-width:95vw; height:95dvh; max-height:95dvh; display:flex; flex-direction:column; overflow:hidden; border:1px solid var(--border); border-radius:16px; background:var(--surface); box-shadow:0 24px 64px rgba(15,23,42,.3); }
+    .details-modal-header { flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--border); }
     .details-modal-title { margin:0; color:var(--fg); font-size:22px; font-weight:900; }
     .details-modal-close { width:38px; height:38px; border:0; border-radius:9px; color:var(--muted); background:var(--surface-2); font-size:26px; line-height:1; cursor:pointer; }
-    .details-modal-body { max-height:calc(100dvh - 150px); overflow:auto; font-size:15px; }
+    .details-modal-body { flex:1 1 auto; min-height:0; overflow:auto; font-size:15px; }
     .trade-tabs { display:flex; gap:8px; padding:10px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,#F8FAFD 0%,#F2F6FC 100%); }
     .trade-tab { position:relative; flex:1; padding:9px 10px; border:1px solid transparent; border-radius:9px; color:var(--muted); background:transparent; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; transition:background .15s,border-color .15s,color .15s; }
     .trade-tab:hover { color:var(--accent-dark); background:rgba(255,255,255,.76); border-color:rgba(41,98,255,.18); }
