@@ -16,140 +16,172 @@
   <link rel="stylesheet" href="/css/style.css?v=20260811-menu-fix-1">
   <script src="https://code.highcharts.com/11.1.0/highcharts.js"></script>
   <style>
-    #site-footer { position:fixed; bottom:0; left:0; right:0; z-index:50; margin-top:0; }
-    body { padding-bottom: 40px; }
+    /* 탭 막대는 main(공용 app-shell-layout이 스크롤을 담당하는 유일한 영역) 안에서
+       sticky로 고정하고, 탭을 전환해도 필요할 때만 그 안에서 스크롤되게 한다. */
+    .hold-tabs { position:sticky; top:0; z-index:5; display:flex; gap:8px; margin:0 0 20px; padding:10px; border-bottom:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow-sm); overflow-x:auto; }
+    .hold-tab { flex:0 0 auto; padding:10px 18px; border:1px solid transparent; border-radius:9px; color:var(--muted); background:transparent; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; transition:background .15s,border-color .15s,color .15s; }
+    .hold-tab:hover { color:var(--accent-dark); background:var(--accent-light); border-color:rgba(41,98,255,.18); }
+    .hold-tab.active { color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); border-color:var(--accent-dark); box-shadow:0 4px 12px rgba(41,98,255,.26); }
+    .hold-panel { display:none; }
+    .hold-panel.active { display:block; }
   </style>
 </head>
 <body class="min-h-screen">
 <div id="header-mount"></div>
-<main class="w-full px-4 py-6">
+<main class="hold-main w-full px-4 py-6">
+  <nav class="hold-tabs" role="tablist" aria-label="보유자산 메뉴">
+    <button type="button" class="hold-tab active" data-tab="summary" onclick="switchHoldTab('summary')" role="tab" aria-selected="true" aria-controls="panel-summary">요약</button>
+    <button type="button" class="hold-tab" data-tab="analysis" onclick="switchHoldTab('analysis')" role="tab" aria-selected="false" aria-controls="panel-analysis">✦ 포트폴리오 분석</button>
+    <button type="button" class="hold-tab" data-tab="stock" onclick="switchHoldTab('stock')" role="tab" aria-selected="false" aria-controls="panel-stock">주식</button>
+    <button type="button" class="hold-tab" data-tab="crypto" onclick="switchHoldTab('crypto')" role="tab" aria-selected="false" aria-controls="panel-crypto">코인</button>
+    <button type="button" class="hold-tab" data-tab="alt" onclick="switchHoldTab('alt')" role="tab" aria-selected="false" aria-controls="panel-alt">대체자산</button>
+  </nav>
 
-<div class="space-y-6">
-
-  <!-- Summary -->
-  <section class="glass-card p-6">
-    <div class="mb-6 flex flex-wrap items-center justify-center gap-3"><h2 class="text-2xl font-black" style="color:var(--fg);">보유자산 현황</h2><button type="button" onclick="openPortfolioAnalysis()" class="badge badge-gold" style="border:0;cursor:pointer;padding:.5rem .8rem;font-family:inherit;"><span aria-hidden="true">✦</span> 포트폴리오 분석</button></div>
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <div class="space-y-3">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="stat-card">
-            <div class="stat-label">보유 KRW</div>
-            <div class="stat-value"><span id="member_asset">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div>
+  <!-- 요약 -->
+  <div id="panel-summary" class="hold-panel active">
+    <section class="glass-card p-6">
+      <div class="mb-6 flex flex-wrap items-center justify-center gap-3"><h2 class="text-2xl font-black" style="color:var(--fg);">보유자산 현황</h2></div>
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="stat-card">
+              <div class="stat-label">보유 KRW</div>
+              <div class="stat-value"><span id="member_asset">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div>
+            </div>
+            <div class="stat-card gold-stat">
+              <div class="stat-label">총 보유자산</div>
+              <div class="stat-value"><span id="total_member_asset">-</span><span style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.7);margin-left:4px;">KRW</span></div>
+            </div>
           </div>
-          <div class="stat-card gold-stat">
-            <div class="stat-label">총 보유자산</div>
-            <div class="stat-value"><span id="total_member_asset">-</span><span style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.7);margin-left:4px;">KRW</span></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="stat-card">
+              <div class="stat-label">총매수금액</div>
+              <div style="font-size:17px;font-weight:700;color:var(--fg);margin-top:.25rem;"><span id="total_buy_krw">-</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">총평가손익</div>
+              <div style="font-size:17px;font-weight:700;margin-top:.25rem;"><span id="total_krw_of_return">-</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="stat-card">
+              <div class="stat-label">총평가금액</div>
+              <div style="font-size:17px;font-weight:700;color:var(--fg);margin-top:.25rem;"><span id="total_evaluation_krw">-</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">총평가수익률</div>
+              <div style="font-size:21px;font-weight:800;margin-top:.25rem;"><span id="total_evaluation_rate_of_return">-</span><span style="font-size:12px;color:var(--muted);margin-left:2px;">%</span></div>
+            </div>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="stat-card">
-            <div class="stat-label">총매수금액</div>
-            <div style="font-size:17px;font-weight:700;color:var(--fg);margin-top:.25rem;"><span id="total_buy_krw">-</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span></div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">총평가손익</div>
-            <div style="font-size:17px;font-weight:700;margin-top:.25rem;"><span id="total_krw_of_return">-</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span></div>
-          </div>
+        <div id="hold_asset_chart" class="min-h-[320px]"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 포트폴리오 분석 (기존 팝업 → 탭) -->
+  <div id="panel-analysis" class="hold-panel">
+    <section class="glass-card p-5">
+      <h2 class="font-black" style="color:var(--fg);">포트폴리오 분석</h2>
+      <p class="mt-1 text-xs" style="color:var(--muted);">현재 평가액 기준 자산배분</p>
+      <div id="portfolioAnalysisContent" class="mt-4"><p class="text-sm" style="color:var(--muted);">분석 정보를 불러오는 중입니다.</p></div>
+    </section>
+  </div>
+
+  <!-- 주식 포트폴리오 -->
+  <div id="panel-stock" class="hold-panel">
+    <section class="glass-card overflow-hidden">
+      <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-3" style="border-bottom:1px solid var(--border);">
+        <div>
+          <h3 class="text-base font-black" style="color:var(--fg);">주식 포트폴리오</h3>
+          <p class="mt-1 text-xs" style="color:var(--muted);">보유 종목과 섹터별 평가 비중을 확인하세요.</p>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="stat-card">
-            <div class="stat-label">총평가금액</div>
-            <div style="font-size:17px;font-weight:700;color:var(--fg);margin-top:.25rem;"><span id="total_evaluation_krw">-</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">KRW</span></div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">총평가수익률</div>
-            <div style="font-size:21px;font-weight:800;margin-top:.25rem;"><span id="total_evaluation_rate_of_return">-</span><span style="font-size:12px;color:var(--muted);margin-left:2px;">%</span></div>
-          </div>
+        <span class="badge badge-muted">KOSPI · KOSDAQ</span>
+      </div>
+      <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-3">
+        <div class="stat-card"><div class="stat-label">보유 종목</div><div class="stat-value"><span id="stockPositionCount">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">종목</span></div></div>
+        <div class="stat-card"><div class="stat-label">주식 평가금액</div><div class="stat-value"><span id="stockPortfolioEval">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div></div>
+        <div class="stat-card"><div class="stat-label">주식 평가손익</div><div class="stat-value"><span id="stockPortfolioPnl">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div></div>
+      </div>
+      <div class="grid grid-cols-1 gap-4 px-4 pb-4 lg:grid-cols-2">
+        <div class="rounded-lg p-3" style="border:1px solid var(--border);background:var(--surface-2);">
+          <div class="mb-1 flex items-center justify-between"><h4 class="text-sm font-extrabold" style="color:var(--fg);">종목별 평가 비중</h4><span class="text-xs" style="color:var(--muted);">평가금액 기준</span></div>
+          <div id="stockAllocationChart" class="min-h-[270px]"></div>
+        </div>
+        <div class="rounded-lg p-3" style="border:1px solid var(--border);background:var(--surface-2);">
+          <div class="mb-1 flex items-center justify-between"><h4 class="text-sm font-extrabold" style="color:var(--fg);">섹터별 평가금액</h4><span class="text-xs" style="color:var(--muted);">보유 종목 합산</span></div>
+          <div id="stockSectorChart" class="min-h-[270px]"></div>
         </div>
       </div>
-      <div id="hold_asset_chart" class="min-h-[320px]"></div>
-    </div>
-  </section>
-
-  <!-- Stock portfolio -->
-  <section class="glass-card overflow-hidden">
-    <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-3" style="border-bottom:1px solid var(--border);">
-      <div>
-        <h3 class="text-base font-black" style="color:var(--fg);">주식 포트폴리오</h3>
-        <p class="mt-1 text-xs" style="color:var(--muted);">보유 종목과 섹터별 평가 비중을 확인하세요.</p>
+      <div id="stockSectorSummary" class="px-4 pb-4"></div>
+      <div class="overflow-x-auto" style="border-top:1px solid var(--border);">
+        <table class="dark-table min-w-full">
+          <thead><tr>
+            <th class="text-left">종목</th><th class="text-left">섹터</th><th class="text-right">보유수량</th><th class="text-right">평균단가</th><th class="text-right">현재가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th><th class="text-right">수익률 변동성</th>
+          </tr></thead>
+          <tbody id="holdStockTableBody"><tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr></tbody>
+        </table>
       </div>
-      <span class="badge badge-muted">KOSPI · KOSDAQ</span>
-    </div>
-    <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-3">
-      <div class="stat-card"><div class="stat-label">보유 종목</div><div class="stat-value"><span id="stockPositionCount">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">종목</span></div></div>
-      <div class="stat-card"><div class="stat-label">주식 평가금액</div><div class="stat-value"><span id="stockPortfolioEval">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div></div>
-      <div class="stat-card"><div class="stat-label">주식 평가손익</div><div class="stat-value"><span id="stockPortfolioPnl">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div></div>
-    </div>
-    <div class="grid grid-cols-1 gap-4 px-4 pb-4 lg:grid-cols-2">
-      <div class="rounded-lg p-3" style="border:1px solid var(--border);background:var(--surface-2);">
-        <div class="mb-1 flex items-center justify-between"><h4 class="text-sm font-extrabold" style="color:var(--fg);">종목별 평가 비중</h4><span class="text-xs" style="color:var(--muted);">평가금액 기준</span></div>
-        <div id="stockAllocationChart" class="min-h-[270px]"></div>
+    </section>
+  </div>
+
+  <!-- 보유 코인 -->
+  <div id="panel-crypto" class="hold-panel">
+    <section class="glass-card overflow-hidden">
+      <div class="px-5 py-4" style="border-bottom:1px solid var(--border);">
+        <h3 class="text-base font-black" style="color:var(--fg);">보유 코인</h3>
       </div>
-      <div class="rounded-lg p-3" style="border:1px solid var(--border);background:var(--surface-2);">
-        <div class="mb-1 flex items-center justify-between"><h4 class="text-sm font-extrabold" style="color:var(--fg);">섹터별 평가금액</h4><span class="text-xs" style="color:var(--muted);">보유 종목 합산</span></div>
-        <div id="stockSectorChart" class="min-h-[270px]"></div>
+      <div class="overflow-x-auto">
+        <table class="dark-table min-w-full">
+          <thead>
+            <tr>
+              <th class="text-left">보유자산</th>
+              <th class="text-right">보유수량</th>
+              <th class="text-right">매수평균가</th>
+              <th class="text-right">매수금액</th>
+              <th class="text-right">평가금액</th>
+              <th class="text-right">평가손익 (%)</th>
+              <th class="text-right">수익률 변동성</th>
+            </tr>
+          </thead>
+          <tbody id="holdCryptoTableBody">
+            <tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr>
+          </tbody>
+        </table>
       </div>
-    </div>
-    <div id="stockSectorSummary" class="px-4 pb-4"></div>
-    <div class="overflow-x-auto" style="border-top:1px solid var(--border);">
-      <table class="dark-table min-w-full">
-        <thead><tr>
-          <th class="text-left">종목</th><th class="text-left">섹터</th><th class="text-right">보유수량</th><th class="text-right">평균단가</th><th class="text-right">현재가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th><th class="text-right">수익률 변동성</th>
-        </tr></thead>
-        <tbody id="holdStockTableBody"><tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr></tbody>
-      </table>
-    </div>
-  </section>
+    </section>
+  </div>
 
-  <!-- Crypto holdings table -->
-  <section class="glass-card overflow-hidden">
-    <div class="px-5 py-4" style="border-bottom:1px solid var(--border);">
-      <h3 class="text-base font-black" style="color:var(--fg);">보유 코인</h3>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="dark-table min-w-full">
-        <thead>
-          <tr>
-            <th class="text-left">보유자산</th>
-            <th class="text-right">보유수량</th>
-            <th class="text-right">매수평균가</th>
-            <th class="text-right">매수금액</th>
-            <th class="text-right">평가금액</th>
-            <th class="text-right">평가손익 (%)</th>
-            <th class="text-right">수익률 변동성</th>
-          </tr>
-        </thead>
-        <tbody id="holdCryptoTableBody">
-          <tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+  <!-- 대체자산 포트폴리오 -->
+  <div id="panel-alt" class="hold-panel">
+    <section class="glass-card overflow-hidden">
+      <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border);">
+        <div><h3 class="text-base font-black" style="color:var(--fg);">대체자산 포트폴리오</h3><p class="mt-1 text-xs" style="color:var(--muted);">선물 · 옵션 · 파생상품 · 금 · 은 · 부동산 지분</p></div>
+        <a href="/trade/alternatives.html" class="text-xs font-bold" style="color:var(--accent);text-decoration:none;">거래하기 →</a>
+      </div>
+      <div class="overflow-x-auto"><table class="dark-table min-w-full"><thead><tr><th class="text-left">상품</th><th class="text-left">분류</th><th class="text-right">보유수량</th><th class="text-right">평균단가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th><th class="text-right">수익률 변동성</th></tr></thead><tbody id="alternativePositionBody"><tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr></tbody></table></div>
+    </section>
+  </div>
 
-  <section class="glass-card overflow-hidden">
-    <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border);">
-      <div><h3 class="text-base font-black" style="color:var(--fg);">대체자산 포트폴리오</h3><p class="mt-1 text-xs" style="color:var(--muted);">선물 · 옵션 · 파생상품 · 금 · 은 · 부동산 지분</p></div>
-      <a href="/trade/alternatives.html" class="text-xs font-bold" style="color:var(--accent);text-decoration:none;">거래하기 →</a>
-    </div>
-    <div class="overflow-x-auto"><table class="dark-table min-w-full"><thead><tr><th class="text-left">상품</th><th class="text-left">분류</th><th class="text-right">보유수량</th><th class="text-right">평균단가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th><th class="text-right">수익률 변동성</th></tr></thead><tbody id="alternativePositionBody"><tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr></tbody></table></div>
-  </section>
-
-</div>
 </main>
-<div id="portfolioAnalysisModal" role="dialog" aria-modal="true" aria-labelledby="portfolioAnalysisTitle" style="display:none;position:fixed;inset:0;z-index:500;padding:18px;background:rgba(15,23,42,.56);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
-  <section style="width:95vw;max-width:95vw;height:95dvh;max-height:95dvh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:0 24px 64px rgba(15,23,42,.32);">
-    <div class="flex items-center justify-between px-5 py-4" style="flex:0 0 auto;border-bottom:1px solid var(--border);"><div><h2 id="portfolioAnalysisTitle" class="font-black" style="color:var(--fg);">포트폴리오 분석</h2><p class="mt-1 text-xs" style="color:var(--muted);">현재 평가액 기준 자산배분</p></div><button type="button" onclick="closePortfolioAnalysis()" aria-label="닫기" style="width:30px;height:30px;border:0;border-radius:8px;background:var(--surface-2);color:var(--muted);font-size:18px;cursor:pointer;">×</button></div>
-    <div id="portfolioAnalysisContent" class="p-5" style="flex:1 1 auto;min-height:0;overflow:auto;"><p class="text-sm" style="color:var(--muted);">분석 정보를 불러오는 중입니다.</p></div>
-  </section>
-</div>
 <footer id="site-footer">
   <div class="w-full px-4 py-4 flex items-center justify-between">
     <span class="brand-logo-text" style="font-size:13px;letter-spacing:1.5px;">EDUMGT</span>
       <p style="font-size:12px;color:var(--muted);">(주)에듀엠지티 &nbsp;|&nbsp; <a href="https://www.edumgt.co.kr" target="_blank" style="color:var(--accent-dark);text-decoration:none;font-weight:600;">www.edumgt.co.kr</a> &nbsp;|&nbsp; © 2025</p>
   </div>
 </footer>
+<script>
+function switchHoldTab(name) {
+  document.querySelectorAll('.hold-panel').forEach(panel => panel.classList.toggle('active', panel.id === `panel-${name}`));
+  document.querySelectorAll('.hold-tab').forEach(tab => {
+    const active = tab.dataset.tab === name;
+    tab.classList.toggle('active', active);
+    tab.setAttribute('aria-selected', String(active));
+  });
+}
+</script>
 <script src="/js/config.js"></script>
 <script src="/js/common.js?v=20260813-common-menu-3"></script>
-<script src="/js/hold_crypto.js?v=20260906-volatility-1"></script>
+<script src="/js/hold_crypto.js?v=20260906-tabs-1"></script>
 </body>
 </html>

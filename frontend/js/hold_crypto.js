@@ -20,6 +20,7 @@
   loadCryptoVolatility(holdCryptoList);
   await loadStockPortfolio();
   await loadAlternativePortfolio();
+  loadPortfolioAnalysis();
 
   if (!holdCryptoList.length) {
     setText('total_member_asset', fmt(memberAsset));
@@ -103,7 +104,7 @@ async function loadAlternativePortfolio() {
   }
 }
 
-/* ── 포트폴리오 분석 모달 (어드바이저 리포트) ───────────────────────────────────── */
+/* ── 포트폴리오 분석 탭 (어드바이저 리포트) ───────────────────────────────────── */
 const CHECK_STATUS_STYLE = {
   good: { icon: '✓', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
   warn: { icon: '⚠', color: '#92400E', bg: '#FFFBEB', border: '#FDE68A' },
@@ -118,10 +119,9 @@ function healthColor(score) {
 function pnlColor(rate) { return rate >= 0 ? '#E11D48' : '#2563EB'; }
 function signed(n, digits = 2) { return `${n >= 0 ? '+' : ''}${n.toFixed(digits)}`; }
 
-async function openPortfolioAnalysis() {
-  const modal = document.getElementById('portfolioAnalysisModal');
+async function loadPortfolioAnalysis() {
   const content = document.getElementById('portfolioAnalysisContent');
-  modal.style.display = 'flex';
+  if (!content) return;
   content.innerHTML = '<p class="text-sm" style="color:var(--muted);">분석 정보를 불러오는 중입니다.</p>';
   try {
     const res = await apiFetch('/api/member/portfolio-analysis');
@@ -162,9 +162,6 @@ async function openPortfolioAnalysis() {
     content.innerHTML = '<p class="text-sm" style="color:#E11D48;">분석 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p>';
   }
 }
-function closePortfolioAnalysis() { document.getElementById('portfolioAnalysisModal').style.display = 'none'; }
-document.getElementById('portfolioAnalysisModal')?.addEventListener('click', event => { if (event.target.id === 'portfolioAnalysisModal') closePortfolioAnalysis(); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape') closePortfolioAnalysis(); });
 
 function renderStockSectorSummary(positions, totalEval) {
   const container = document.getElementById('stockSectorSummary');
