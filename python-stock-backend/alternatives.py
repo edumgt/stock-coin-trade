@@ -1,11 +1,10 @@
-"""모의 파생·귀금속·부동산 시장과 주문 API.
-
-외부 시세 라이선스에 의존하지 않는 교육용 기준 시세다. 가격은 영업일별로
-변동하며, 각 상품의 단위·계약승수·증거금 정보를 응답에 함께 제공한다.
-"""
+"""모의 파생·귀금속·부동산 시장과 주문 API."""
 import math
+import threading
+import time
 from datetime import date, timedelta
 
+import yfinance as yf
 from flask import Blueprint, jsonify, request, session
 from sqlalchemy import text
 
@@ -29,27 +28,97 @@ CATALOG = {
     "RE-BUSAN": {"name": "부산 해운대 아파트 지분", "category": "부동산", "price": 6_380_000, "multiplier": 1, "unit": "1구좌", "marginRate": 100, "description": "전용 84㎡ 대표 단지 시세를 분할한 교육용 지분", "location": {"lat": 35.1631, "lng": 129.1636, "label": "부산 해운대구"}},
 }
 
+# Yahoo Finance는 무료 데이터라 장중에는 지연될 수 있다. 실제 선물 호가를
+# 선물 계약으로 오인하지 않도록 KOSPI200은 지수, USD 선물은 환율을 기준으로
+# 표시한다. 옵션·부동산은 공개 실시간 원천이 없어 교육용 기준가를 유지한다.
+LIVE_FEEDS = {
+    "FUT-K200": {"ticker": "^KS200", "scale": 1_000, "label": "KOSPI 200 지수 연동 (Yahoo Finance 지연 시세)"},
+    "FUT-USD": {"ticker": "KRW=X", "scale": 10, "label": "원/달러 환율 연동 (Yahoo Finance 지연 시세)"},
+    "DRV-LEV": {"ticker": "122630.KS", "scale": 1, "label": "KODEX 레버리지 (Yahoo Finance 지연 시세)"},
+    "DRV-INV": {"ticker": "114800.KS", "scale": 1, "label": "KODEX 인버스 (Yahoo Finance 지연 시세)"},
+    "MET-GOLD": {"ticker": "GC=F", "scale": 1, "label": "국제 금 선물 참고 (Yahoo Finance 지연 시세)"},
+    "MET-SILVER": {"ticker": "SI=F", "scale": 1, "label": "국제 은 선물 참고 (Yahoo Finance 지연 시세)"},
+}
+LIVE_TTL = 60
+_live_chart_cache: dict[str, dict] = {}
+_live_chart_lock = threading.Lock()
+
+
+def _feed_scale(symbol: str) -> float:
+    """원화/g로 표시하는 금속 상품에는 최신 USD/KRW 환율을 적용한다."""
+    feed = LIVE_FEEDS[symbol]
+    if symbol not in {"MET-GOLD", "MET-SILVER"}:
+        return feed["scale"]
+    try:
+        fx = yf.Ticker("KRW=X").history(period="5d", interval="1d", auto_adjust=False)["Close"].dropna().iloc[-1]
+        return float(fx) / 31.1035  # troy oz → g, USD → KRW
+    except Exception:
+        return 1.0
+
+
+def _live_chart(symbol: str, days: int = 365) -> list[dict]:
+    """실제 일봉을 가져온다. 실패 시 빈 목록으로 돌려 기존 모의 기준가를 사용한다."""
+    if symbol not in LIVE_FEEDS:
+        return []
+    now = time.time()
+    cached = _live_chart_cache.get(symbol)
+    if cached and now - cached["ts"] < LIVE_TTL:
+        return cached["data"][-days:]
+    with _live_chart_lock:
+        cached = _live_chart_cache.get(symbol)
+        if cached and now - cached["ts"] < LIVE_TTL:
+            return cached["data"][-days:]
+        try:
+            rows = yf.Ticker(LIVE_FEEDS[symbol]["ticker"]).history(period="2y", interval="1d", auto_adjust=False)
+            scale = _feed_scale(symbol)
+            data = []
+            for index, row in rows.iterrows():
+                values = [float(row[key]) * scale for key in ("Open", "High", "Low", "Close")]
+                if not all(math.isfinite(value) and value > 0 for value in values):
+                    continue
+                data.append({"time": index.date().isoformat(), "open": round(values[0]), "high": round(values[1]),
+                             "low": round(values[2]), "close": round(values[3])})
+            if len(data) >= 2:
+                _live_chart_cache[symbol] = {"ts": now, "data": data}
+                return data[-days:]
+        except Exception:
+            pass
+        return cached["data"][-days:] if cached else []
+
 
 def _quote(symbol: str) -> dict:
     item = CATALOG[symbol]
-    # 교육용 기준 시세의 하루 단위 변동. 주문·평가가 같은 기준으로 일관되게 계산된다.
-    wave = math.sin(date.today().toordinal() * 0.71 + sum(map(ord, symbol)))
-    rate = round(wave * (0.018 if item["category"] in {"옵션", "파생상품"} else 0.009), 2)
-    price = max(1, round(item["price"] * (1 + rate / 100)))
+    live_data = _live_chart(symbol, 2)
+    if len(live_data) >= 2:
+        price = live_data[-1]["close"]
+        previous = live_data[-2]["close"]
+        rate = round((price - previous) / previous * 100, 2) if previous else 0
+        source = LIVE_FEEDS[symbol]["label"]
+        updated_at = live_data[-1]["time"]
+    else:
+        # 공개 실시간 원천이 없는 옵션·부동산, 또는 공급자 장애 시에만 기준가를 쓴다.
+        wave = math.sin(date.today().toordinal() * 0.71 + sum(map(ord, symbol)))
+        rate = round(wave * (0.018 if item["category"] in {"옵션", "파생상품"} else 0.009), 2)
+        price = max(1, round(item["price"] * (1 + rate / 100)))
+        source = "교육용 기준 시세"
+        updated_at = date.today().isoformat()
     amount_per_unit = price * item["multiplier"]
     margin_per_unit = round(amount_per_unit * item["marginRate"] / 100)
     quote = {"symbol": symbol, **item, "price": price, "changeRate": rate,
             "notionalPerUnit": amount_per_unit, "tradeAmountPerUnit": margin_per_unit,
-            "updatedAt": date.today().isoformat(), "source": "교육용 기준 시세"}
+            "updatedAt": updated_at, "source": source}
     if item.get("pointScale"):
         quote["actualPoint"] = price / item["pointScale"]
     return quote
 
 
 def get_chart(symbol: str, days: int = 120) -> list[dict]:
-    """교육용 기준가에서 파생한 일봉 데이터. 마지막 종가는 현재 주문 기준가와 일치한다."""
-    quote = _quote(symbol)
+    """실제 일봉을 우선 반환하고, 지원하지 않는 상품은 교육용 차트로 대체한다."""
     days = max(30, min(days, 365))
+    live_data = _live_chart(symbol, days)
+    if len(live_data) >= 2:
+        return live_data
+    quote = _quote(symbol)
     raw = []
     for index in range(days):
         day = date.today() - timedelta(days=days - index - 1)

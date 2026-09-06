@@ -2,7 +2,7 @@ let markets = [], selected = null, category = '전체', chart, candleSeries, pro
 let lastCash = 0, lastPositions = [];
 const won = value => Number(value || 0).toLocaleString('ko-KR') + '원';
 
-(async () => { await initPage({ requireAuth: true }); initChart(); await refresh(); })();
+(async () => { await initPage({ requireAuth: true }); initChart(); await refresh(); setInterval(refresh, 60_000); })();
 
 function initChart() {
   const el = document.getElementById('alternativeChart');
@@ -125,12 +125,12 @@ function renderMarkets() {
 async function selectMarket(symbol) {
   selected = markets.find(item => item.symbol === symbol); if (!selected) return;
   document.getElementById('selectedName').textContent = selected.name; document.getElementById('selectedCategory').textContent = selected.category;
-  document.getElementById('selectedInfo').textContent = `${selected.description} · 교육용 기준가 ${won(selected.price)} / ${selected.unit}`;
+  document.getElementById('selectedInfo').textContent = `${selected.description} · ${selected.source} · ${selected.updatedAt}`;
   const futuresContractInfo = document.getElementById('futuresContractInfo');
   futuresContractInfo.textContent = selected.actualMultiplier ? `${formatActualFutures(selected)}. 현재 주문은 계약승수 1의 축소 모의계약이며, 실제 선물 주문이 아닙니다.` : '';
   futuresContractInfo.classList.toggle('hidden', !selected.actualMultiplier);
   document.getElementById('viewTitle').textContent = selected.category === '부동산' ? '부동산 시세 지도' : `${selected.name} 일봉 차트`;
-  document.getElementById('viewSubtitle').textContent = selected.category === '부동산' ? `${selected.location?.label || ''} · 지도에서 다른 지역도 선택할 수 있습니다.` : '교육용 기준 시세 일봉 · 주문 기준가는 당일 종가와 연동됩니다.';
+  document.getElementById('viewSubtitle').textContent = selected.category === '부동산' ? `${selected.location?.label || ''} · 지도에서 다른 지역도 선택할 수 있습니다.` : `${selected.source} · 60초마다 갱신 · 주문 기준가는 최신 일봉 종가와 연동됩니다.`;
   document.getElementById('viewBadge').textContent = selected.category === '부동산' ? '지도 시세' : '일봉';
   document.getElementById('chartView').classList.toggle('active', selected.category !== '부동산'); document.getElementById('mapView').classList.toggle('active', selected.category === '부동산');
   document.getElementById('viewPrice').textContent = won(selected.price);

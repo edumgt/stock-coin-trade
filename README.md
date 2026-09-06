@@ -119,14 +119,19 @@ docker compose down
 docker compose down -v
 ```
 
-## 기본 계정과 메뉴
+## 공개 멀티자산 데모 계정과 메뉴
 
-기동 시 테스트 계정과 예제 투자자 데이터가 준비됩니다. 기본 테스트 계정은 다음과 같습니다.
+<https://st.edumgt.co.kr>에서 바로 로그인해 확인할 수 있도록, 주식·암호화폐·대체자산 포지션을 각각 포함한 공개 데모 계정 5개를 준비했습니다. 아래 계정은 교육·기능 테스트 전용이며, 실제 개인정보·실계좌·외부 API 키를 연결하지 않습니다. 공개된 계정이므로 비밀번호 변경, 개인 정보 입력, 실제 서비스 용도의 사용은 금지합니다.
 
-```text
-test1@test.com / 123456
-test2@test.com / 123456
-```
+| 투자 유형 | ID(이메일) | 비밀번호 | 사전 구성 포지션 |
+|---|---|---|---|
+| 보수형 | `multiasset-demo-01@edumgt.test` | `DemoMultiAsset2601` | 삼성전자 · 비트코인 · 금 |
+| 균형형 | `multiasset-demo-02@edumgt.test` | `DemoMultiAsset2602` | SK하이닉스 · 이더리움 · 판교 아파트 지분 |
+| 성장형 | `multiasset-demo-03@edumgt.test` | `DemoMultiAsset2603` | NAVER · 리플 · 미국 달러 선물 |
+| 실물형 | `multiasset-demo-04@edumgt.test` | `DemoMultiAsset2604` | 현대차 · 솔라나 · KOSPI 200 콜옵션 |
+| 파생형 | `multiasset-demo-05@edumgt.test` | `DemoMultiAsset2605` | POSCO홀딩스 · 에이다 · KOSPI 200 레버리지 |
+
+각 계정은 초기 가상 현금도 보유합니다. 여러 사용자가 같은 공개 계정을 함께 사용하므로 주문·매도·초기화에 따라 포트폴리오 상태는 변경될 수 있습니다.
 
 좌측 공통 offcanvas 메뉴는 모든 페이지가 같은 `frontend/js/common.js`를 사용합니다.
 
