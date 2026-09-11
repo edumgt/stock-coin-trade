@@ -226,6 +226,28 @@ CREATE TABLE IF NOT EXISTS `system_error_log` (
   CONSTRAINT `fk_system_error_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 외부 API 테스트 사용이력: 요청·응답은 민감값을 마스킹하여 저장한다.
+CREATE TABLE IF NOT EXISTS `api_usage_log` (
+  `api_usage_log_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `called_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `member_id` bigint(20) DEFAULT NULL,
+  `provider` varchar(40) NOT NULL,
+  `operation` varchar(100) NOT NULL,
+  `method` varchar(10) NOT NULL,
+  `path` varchar(500) NOT NULL,
+  `request_meta` text DEFAULT NULL,
+  `http_status` int NOT NULL,
+  `success` tinyint(1) NOT NULL,
+  `duration_ms` int DEFAULT NULL,
+  `result_summary` varchar(500) DEFAULT NULL,
+  `response_body` text DEFAULT NULL,
+  PRIMARY KEY (`api_usage_log_id`),
+  KEY `idx_api_usage_member_called` (`member_id`,`called_at`),
+  KEY `idx_api_usage_provider_called` (`provider`,`called_at`),
+  KEY `idx_api_usage_success_called` (`success`,`called_at`),
+  CONSTRAINT `fk_api_usage_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- 테이블 mockinv.upbit_market 구조 내보내기
 CREATE TABLE IF NOT EXISTS `upbit_market` (
   `upbit_market_id` bigint(20) NOT NULL AUTO_INCREMENT,

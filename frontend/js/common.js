@@ -132,6 +132,7 @@ function renderHeader(user) {
       { href: '/analysis.html', label: '투자 분석 학습', icon: 'fa-solid fa-graduation-cap' },
       { href: '/ai-sheet.html', label: 'AI Sheet',       icon: 'fa-solid fa-table-cells-large' },
       { href: '/openapi.html',  label: 'Open API',       icon: 'fa-solid fa-key' },
+      { href: '/api-usage-history.html', label: 'API 사용이력', icon: 'fa-solid fa-list-check' },
       { href: '/error-analysis.html', label: '에러분석', icon: 'fa-solid fa-bug' },
       { href: '/broker-api-test.html', label: '증권사 시세 테스트', icon: 'fa-solid fa-plug-circle-check' },
     ]},
@@ -687,6 +688,7 @@ function mountApiTestGuide() {
   const guides = {
     '/broker-api-test.html': {
       title: '이 화면의 API 호출과 기대 결과',
+      rate: '<strong>공식 한도(이 화면의 KIS Testbed): 분당 60건</strong> — 모의투자는 초당 1건(계좌·App Key 기준)입니다. 접근 토큰 발급도 초당 1건입니다. KB는 API별 고정 분당 한도를 공개하지 않아 아래 KB 호출은 연속 실행하지 말고 포털의 최신 명세를 확인하세요.',
       rows: [
         ['KIS 현재가', 'GET /api/broker-test/kis/quote?symbol=005930', 'symbol: 6자리 KRX 코드', 'ok: true, quote.price·changeRate·volume·tradeTime'],
         ['KIS 일봉', 'GET /api/broker-test/kis/chart?symbol=005930', 'symbol: 6자리 KRX 코드', 'ok: true, chart.data 배열(날짜·OHLC 가격)'],
@@ -700,6 +702,7 @@ function mountApiTestGuide() {
     },
     '/kb-api-test.html': {
       title: '이 화면의 API 호출과 기대 결과',
+      rate: '<strong>KB증권: 고정 분당 호출 한도 미공개</strong> — 공식 포털은 API·운영 정책별 호출 제한이 적용된다고 안내합니다. 따라서 이 화면에서는 버튼을 연속 클릭하지 말고, 429 또는 제한 오류가 나면 잠시 기다린 뒤 재시도하세요.',
       rows: [
         ['Access Token', 'GET /api/broker-test/kb/token', '서버의 kb.key 또는 환경변수', 'ok: true, check.tokenType·expiresIn. 토큰 원문은 표시하지 않음'],
         ['현재가 (IVU10140)', 'GET /api/broker-test/kb/quote?symbol=005930', 'symbol: 6자리 KRX 코드', 'ok: true, quote.price·changeRate·volume'],
@@ -710,6 +713,7 @@ function mountApiTestGuide() {
     },
     '/kis-order-flow-test.html': {
       title: '이 화면의 API 호출과 기대 결과',
+      rate: '<strong>KIS Testbed: 분당 60건</strong> — 모의투자 REST 기준 초당 1건입니다. 이 화면은 한 번 클릭에 주문·정정·취소를 순차 실행하므로 중복 클릭하지 마세요.',
       rows: [
         ['모의 주문 흐름', 'POST /api/broker-test/kis/order-flow-test', '로그인 세션 + 확인 체크 + 서버의 Testbed 계좌', 'ok: true, test.environment·symbol·currentPrice·testPrice·amendedPrice. 서버가 모의 주문→정정→취소까지 완료'],
       ],
@@ -717,6 +721,7 @@ function mountApiTestGuide() {
     },
     '/alpaca-test.html': {
       title: '이 화면의 API 호출과 기대 결과',
+      rate: '<strong>Alpaca: 호출 종류·플랜별로 다름</strong> — 이 화면의 시세 데이터는 Basic 플랜 기준 분당 200건(Algo Trader Plus는 분당 10,000건)입니다. Paper 계정·포지션·주문 조회의 고정 분당 수치는 공개되지 않으며, 응답의 <code>X-RateLimit-*</code> 헤더를 기준으로 제한을 관리해야 합니다.',
       rows: [
         ['Paper 계정', 'GET /api/alpaca-test/paper/account', '서버의 Paper API Key·Secret', 'ok: true, result.environment=paper, accountStatus·currency, tradingBlocked=false 확인'],
         ['포지션', 'GET /api/alpaca-test/paper/positions', '동일 Paper 인증', 'ok: true, result.positions 배열(보유 수량·평가 정보)'],
@@ -727,6 +732,7 @@ function mountApiTestGuide() {
     },
     '/alpaca-order-flow-test.html': {
       title: '이 화면의 API 호출과 기대 결과',
+      rate: '<strong>Alpaca Paper 주문: 고정 분당 수치 미공개</strong> — 응답의 <code>X-RateLimit-Limit</code>·<code>Remaining</code>·<code>Reset</code> 헤더를 따릅니다. 이 화면은 안전을 위해 사용자가 한 번씩만 실행하도록 구성했습니다.',
       rows: [
         ['Paper 주문·취소', 'POST /api/alpaca-test/paper/order-flow-test', '로그인 세션 + 확인 체크 + Paper 인증', 'ok: true, result.environment=paper·symbol=AAPL·askPrice·testLimitPrice·quantity·order·cancel'],
       ],
@@ -734,6 +740,7 @@ function mountApiTestGuide() {
     },
     '/binance-api-test.html': {
       title: '이 화면의 API 호출과 기대 결과',
+      rate: '<strong>Binance Spot 공개 API: IP당 분당 6,000 request weight</strong> — “6,000회”가 아니라 엔드포인트별 가중치 합계입니다. 현재 사용량은 <code>X-MBX-USED-WEIGHT-1M</code> 응답 헤더에서 확인하며, 429가 나오면 <code>Retry-After</code>만큼 기다립니다.',
       rows: [
         ['24시간 시세', 'GET /api/crypto-exchange-test/binance/ticker?symbol=BTCUSDT', 'symbol: BTCUSDT 형식, 6~20자리 영문·숫자', 'ok: true, result 내 lastPrice·priceChangePercent·volume 등'],
         ['호가 10단계', 'GET /api/crypto-exchange-test/binance/orderbook?symbol=BTCUSDT', '동일 symbol', 'ok: true, result 내 bids·asks 배열 각 최대 10단계'],
@@ -742,6 +749,7 @@ function mountApiTestGuide() {
     },
     '/korbit-api-test.html': {
       title: '이 화면의 API 호출과 기대 결과',
+      rate: '<strong>Korbit 공개 API: IP당 초당 50건 = 분당 최대 3,000건</strong> — 이 화면의 시세·호가 호출 모두 공개 API입니다. 실제 남은 양은 <code>Ratelimit</code> 헤더의 <code>remaining</code>과 <code>reset</code>으로 확인합니다.',
       rows: [
         ['24시간 시세', 'GET /api/crypto-exchange-test/korbit/ticker?symbol=btc_krw', 'symbol: btc_krw 형식(코인_krw)', 'ok: true, result 내 last·high·low·volume 등'],
         ['호가 10단계', 'GET /api/crypto-exchange-test/korbit/orderbook?symbol=btc_krw', '동일 symbol', 'ok: true, result 내 bids·asks 배열 각 최대 10단계'],
@@ -750,6 +758,7 @@ function mountApiTestGuide() {
     },
     '/aws-broker-api-test.html': {
       title: 'AWS SSM 트랙: API 호출과 기대 결과',
+      rate: '<strong>KIS Testbed: 분당 60건</strong> — SSM에서 키를 읽은 뒤에도 KIS 모의 REST 한도는 초당 1건입니다. <strong>KB: 고정 분당 한도 미공개</strong>으로 API별 최신 명세와 제한 응답을 따릅니다. SSM 상태 점검 자체는 AWS 계정의 SSM API 한도를 사용합니다.',
       rows: [
         ['SSM 준비 상태', 'GET /api/aws-broker-test/ssm/status', 'AWS_REGION, IAM GetParameters 권한, 7개 파라미터', 'ok: true, status 내 파라미터 존재 여부·타입. SecureString 값은 복호화·반환하지 않음'],
         ['KIS 현재가', 'GET /api/aws-broker-test/kis/quote?symbol=005930', 'SSM kis/app_key·secret + 6자리 symbol', 'ok: true, quote.price·changeRate·volume·tradeTime'],
@@ -761,6 +770,7 @@ function mountApiTestGuide() {
     },
     '/aws-alpaca-test.html': {
       title: 'AWS SSM 트랙: API 호출과 기대 결과',
+      rate: '<strong>Alpaca 시세 데이터: Basic 플랜 분당 200건</strong> (Algo Trader Plus 분당 10,000건)입니다. 계정·포지션·종목 정보 API의 고정 분당 수치는 공개되지 않으므로 <code>X-RateLimit-*</code> 응답 헤더를 기준으로 관리하세요.',
       rows: [
         ['Paper 계정', 'GET /api/aws-alpaca-test/paper/account', 'SSM alpaca/api_key·secret_key', 'ok: true, result.environment=paper·accountStatus·tradingBlocked'],
         ['포지션', 'GET /api/aws-alpaca-test/paper/positions', '동일 SSM 인증값', 'ok: true, result.positions 배열'],
@@ -779,7 +789,7 @@ function mountApiTestGuide() {
   element.id = 'api-test-guide';
   element.className = 'api-test-guide';
   element.open = true;
-  element.innerHTML = `<summary>${guide.title}<span>호출 경로 · 입력값 · 성공 기준 보기</span></summary><div class="api-test-guide-scroll"><table><thead><tr><th>테스트</th><th>이 웹앱 서버 호출</th><th>필요한 값</th><th>성공 시 확인할 값</th></tr></thead><tbody>${rows}</tbody></table></div>${guide.note ? `<p class="api-test-guide-note">${guide.note}</p>` : ''}<p class="api-test-guide-note">공통 성공 형식은 <code>ok: true</code>입니다. <code>ok: false</code> 또는 HTTP 4xx/5xx이면 결과창의 <code>message</code>를 확인하세요. Key·Secret·Access Token·계좌번호는 응답에 표시하지 않습니다.</p>`;
+  element.innerHTML = `<summary>${guide.title}<span>호출 경로 · 입력값 · 성공 기준 보기</span></summary><p class="api-test-guide-rate">${guide.rate}</p><div class="api-test-guide-scroll"><table><thead><tr><th>테스트</th><th>이 웹앱 서버 호출</th><th>필요한 값</th><th>성공 시 확인할 값</th></tr></thead><tbody>${rows}</tbody></table></div>${guide.note ? `<p class="api-test-guide-note">${guide.note}</p>` : ''}<p class="api-test-guide-note">공통 성공 형식은 <code>ok: true</code>입니다. <code>ok: false</code> 또는 HTTP 4xx/5xx이면 결과창의 <code>message</code>를 확인하세요. Key·Secret·Access Token·계좌번호는 응답에 표시하지 않습니다.</p>`;
   host.appendChild(element);
 }
 

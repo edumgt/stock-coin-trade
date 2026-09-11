@@ -177,3 +177,22 @@ class SystemErrorLog(Base):
     request_meta = Column(Text, nullable=True)
     fingerprint = Column(String(64), nullable=True)
     member_id = Column(BigInteger, ForeignKey("member.member_id"), nullable=True)
+
+
+class ApiUsageLog(Base):
+    """외부 증권사·거래소 API 테스트 호출의 감사 이력. 인증 원문은 저장하지 않는다."""
+    __tablename__ = "api_usage_log"
+
+    api_usage_log_id = Column(BigInteger, primary_key=True, autoincrement=True)
+    called_at = Column(DateTime, nullable=False, server_default=func.now())
+    member_id = Column(BigInteger, ForeignKey("member.member_id"), nullable=True)
+    provider = Column(String(40), nullable=False)
+    operation = Column(String(100), nullable=False)
+    method = Column(String(10), nullable=False)
+    path = Column(String(500), nullable=False)
+    request_meta = Column(Text, nullable=True)
+    http_status = Column(Integer, nullable=False)
+    success = Column(Boolean, nullable=False)
+    duration_ms = Column(Integer, nullable=True)
+    result_summary = Column(String(500), nullable=True)
+    response_body = Column(Text, nullable=True)

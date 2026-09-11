@@ -8,6 +8,7 @@ import requests as _req
 from flask_cors import CORS
 
 from admin import admin_bp
+from api_usage import api_usage_bp, ensure_api_usage_table, record_api_usage
 from alternatives import alternative_bp, ensure_tables
 from ai import ai_bp
 from ai_sheet import ai_sheet_bp
@@ -61,6 +62,7 @@ app.register_blueprint(open_api_bp)
 app.register_blueprint(quant_bp)
 app.register_blueprint(alternative_bp)
 app.register_blueprint(error_analysis_bp)
+app.register_blueprint(api_usage_bp)
 
 ensure_tables()
 ensure_member_tables()
@@ -70,6 +72,7 @@ seed_ganada_dataset()
 seed_bababa_dataset()
 ensure_bot_accounts()
 ensure_error_analysis_table()
+ensure_api_usage_table()
 start_scheduler()
 
 
@@ -79,24 +82,31 @@ def _capture_unhandled_exception(sender, exception, **extra):
     g.unhandled_error = exception
 
 
+@app.before_request
+def _start_api_usage_timer():
+    if request.path.startswith(("/api/broker-test/", "/api/aws-broker-test/", "/api/alpaca-test/", "/api/aws-alpaca-test/", "/api/crypto-exchange-test/")):
+        g.api_usage_started_at = time.perf_counter()
+
+
 @app.after_request
 def _record_failed_response(response):
     """Capture handled API failures too, not only Flask exceptions."""
-    if response.status_code < 400 or request.path.startswith("/api/error-analysis/"):
-        return response
-    try:
-        body = response.get_json(silent=True) or {}
-        exc = getattr(g, "unhandled_error", None)
-        message = body.get("message") or body.get("error") or str(exc) or response.status
-        record_error(
-            source="SERVER", severity="CRITICAL" if response.status_code >= 500 else "WARNING",
-            status=response.status_code, method=request.method, path=request.full_path.rstrip("?"),
-            error_type=type(exc).__name__ if exc else "HTTPError",
-            message=message, stack_trace="".join(__import__("traceback").format_exception(exc)) if exc else None,
-            request_meta={"endpoint": request.endpoint, "remoteAddr": request.remote_addr}, member_id=session.get("member_id"),
-        )
-    except Exception:
-        pass
+    if getattr(g, "api_usage_started_at", None) is not None:
+        record_api_usage(response, g.api_usage_started_at)
+    if response.status_code >= 400 and not request.path.startswith("/api/error-analysis/"):
+        try:
+            body = response.get_json(silent=True) or {}
+            exc = getattr(g, "unhandled_error", None)
+            message = body.get("message") or body.get("error") or str(exc) or response.status
+            record_error(
+                source="SERVER", severity="CRITICAL" if response.status_code >= 500 else "WARNING",
+                status=response.status_code, method=request.method, path=request.full_path.rstrip("?"),
+                error_type=type(exc).__name__ if exc else "HTTPError",
+                message=message, stack_trace="".join(__import__("traceback").format_exception(exc)) if exc else None,
+                request_meta={"endpoint": request.endpoint, "remoteAddr": request.remote_addr}, member_id=session.get("member_id"),
+            )
+        except Exception:
+            pass
     return response
 
 

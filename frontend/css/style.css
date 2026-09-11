@@ -640,6 +640,7 @@ body[data-exchange] .row button:disabled { opacity: .6; }
 .api-test-guide { margin-top:20px; border:1px solid #BFDBFE; border-radius:11px; background:#F8FBFF; color:var(--fg); }
 .api-test-guide summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; cursor:pointer; font-size:14px; font-weight:900; }
 .api-test-guide summary span { color:var(--accent-dark); font-size:12px; font-weight:700; }
+.api-test-guide-rate { margin:0; padding:11px 14px; border-top:1px solid #DBEAFE; border-bottom:1px solid #DBEAFE; background:#FFF8E8; color:#854D0E; font-size:12px; line-height:1.65; }
 .api-test-guide-scroll { overflow-x:auto; border-top:1px solid #DBEAFE; }
 .api-test-guide table { width:100%; min-width:820px; border-collapse:collapse; font-size:12px; line-height:1.55; }
 .api-test-guide th,.api-test-guide td { padding:10px 12px; border-bottom:1px solid #DBEAFE; text-align:left; vertical-align:top; }
