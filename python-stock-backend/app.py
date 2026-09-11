@@ -15,6 +15,7 @@ from alpaca_test_api import alpaca_test_bp
 from api_keys import api_key_bp
 from broker_test_api import broker_test_bp
 from crypto import ensure_crypto_tables, market_bp, trade_bp
+from crypto_exchange_test_api import crypto_exchange_test_bp
 from demo_seed import seed_bababa_dataset, seed_demo_investors, seed_ganada_dataset
 from market_bots import ensure_bot_accounts
 from members import ensure_member_tables, member_bp
@@ -43,6 +44,7 @@ CORS(
 app.register_blueprint(member_bp)
 app.register_blueprint(market_bp)
 app.register_blueprint(trade_bp)
+app.register_blueprint(crypto_exchange_test_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(ai_bp)
 app.register_blueprint(ai_sheet_bp)

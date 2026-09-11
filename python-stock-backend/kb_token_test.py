@@ -52,7 +52,14 @@ def request_access_token() -> tuple[str, int]:
     response = requests.post(
         f"{KB_API_BASE_URL}{TOKEN_PATH}",
         headers={"Content-Type": "application/json"},
-        json={"grant_type": "client_credentials", "appKey": app_key, "appSecret": app_secret},
+        json={
+            "dataHeader": {"ipAddr": "", "macAddr": ""},
+            "dataBody": {
+                "appKey": app_key,
+                "appSecret": app_secret,
+                "grantType": "client_credentials",
+            },
+        },
         timeout=20,
     )
     body = response.json()

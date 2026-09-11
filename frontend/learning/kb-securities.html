@@ -18,6 +18,7 @@
       <div class="kicker">LEARNING · KB SECURITIES</div>
       <h1 style="margin:7px 0;font-size:30px;line-height:1.25;font-weight:900;color:var(--fg);">KB증권 모의투자, 직접 수동 테스트하기</h1>
       <p class="desc" style="max-width:840px">KB증권 앱·HTS의 모의투자는 상품과 참가 목적에 따라 경로가 다릅니다. 이 페이지는 실제 주문이 아닌 <strong>모의투자 전용 모드</strong>에서 로그인, 종목 검색, 주문 화면, 체결·이력 확인을 차례로 점검하는 학습용 매뉴얼입니다.</p>
+      <p class="desc" style="margin-top:14px;font-size:12px">공식 GitHub 샘플: <a href="https://github.com/kbsecurities/kb-openapi" target="_blank" rel="noopener noreferrer"><code>https://github.com/kbsecurities/kb-openapi</code></a> · 이 웹앱의 OAuth <code>dataHeader + dataBody</code> 형식과 국내주식 조회 TR 구현 기준으로 사용합니다.</p>
     </section>
 
     <section class="card">
@@ -70,18 +71,18 @@ KB_APP_SECRET=발급받은_APP_SECRET
       <div class="grid"><div class="box"><b>1 · 서비스 사용신청</b><p>KB증권 계좌를 준비한 뒤 포털 또는 KB증권 홈페이지에서 사용신청 가능 여부를 확인합니다. 신청이 완료되면 서비스 정보를 등록하고 App Key·App Secret을 발급받습니다.</p></div><div class="box"><b>2 · 개발가이드</b><p>App Key·App Secret으로 Access Token을 발급하고, HTTPS·JSON 요청과 Bearer Token 인증 흐름을 확인합니다. 토큰 만료와 호출 제한의 처리 방법도 먼저 읽습니다.</p></div><div class="box"><b>3 · API 문서</b><p>OAuth 인증, 국내주식, 해외주식 등 필요한 API를 검색해 요청·응답 명세와 오류 코드를 확인합니다. 전체 문서 다운로드와 언어별 샘플 생성 기능도 활용할 수 있습니다.</p></div></div>
       <div class="steps"><div class="step"><span class="num">1</span><div><h3>포털에서 서비스 사용신청과 키 발급 상태 확인</h3><p>앞 단계에서 신청한 계좌와 환경에 맞는 App Key·App Secret인지 확인합니다. 키는 브라우저·Git·메신저에 저장하지 않고 서버 환경변수 또는 비밀 관리 도구에만 보관합니다.</p></div></div><div class="step"><span class="num">2</span><div><h3>개발가이드에서 인증·접속·오류 처리 확인</h3><p>토큰을 발급한 뒤 만료 시에만 재발급하도록 구현합니다. 접속 URL, API 권한, 계좌 권한, 호출 제한은 서비스 환경과 API별로 다를 수 있으므로 실제 호출 전에 현재 문서를 대조합니다.</p></div></div><div class="step"><span class="num">3</span><div><h3>API 문서에서 조회 API부터 테스트</h3><p>처음에는 시세·종목정보처럼 읽기 전용 API를 단일 호출로 검증합니다. 주문 API는 요청 필드, 한도, 상품 상태를 모두 확인하고 별도의 승인 절차와 손실 한도를 갖춘 뒤에만 다룹니다.</p></div></div></div>
       <div class="notice"><strong>권장 순서:</strong> 계좌 개설 → Open API 사용신청 → App Key·App Secret 발급 및 안전한 보관 → Access Token 발급 → 읽기 전용 API 테스트 → 필요한 경우에만 주문 연동 순서로 진행하세요. 포털의 API 명세·접속 주소·제한 정책은 변경될 수 있으므로 코드에 고정하기 전에 최신 문서를 확인합니다.</div>
-      <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)"><div class="kicker">연결 테스트 기록 · 읽기 전용</div><h3 class="title" style="font-size:18px">KB Open API 토큰 발급 점검 결과</h3>
-        <p class="desc">프로젝트 루트의 <code>kb.key</code>에서 AppKey·Secret을 읽고, KB 개발가이드의 Client Credentials 방식으로 <code>/oauth2/token</code> 토큰 발급만 테스트했습니다. 키·토큰·계좌번호는 출력하거나 저장하지 않았고, 토큰 발급이 완료되지 않아 시세·계좌·주문 API는 호출하지 않았습니다.</p>
+      <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)"><div class="kicker">연결 테스트 기록 · 읽기 전용</div><h3 class="title" style="font-size:18px">KB Open API 토큰·시세 점검 결과</h3>
+        <p class="desc">프로젝트 루트의 <code>kb.key</code>에서 AppKey·Secret을 서버에서만 읽고, KB 공식 GitHub 예제의 <code>dataHeader + dataBody</code> 형식으로 <code>/oauth2/token</code>을 호출합니다. 토큰·키·계좌번호는 출력하거나 저장하지 않습니다.</p>
         <div class="table-wrap"><table class="test-table"><thead><tr><th>점검 항목</th><th>결과</th><th>다음 조치</th></tr></thead><tbody>
           <tr><td><strong>키 파일 형식</strong></td><td><code>AppKey</code>와 <code>Secret</code> 두 항목을 확인했습니다. 값은 노출하지 않았습니다.</td><td>키 파일은 <code>*.key</code> 규칙으로 Git에서 제외된 상태를 유지합니다.</td></tr>
-          <tr><td><strong>Access Token 발급</strong></td><td>KB 서버가 <code>HTTP 500 / E021</code>과 함께 앱키로 앱정보를 추출하지 못했다는 응답을 반환했습니다.</td><td>포털에서 사용신청 완료, 서비스 정보 등록, App Key 발급·앱 사용 가능 상태를 확인한 뒤 다시 테스트합니다.</td></tr>
-          <tr><td><strong>후속 API 호출</strong></td><td>토큰이 없으므로 시세·계좌·주문 API는 호출하지 않았습니다.</td><td>토큰 발급 성공 후에는 읽기 전용 API를 단일 호출로 먼저 검증합니다.</td></tr>
+          <tr><td><strong>Access Token 발급</strong></td><td>성공했습니다. <code>dataHeader.ipAddr/macAddr</code>와 <code>dataBody.appKey/appSecret/grantType</code>을 사용합니다.</td><td>토큰은 서버에서만 관리합니다.</td></tr>
+          <tr><td><strong>후속 조회 API</strong></td><td>종목기본정보, 현재가, 호가, 통합차트(일봉)를 읽기 전용으로 검증했습니다.</td><td>전용 화면에서 한 항목씩 조회합니다. 주문·계좌 기능은 별도 권한 설계 후 다룹니다.</td></tr>
         </tbody></table></div>
         <pre class="code"># 프로젝트 루트에서 실행 — 토큰만 안전하게 점검
 python3 python-stock-backend/kb_token_test.py
 
 # 성공 후에도 Access Token은 화면·로그·Git에 출력하거나 저장하지 않습니다.</pre>
-        <div class="danger"><strong>오류 대응:</strong> <code>E021</code>이 계속되면 키 값을 임의로 여러 번 재발급하거나 공유하지 마세요. KB증권 Open API 포털의 신청·앱 상태를 확인하고, 해결되지 않으면 오류 코드와 발생 시각만 정리해 공식 고객지원에 문의하세요.</div>
+        <div class="notice"><strong>현재 웹앱 기능:</strong> <a href="/kb-api-test.html">KB 연결·시세 테스트</a>에서 토큰, 종목기본정보, 현재가, 호가, 통합차트를 실행할 수 있습니다. KB B2C Open API는 운영 환경이므로 주문·잔고 조회는 이 학습 도구에 포함하지 않습니다.</div>
       </div>
       <a class="btn" href="https://openapi.kbsec.com/intro" target="_blank" rel="noopener noreferrer">KB증권 Open API 포털 열기 ↗</a><a class="btn-alt" href="https://openapi.kbsec.com/howto_b2c" target="_blank" rel="noopener noreferrer">이용안내 보기 ↗</a><a class="btn-alt" href="https://openapi.kbsec.com/guide_b2c" target="_blank" rel="noopener noreferrer">개발가이드 보기 ↗</a><a class="btn-alt" href="https://openapi.kbsec.com/apidoc_b2c" target="_blank" rel="noopener noreferrer">API 문서 보기 ↗</a>
     </section>
@@ -108,7 +109,7 @@ python3 python-stock-backend/kb_token_test.py
       <label class="check"><input type="checkbox"> T04는 모의투자 화면에서만 최소 수량으로 진행했다.</label>
       <label class="check"><input type="checkbox"> T05에서 주문 상태, 잔고, 거래이력을 대조했다.</label>
       <div class="notice">파생상품 실거래를 준비하는 경우, KB증권 안내상 사전교육과 모의거래 이수가 필요할 수 있습니다. 요구 시간은 투자성향·거래경험 등에 따라 다르며, KB증권 거래등록 화면과 금융투자교육원 안내에서 본인에게 적용되는 기준을 확인하세요. KB증권의 모의투자 메뉴·참가 조건은 서비스 업데이트나 상품에 따라 달라질 수 있으므로 주문 직전 공식 화면을 다시 확인합니다.</div>
-      <a class="btn" href="https://www.kbsec.com/go.able?linkcd=m04040009" target="_blank" rel="noopener noreferrer">KB증권 해외선물옵션 시작 안내 ↗</a><a class="btn-alt" href="/broker-api-test.html">OpenAPI 시세 연결 테스트 →</a><a class="btn-alt" href="/learning/tradingview-pine.html">TradingView(Pine) 학습으로 →</a>
+      <a class="btn" href="https://www.kbsec.com/go.able?linkcd=m04040009" target="_blank" rel="noopener noreferrer">KB증권 해외선물옵션 시작 안내 ↗</a><a class="btn-alt" href="/kb-api-test.html">KB 연결·시세 테스트 →</a><a class="btn-alt" href="/learning/tradingview-pine.html">TradingView(Pine) 학습으로 →</a>
     </section>
   </main>
   <footer class="footer"><div>EDUMGT · KB증권 모의투자 수동 테스트 · 교육용 콘텐츠</div></footer>

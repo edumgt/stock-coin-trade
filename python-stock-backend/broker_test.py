@@ -7,8 +7,10 @@ or logged; the browser only receives a small normalized quote or a safe error.
 from __future__ import annotations
 
 import os
+import socket
 import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +25,11 @@ _kis_token_cache: dict[str, Any] = {"value": None, "expires_at": 0.0}
 _kis_token_lock = threading.Lock()
 _kis_quote_cache: dict[str, dict[str, Any]] = {}
 _kis_quote_lock = threading.Lock()
+_kis_order_flow_lock = threading.Lock()
+_KIS_ORDER_TEST_SYMBOL = "005930"
+_KIS_ORDER_TEST_PRICE = 200000
+_KIS_ORDER_TEST_AMENDED_PRICE = 199500
+_KIS_ORDER_TEST_MIN_CURRENT_PRICE = 220000
 
 
 class BrokerApiError(RuntimeError):
@@ -66,7 +73,17 @@ def _kb_token_response() -> dict[str, Any]:
     response = requests.post(
         f"{KB_API_BASE_URL}/oauth2/token",
         headers={"Content-Type": "application/json"},
-        json={"grant_type": "client_credentials", "appKey": app_key, "appSecret": app_secret},
+        # KB's official kb-openapi repository uses the common B2C request
+        # envelope. The public portal's shortened guide shows a flat OAuth
+        # example, but that form returns E021 for the currently issued keys.
+        json={
+            "dataHeader": {"ipAddr": "", "macAddr": ""},
+            "dataBody": {
+                "appKey": app_key,
+                "appSecret": app_secret,
+                "grantType": "client_credentials",
+            },
+        },
         timeout=20,
     )
     body = _json(response, "KB증권")
@@ -77,6 +94,21 @@ def _kb_token_response() -> dict[str, Any]:
     code = header.get("processCode") or body.get("error") or body.get("code") or "unknown"
     message = header.get("processMessage") or body.get("error_description") or body.get("message") or "토큰 발급 실패"
     raise BrokerApiError(f"KB증권 인증 실패 (HTTP {response.status_code}, {code}): {message}")
+
+
+def _kb_data_header() -> dict[str, str]:
+    """Build the B2C device header the official KB test app supplies."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.connect(("8.8.8.8", 80))
+        ip_addr = sock.getsockname()[0]
+    except OSError:
+        ip_addr = "127.0.0.1"
+    finally:
+        sock.close()
+    node = uuid.getnode()
+    mac_addr = ":".join(f"{(node >> shift) & 0xFF:02X}" for shift in range(40, -1, -8))
+    return {"ipAddr": ip_addr, "macAddr": mac_addr}
 
 
 def check_kb_token() -> dict[str, Any]:
@@ -92,40 +124,53 @@ def check_kb_token() -> dict[str, Any]:
     return {"broker": "KB증권 Open API", "tokenType": token_type, "expiresIn": int(expires_in)}
 
 
-def get_kb_domestic_quote(symbol: str) -> dict[str, Any]:
-    """Call KB's domestic-stock quote API once the portal-approved path is known.
-
-    KB only documents OAuth (/oauth2/token) in the crawlable guide; the quote
-    endpoint path/tr_id are issued per approved service and are not guessed
-    here (an unverified URL could hit an unrelated, unintended endpoint). Once
-    approved, set KB_QUOTE_PATH (e.g. "/uapi/domestic-stock/v1/quotations/...")
-    and KB_QUOTE_TR_ID from the portal's API spec to activate this check.
-    """
-    quote_path = os.environ.get("KB_QUOTE_PATH")
-    tr_id = os.environ.get("KB_QUOTE_TR_ID")
-    if not quote_path or not tr_id:
-        raise BrokerApiError(
-            "KB증권 현재가 API 경로가 아직 설정되지 않았습니다. 포털에서 승인된 API 스펙을 확인한 뒤 "
-            "KB_QUOTE_PATH, KB_QUOTE_TR_ID 환경변수를 설정하세요."
-        )
-    app_key, app_secret = _credentials("KB", "kb.key", ("appkey", "app_key"), ("secret", "appsecret", "app_secret"))
+def _kb_investment_info(endpoint: str, data_body: dict[str, str]) -> dict[str, Any]:
+    """Call a read-only KB B2C investment-information TR."""
+    app_key, _ = _credentials("KB", "kb.key", ("appkey", "app_key"), ("secret", "appsecret", "app_secret"))
     token_body = _kb_token_response()
     access_token = token_body.get("access_token") or token_body.get("dataBody", {}).get("access_token")
-    response = requests.get(
-        f"{KB_API_BASE_URL}{quote_path}",
+    response = requests.post(
+        f"{KB_API_BASE_URL}{endpoint}",
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}",
+            "Authorization": f"bearer {access_token}",
             "appKey": app_key,
-            "appSecret": app_secret,
-            "tr_id": tr_id,
         },
-        params={"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": symbol},
+        json={"dataHeader": _kb_data_header(), "dataBody": data_body},
         timeout=20,
     )
     body = _json(response, "KB증권")
-    output = body.get("output", body.get("dataBody", {}))
-    return {"broker": "KB증권 Open API", "symbol": symbol, "raw": output}
+    if not response.ok:
+        header = body.get("dataHeader", {})
+        raise BrokerApiError(
+            f"KB증권 조회 실패 (HTTP {response.status_code}, {header.get('processCode') or 'unknown'}): "
+            f"{header.get('processMessage') or '요청이 거부되었습니다.'}"
+        )
+    return body.get("dataBody", {})
+
+
+def get_kb_domestic_quote(symbol: str) -> dict[str, Any]:
+    """Call the official KB B2C domestic-stock current-price TR (IVU10140)."""
+    return {"broker": "KB증권 Open API", "symbol": symbol, "raw": _kb_investment_info("/api/v1/ivu10140", {"excg_clsf": "1", "shrt_cd": symbol})}
+
+
+def get_kb_stock_base_info(symbol: str) -> dict[str, Any]:
+    return {"broker": "KB증권 Open API", "symbol": symbol, "raw": _kb_investment_info("/api/v1/siqm4900", {"stnd_is_cd": symbol})}
+
+
+def get_kb_stock_orderbook(symbol: str) -> dict[str, Any]:
+    return {"broker": "KB증권 Open API", "symbol": symbol, "raw": _kb_investment_info("/api/v1/ivu10070", {"is_cd": symbol, "ovtm_mkt_clsf": "0"})}
+
+
+def get_kb_stock_chart(symbol: str) -> dict[str, Any]:
+    return {
+        "broker": "KB증권 Open API",
+        "symbol": symbol,
+        "raw": _kb_investment_info(
+            "/api/v1/ivs11560",
+            {"info_ccd": "1", "mkt_clsf": "1", "chrt_clsf": "D", "minute_tck_indx": "", "is_cd": symbol, "inq_clsf": "1", "strt_dy": "", "inq_cnt": "10"},
+        ),
+    }
 
 
 def _kis_credentials() -> tuple[str, str]:
@@ -338,3 +383,96 @@ def get_kis_index(index_code: str = "0001") -> dict[str, Any]:
         "price": output.get("bstp_nmix_prpr"), "change": output.get("bstp_nmix_prdy_vrss"),
         "changeRate": output.get("bstp_nmix_prdy_ctrt"), "volume": output.get("acml_vol"),
     }
+
+
+def _kis_order_post(path: str, tr_id: str, payload: dict[str, str], label: str) -> dict[str, Any]:
+    response = requests.post(
+        f"{KIS_TESTBED_URL}{path}",
+        headers={**_kis_headers(tr_id), "custtype": "P"},
+        json=payload,
+        timeout=15,
+    )
+    body = _json(response, "한국투자증권")
+    if body.get("rt_cd") != "0":
+        raise BrokerApiError(
+            f"한국투자증권 {label} 실패 (HTTP {response.status_code}, {body.get('msg_cd')}): {body.get('msg1')}"
+        )
+    return body
+
+
+def run_kis_mock_order_flow_test() -> dict[str, Any]:
+    """Run one safe Testbed-only order → amend → cancel verification.
+
+    The fixed limit prices intentionally sit below the permitted current-price
+    threshold. If that safety condition changes, no order is sent.
+    """
+    with _kis_order_flow_lock:
+        quote = get_kis_quote(_KIS_ORDER_TEST_SYMBOL)
+        try:
+            current_price = int(str(quote.get("price") or "").replace(",", ""))
+        except ValueError as exc:
+            raise BrokerApiError("한국투자증권 현재가를 숫자로 확인할 수 없어 주문 테스트를 중단했습니다.") from exc
+        if current_price <= _KIS_ORDER_TEST_MIN_CURRENT_PRICE:
+            raise BrokerApiError(
+                f"안전을 위해 현재가가 {_KIS_ORDER_TEST_MIN_CURRENT_PRICE:,}원 이하이면 주문 테스트를 실행하지 않습니다."
+            )
+
+        cano, acnt_prdt_cd = _kis_account()
+        order = _kis_order_post(
+            "/uapi/domestic-stock/v1/trading/order-cash",
+            "VTTC0012U",
+            {
+                "CANO": cano, "ACNT_PRDT_CD": acnt_prdt_cd, "PDNO": _KIS_ORDER_TEST_SYMBOL,
+                "ORD_DVSN": "00", "ORD_QTY": "1", "ORD_UNPR": str(_KIS_ORDER_TEST_PRICE),
+                "EXCG_ID_DVSN_CD": "KRX",
+            },
+            "모의 매수 주문",
+        )
+        output = order.get("output") or {}
+        org_no = output.get("KRX_FWDG_ORD_ORGNO")
+        order_no = output.get("ODNO")
+        if not org_no or not order_no:
+            raise BrokerApiError("모의 주문은 접수됐지만 정정·취소에 필요한 참조값을 받지 못했습니다. 모의투자 화면에서 주문 상태를 확인하세요.")
+
+        amend_ok = False
+        cancel_body: dict[str, Any] | None = None
+        try:
+            amended = _kis_order_post(
+                "/uapi/domestic-stock/v1/trading/order-rvsecncl",
+                "VTTC0013U",
+                {
+                    "CANO": cano, "ACNT_PRDT_CD": acnt_prdt_cd,
+                    "KRX_FWDG_ORD_ORGNO": org_no, "ORGN_ODNO": order_no,
+                    "ORD_DVSN": "00", "RVSE_CNCL_DVSN_CD": "01", "ORD_QTY": "1",
+                    "ORD_UNPR": str(_KIS_ORDER_TEST_AMENDED_PRICE), "QTY_ALL_ORD_YN": "Y",
+                    "EXCG_ID_DVSN_CD": "KRX",
+                },
+                "모의 주문 정정",
+            )
+            amend_ok = True
+            amended_output = amended.get("output") or {}
+            org_no = amended_output.get("KRX_FWDG_ORD_ORGNO") or org_no
+            order_no = amended_output.get("ODNO") or order_no
+        finally:
+            cancel_body = _kis_order_post(
+                "/uapi/domestic-stock/v1/trading/order-rvsecncl",
+                "VTTC0013U",
+                {
+                    "CANO": cano, "ACNT_PRDT_CD": acnt_prdt_cd,
+                    "KRX_FWDG_ORD_ORGNO": org_no, "ORGN_ODNO": order_no,
+                    "ORD_DVSN": "00", "RVSE_CNCL_DVSN_CD": "02", "ORD_QTY": "1", "ORD_UNPR": "0",
+                    "QTY_ALL_ORD_YN": "Y", "EXCG_ID_DVSN_CD": "KRX",
+                },
+                "모의 주문 취소",
+            )
+
+        return {
+            "environment": "KIS Testbed 모의투자",
+            "symbol": _KIS_ORDER_TEST_SYMBOL,
+            "currentPrice": current_price,
+            "order": "success",
+            "amend": "success" if amend_ok else "failed",
+            "cancel": "success" if cancel_body else "failed",
+            "testPrice": _KIS_ORDER_TEST_PRICE,
+            "amendedPrice": _KIS_ORDER_TEST_AMENDED_PRICE,
+        }

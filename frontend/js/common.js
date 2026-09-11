@@ -50,9 +50,29 @@ function renderHeader(user) {
     { type: 'group', label: '실전연습', items: [
       { href: '/hts.html', label: 'HTS 시뮬레이션', icon: 'fa-solid fa-desktop' },
       { href: '/learning/tradingview-pine.html', label: 'TradingView(Pine)', icon: 'fa-solid fa-chart-column' },
-      { href: '/learning/kb-securities.html', label: 'KB 증권', icon: 'fa-solid fa-clipboard-check' },
-      { href: '/learning/kis-developers.html', label: '한국투자증권 API', icon: 'fa-solid fa-code' },
-      { href: '/learning/alpaca-api.html', label: 'Alpaca API', icon: 'fa-solid fa-robot' },
+    ]},
+    { type: 'group', label: 'KIS 실전연습', items: [
+      { href: '/learning/kis-module-guide.html', label: 'KIS 모듈 실습', icon: 'fa-solid fa-plug-circle-check' },
+      { href: '/learning/kis-developers.html', label: 'KIS Developers 학습', icon: 'fa-solid fa-code' },
+      { href: '/kis-order-flow-test.html', label: '모의 주문 흐름 테스트', icon: 'fa-solid fa-vial-circle-check' },
+      { href: '/broker-api-test.html', label: 'KIS 연결 테스트', icon: 'fa-solid fa-chart-line' },
+    ]},
+    { type: 'group', label: 'KB증권 실전연습', items: [
+      { href: '/learning/kb-securities.html', label: 'KB 모의투자 학습', icon: 'fa-solid fa-clipboard-check' },
+      { href: '/kb-api-test.html', label: 'KB 연결 테스트', icon: 'fa-solid fa-plug-circle-check' },
+    ]},
+    { type: 'group', label: 'Alpaca 실전연습', items: [
+      { href: '/learning/alpaca-api.html', label: 'Alpaca Paper 학습', icon: 'fa-solid fa-robot' },
+      { href: '/alpaca-test.html', label: 'Paper 연결·조회', icon: 'fa-solid fa-chart-line' },
+      { href: '/alpaca-order-flow-test.html', label: 'Paper 주문 흐름 테스트', icon: 'fa-solid fa-vial-circle-check' },
+    ]},
+    { type: 'group', label: 'Binance 실전연습', items: [
+      { href: '/learning/binance-api.html', label: 'Binance Spot API 학습', icon: 'fa-brands fa-bitcoin' },
+      { href: '/binance-api-test.html', label: 'Binance 공개 시세 테스트', icon: 'fa-solid fa-chart-line' },
+    ]},
+    { type: 'group', label: 'Korbit 실전연습', items: [
+      { href: '/learning/korbit-api.html', label: 'Korbit Open API 학습', icon: 'fa-solid fa-coins' },
+      { href: '/korbit-api-test.html', label: 'Korbit 공개 시세 테스트', icon: 'fa-solid fa-chart-line' },
     ]},
     { type: 'group', label: 'POSTGRESQL QUANT', items: [
       { href: '/quant.html?tab=schema', label: 'DB 스키마', icon: 'fa-solid fa-sitemap' },
@@ -63,7 +83,6 @@ function renderHeader(user) {
       { href: '/ai-sheet.html', label: 'AI Sheet',       icon: 'fa-solid fa-table-cells-large' },
       { href: '/openapi.html',  label: 'Open API',       icon: 'fa-solid fa-key' },
       { href: '/broker-api-test.html', label: '증권사 시세 테스트', icon: 'fa-solid fa-plug-circle-check' },
-      { href: '/alpaca-test.html', label: 'Alpaca Test', icon: 'fa-solid fa-flask-vial' },
     ]},
   ];
 

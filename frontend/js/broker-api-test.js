@@ -68,7 +68,16 @@
       if (!/^\d{6}$/.test(symbol)) throw new Error('종목코드는 6자리 숫자로 입력하세요.');
       return `/api/broker-test/kb/quote?symbol=${encodeURIComponent(symbol)}`;
     },
+    'kb-base-info': () => kbSymbolPath('/base-info'),
+    'kb-orderbook': () => kbSymbolPath('/orderbook'),
+    'kb-chart': () => kbSymbolPath('/chart'),
   };
+
+  function kbSymbolPath(path) {
+    const symbol = document.getElementById('kb-symbol').value.trim();
+    if (!/^\d{6}$/.test(symbol)) throw new Error('종목코드는 6자리 숫자로 입력하세요.');
+    return `/api/broker-test/kb${path}?symbol=${encodeURIComponent(symbol)}`;
+  }
 
   const runGenericTest = async (button) => {
     const testId = button.dataset.test;

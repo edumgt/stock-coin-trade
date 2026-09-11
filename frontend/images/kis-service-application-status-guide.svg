@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">KIS Developers 서비스 신청현황 확인 예시</title>
+  <desc id="desc">모의투자계좌 행에서 계좌번호 형식과 App Key, App Secret을 확인하는 개인정보 비식별 교육용 화면입니다.</desc>
+  <rect width="1200" height="650" fill="#F8FAFC"/>
+  <rect x="0" y="0" width="1200" height="72" fill="#FFFFFF"/>
+  <text x="42" y="44" fill="#1E293B" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="24" font-weight="700">KIS Developers · 서비스 신청/조회</text>
+  <text x="42" y="104" fill="#64748B" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="15">트레이딩  ›  Open API  ›  KIS Developers  ›  서비스 신청/조회</text>
+  <text x="56" y="165" fill="#0F172A" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="29" font-weight="700">신청현황</text>
+  <rect x="56" y="192" width="1088" height="70" fill="#EEF4F8" stroke="#CBD5E1"/>
+  <g fill="#0F172A" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="15" font-weight="700" text-anchor="middle">
+    <text x="145" y="233">구분</text><text x="335" y="233">계좌번호</text><text x="510" y="233">신청일자 · 만료일</text><text x="675" y="233">상태</text><text x="840" y="226">APP Key</text><text x="840" y="248">APP Secret</text><text x="1028" y="233">확인</text>
+  </g>
+  <g stroke="#CBD5E1" fill="#FFFFFF"><rect x="56" y="262" width="1088" height="112"/><rect x="56" y="374" width="1088" height="132" fill="#EFF6FF" stroke="#60A5FA" stroke-width="2"/></g>
+  <g stroke="#CBD5E1"><path d="M235 192V506M435 192V506M590 192V506M750 192V506M930 192V506M1080 192V506"/></g>
+  <g fill="#475569" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="16" text-anchor="middle">
+    <text x="145" y="325">실전투자계좌</text><text x="335" y="325">••••••••-••</text><text x="510" y="325">서비스 상태 확인</text><text x="675" y="325">실전</text><text x="840" y="316">실전 키</text><text x="840" y="343">실전 Secret</text>
+  </g>
+  <rect x="952" y="299" width="105" height="40" rx="7" fill="#E2E8F0"/><text x="1004" y="325" fill="#64748B" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="14" font-weight="700" text-anchor="middle">사용 안 함</text>
+  <g fill="#0F172A" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="17" text-anchor="middle" font-weight="700">
+    <text x="145" y="437">모의투자계좌</text><text x="335" y="437">••••••••-••</text><text x="510" y="437">신청일자 · 만료일 확인</text><text x="675" y="437">모의</text><text x="840" y="428">모의 App Key</text><text x="840" y="456">모의 App Secret</text>
+  </g>
+  <rect x="952" y="405" width="105" height="40" rx="7" fill="#0284C7"/><text x="1004" y="431" fill="#FFFFFF" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="14" font-weight="700" text-anchor="middle">안전하게 복사</text>
+  <path d="M1080 440h35" stroke="#2563EB" stroke-width="3"/><path d="M1108 432l12 8-12 8" fill="none" stroke="#2563EB" stroke-width="3"/>
+  <rect x="895" y="515" width="249" height="70" rx="10" fill="#DBEAFE" stroke="#60A5FA"/>
+  <text x="1020" y="543" fill="#1D4ED8" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="14" font-weight="700" text-anchor="middle">모의투자 행의 값만</text>
+  <text x="1020" y="566" fill="#1E3A8A" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="13" text-anchor="middle">kis.key에 기록</text>
+  <g font-family="Arial, Apple SD Gothic Neo, sans-serif"><circle cx="78" cy="555" r="13" fill="#2563EB"/><text x="78" y="560" fill="#FFFFFF" font-size="14" font-weight="700" text-anchor="middle">1</text><text x="102" y="560" fill="#334155" font-size="15">구분이 ‘모의투자계좌’인지 확인</text><circle cx="410" cy="555" r="13" fill="#2563EB"/><text x="410" y="560" fill="#FFFFFF" font-size="14" font-weight="700" text-anchor="middle">2</text><text x="434" y="560" fill="#334155" font-size="15">계좌번호는 CANO-상품코드 형식으로 저장</text><circle cx="78" cy="605" r="13" fill="#2563EB"/><text x="78" y="610" fill="#FFFFFF" font-size="14" font-weight="700" text-anchor="middle">3</text><text x="102" y="610" fill="#334155" font-size="15">App Key·Secret은 키 파일에만 보관하고 화면·Git에는 남기지 않기</text></g>
+</svg>

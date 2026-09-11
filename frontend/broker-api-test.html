@@ -63,19 +63,19 @@
 
         <section class="broker-card">
           <h2>KB증권 Open API</h2>
-          <p>Client Credentials 방식 OAuth Access Token 발급 점검 (시세 API는 포털 승인 필요)</p>
+          <p>Client Credentials OAuth와 국내주식 현재가(IVU10140) 읽기 전용 점검</p>
           <div class="controls"><button class="run" data-broker="kb">토큰 발급 점검</button></div>
           <div id="kb-result" class="result" role="status">점검 대기 중</div>
 
           <div class="test-list">
             <div class="test-row">
-              <label for="kb-symbol">현재가 조회 (승인 후 사용 가능)</label>
+              <label for="kb-symbol">국내주식 현재가 조회</label>
             </div>
             <div class="test-row">
               <input id="kb-symbol" value="005930" inputmode="numeric" maxlength="6" aria-label="KB증권 종목코드" style="flex:1;min-width:0;padding:8px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--fg);font:inherit;font-size:12px">
               <button class="run-sm" data-test="kb-quote">현재가 조회</button>
             </div>
-            <div id="kb-quote-result" class="result result--sm" role="status">KB_QUOTE_PATH 미설정 시 승인 대기 안내가 표시됩니다</div>
+            <div id="kb-quote-result" class="result result--sm" role="status">조회 대기 중</div>
           </div>
         </section>
       </div>

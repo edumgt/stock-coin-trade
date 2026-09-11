@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KB증권 Open API 연결 테스트 — 모의투자</title>
+  <link rel="icon" href="/img/favicon.png">
+  <link rel="stylesheet" href="/css/style.css?v=20260911-kb-test">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .test-wrap{max-width:960px;margin:0 auto;padding:32px 20px 56px}.card{margin-top:18px;padding:24px;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:var(--shadow-sm)}.kicker{font-size:12px;font-weight:900;letter-spacing:.09em;color:var(--accent-dark)}.result{display:block;min-height:150px;margin-top:14px;padding:14px;border-radius:9px;background:#111827;color:#e5e7eb;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}.result--error{background:#4c0519;color:#ffe4e6}.controls,.test-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.controls{margin-top:16px}.controls input{min-width:0;flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit}.run,.run-sm{border:0;border-radius:8px;background:var(--accent);color:#fff;padding:10px 13px;font:inherit;font-size:13px;font-weight:800;cursor:pointer}.run-sm{padding:8px 11px}.run:disabled,.run-sm:disabled{opacity:.65;cursor:wait}.notice,.danger{margin-top:14px;padding:13px 14px;border-radius:9px;font-size:13px;line-height:1.7}.notice{background:#fff8e8;color:#854d0e}.danger{background:#fff1f2;color:#9f1239}.test-list{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}.test-row label{flex:1;min-width:180px;color:var(--fg-2);font-size:13px;font-weight:800}.result--sm{min-height:80px;max-height:240px;overflow:auto;margin-top:10px;font-size:11px}.btn{display:inline-block;margin-top:14px;padding:9px 13px;border-radius:7px;background:var(--accent);color:#fff;text-decoration:none;font-size:13px;font-weight:800}.footer{border-top:1px solid var(--border);background:var(--surface)}.footer div{max-width:960px;margin:0 auto;padding:14px 20px;color:var(--muted);font-size:12px}@media(max-width:680px){.test-wrap{padding:20px 12px 36px}.card{padding:17px}.controls input{flex-basis:100%}}
+  </style>
+</head>
+<body>
+  <div id="header-mount"></div>
+  <main class="test-wrap">
+    <section class="card">
+      <div class="kicker">KB SECURITIES · READ-ONLY SERVER TEST</div>
+      <h1 style="margin:7px 0;font-size:28px;font-weight:900;color:var(--fg)">KB증권 Open API 연결 테스트</h1>
+      <p style="margin:0;color:var(--fg-2);line-height:1.7">서버만 프로젝트 루트의 <code>kb.key</code> 또는 서버 환경변수에서 App Key·Secret을 읽습니다. 브라우저에는 Key·Secret·Access Token을 보내지 않으며, 이 페이지는 주문·정정·취소를 실행하지 않습니다.</p>
+      <div class="notice"><strong>점검 순서:</strong> 먼저 토큰 발급을 1회 확인한 뒤 현재가·종목정보·호가·일봉을 한 항목씩 조회합니다. KB B2C Open API는 운영 환경이므로 모든 요청은 실제 시세 조회이며, 이 화면은 주문·잔고 조회를 제공하지 않습니다.</div>
+      <div class="controls"><button class="run" data-broker="kb">Access Token 발급 점검</button></div>
+      <div id="kb-result" class="result" role="status">점검 대기 중</div>
+
+      <div class="test-list">
+        <div class="test-row"><label for="kb-symbol">국내주식 현재가 조회 (공식 IVU10140 TR)</label></div>
+        <div class="test-row"><input id="kb-symbol" value="005930" inputmode="numeric" maxlength="6" aria-label="KB증권 종목코드" placeholder="6자리 종목코드"><button class="run-sm" data-test="kb-quote">현재가 조회</button></div>
+        <div id="kb-quote-result" class="result result--sm" role="status">조회 대기 중</div>
+        <div class="test-row" style="margin-top:12px"><label for="kb-symbol">같은 종목의 추가 조회</label><button class="run-sm" data-test="kb-base-info">종목기본정보</button><button class="run-sm" data-test="kb-orderbook">호가</button><button class="run-sm" data-test="kb-chart">통합차트(일봉)</button></div>
+        <div id="kb-base-info-result" class="result result--sm" role="status">종목기본정보 조회 대기 중</div>
+        <div id="kb-orderbook-result" class="result result--sm" role="status">호가 조회 대기 중</div>
+        <div id="kb-chart-result" class="result result--sm" role="status">통합차트 조회 대기 중</div>
+      </div>
+      <div class="danger"><strong>인증 실패 시:</strong> 키 값을 화면에 붙여 넣거나 여러 번 재발급하지 마세요. KB Open API 포털에서 사용신청, 서비스·앱 상태, 발급받은 Key 쌍이 같은 환경인지 확인한 뒤 다시 시도합니다. 토큰 발급 실패 시 이 페이지는 후속 API를 호출하지 않습니다.</div>
+      <a class="btn" href="/learning/kb-securities.html">KB 모의투자 학습 가이드 →</a>
+    </section>
+  </main>
+  <footer class="footer"><div>EDUMGT · KB증권 Open API 읽기 전용 연결 점검</div></footer>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20260911-kb-menu"></script><script src="/js/broker-api-test.js?v=20260911-kb-test"></script><script>document.addEventListener('DOMContentLoaded',()=>initPage())</script>
+</body>
+</html>

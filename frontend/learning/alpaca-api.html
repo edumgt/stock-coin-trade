@@ -117,6 +117,25 @@ alpaca order submit --symbol AAPL --side buy --qty 1 --type market --dry-run</pr
     </section>
 
     <section class="card">
+      <div class="kicker">THIS WEB APP · MODULE FLOW</div><h2 class="title">이 웹앱에서는 Paper API를 세 단계로 사용합니다</h2>
+      <p class="desc">이 프로젝트의 Alpaca 모듈은 서버가 <code>al.key</code>를 읽고 Paper 엔드포인트로만 통신합니다. Live URL·Live 키를 선택하는 옵션은 제공하지 않습니다.</p>
+      <div class="steps">
+        <div class="step"><span class="num">1</span><div><h3>연결·조회</h3><p><a href="/alpaca-test.html">Paper 연결·조회</a>에서 계정 상태, 포지션, 최근 주문 내역, 미국 장 상태, AAPL 같은 티커의 최근 호가·체결을 조회합니다. Key·Secret·계좌번호·잔고는 화면에 반환하지 않습니다.</p></div></div>
+        <div class="step"><span class="num">2</span><div><h3>보호된 주문 흐름 점검</h3><p><a href="/alpaca-order-flow-test.html">Paper 주문 흐름 테스트</a>는 로그인과 체크 확인 뒤 AAPL 1주를 $1.00의 고정 비시장성 지정가로 접수하고 즉시 취소합니다. AAPL 매도호가가 $2 이하이거나 취소에 실패하면 안전하게 중단·알림 처리합니다.</p></div></div>
+        <div class="step"><span class="num">3</span><div><h3>주문 후 대사</h3><p>주문 응답만 믿지 않고 최근 주문 내역·포지션을 다시 조회해 취소 상태를 확인합니다. 확장 구현에서는 사용자별 접근 통제, 요청 중복 방지, 감사 로그, WebSocket 주문 이벤트를 추가해야 합니다.</p></div></div>
+      </div>
+      <pre class="code"># 프로젝트 루트의 al.key — Paper 키만 저장하고 Git에 추가하지 않음
+Key=발급받은_PAPER_API_KEY
+Secret=발급받은_PAPER_API_SECRET
+
+# 또는 서버 환경변수 (둘 다 있어야 파일보다 우선)
+ALPACA_API_KEY=발급받은_PAPER_API_KEY
+ALPACA_SECRET_KEY=발급받은_PAPER_API_SECRET</pre>
+      <div class="danger"><strong>Live 전환 금지:</strong> Paper API와 Live API는 키와 엔드포인트가 다릅니다. 이 프로젝트의 주문 흐름은 Paper 전용이며, Live 주문 기능으로 일반화하거나 사용자 입력을 그대로 주문 API에 전달하지 않습니다.</div>
+      <a class="btn" href="/alpaca-test.html">Paper 연결·조회 열기 →</a><a class="btn-alt" href="/alpaca-order-flow-test.html">Paper 주문 흐름 열기 →</a>
+    </section>
+
+    <section class="card">
       <div class="kicker">주의사항</div><h2 class="title">Paper 결과를 실거래 결과로 간주하지 않습니다</h2>
       <div class="danger"><strong>키 보안:</strong> API Key·Secret을 HTML, 브라우저 JavaScript, 화면 캡처, Git, 메시지에 넣지 마세요. 유출이 의심되면 대시보드에서 즉시 폐기·재발급합니다.</div>
       <div class="notice"><strong>시뮬레이션 한계:</strong> Paper Trading은 실제 주문을 거래소로 전송하지 않는 시뮬레이션입니다. 시장 충격, 지연에 따른 슬리피지, 지정가 주문의 호가 대기 순서 등은 실거래와 다를 수 있습니다. 기본 시장 데이터 범위도 계정 플랜에 따라 제한될 수 있습니다.</div>

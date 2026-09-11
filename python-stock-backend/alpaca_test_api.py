@@ -1,6 +1,6 @@
 import requests
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 
 from alpaca_test import (
     test_market_clock,
@@ -8,6 +8,7 @@ from alpaca_test import (
     test_paper_account,
     test_paper_orders,
     test_paper_positions,
+    run_paper_order_flow_test,
 )
 from broker_test import BrokerApiError
 
@@ -51,3 +52,10 @@ def market_quote():
     if not symbol.isalpha() or not (1 <= len(symbol) <= 5):
         return jsonify({"ok": False, "message": "symbol은 1~5자리 영문 티커여야 합니다."})
     return _run(lambda: test_market_quote(symbol))
+
+
+@alpaca_test_bp.post("/paper/order-flow-test")
+def paper_order_flow_test():
+    if not session.get("member_id"):
+        return jsonify({"ok": False, "message": "Paper 주문 흐름 테스트는 로그인 후 실행할 수 있습니다."}), 401
+    return _run(run_paper_order_flow_test)
