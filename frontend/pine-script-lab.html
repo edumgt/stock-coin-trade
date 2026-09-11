@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/css/style.css?v=20260911-ui-system">
   
   <style>
-    .lab-wrap{max-width:1180px;margin:0 auto;padding:30px 18px 48px}.lab-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:20px;margin-top:16px}.lab-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:16px}.label{display:block;margin-bottom:6px;font-size:12px;font-weight:800;color:var(--fg-2)}textarea{width:100%;min-height:390px;padding:15px;border:0;border-radius:9px;background:#131722;color:#d1d4dc;resize:vertical;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.btn{border:0;border-radius:7px;padding:9px 12px;background:var(--accent);color:#fff;font-size:13px;font-weight:800;cursor:pointer}.btn:hover{background:var(--accent-dark)}.btn-sub{background:#fff;color:var(--fg);border:1px solid var(--border)}.result{padding:13px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);font-size:13px;line-height:1.65}.result strong{color:var(--fg)}.metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.metric{padding:11px;border:1px solid var(--border);border-radius:8px;background:#fff}.metric span{display:block;color:var(--muted);font-size:11px;font-weight:700}.metric b{display:block;margin-top:3px;color:var(--fg);font-size:17px}.notice{margin:12px 0 0;padding:11px 13px;border-radius:8px;background:#fff8e8;color:#854d0e;font-size:12px;line-height:1.7}.signal-table{width:100%;border-collapse:collapse;margin-top:13px;font-size:12px}.signal-table th,.signal-table td{padding:8px;border-bottom:1px solid var(--border);text-align:right}.signal-table th:first-child,.signal-table td:first-child{text-align:left}.signal-table th{color:var(--muted);font-size:11px}.ok{color:#15803d;font-weight:800}.warn{color:#b45309;font-weight:800}.bad{color:#e11d48;font-weight:800}.help-list{padding-left:18px;margin:8px 0}.help-list li{margin:6px 0;font-size:13px;color:var(--fg-2);line-height:1.55}@media(max-width:780px){.lab-wrap{padding:20px 12px 32px}.lab-card{padding:15px}.lab-grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:repeat(3,1fr)}textarea{min-height:320px}}
+    .lab-wrap{max-width:1180px;margin:0 auto;padding:30px 18px 48px}.lab-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:20px;margin-top:16px}.lab-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:16px}.label{display:block;margin-bottom:6px;font-size:12px;font-weight:800;color:var(--fg-2)}textarea{width:100%;min-height:390px;padding:15px;border:0;border-radius:9px;background:#131722;color:#d1d4dc;resize:vertical;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.btn{border:0;border-radius:7px;padding:9px 12px;background:var(--accent);color:#fff;font-size:13px;font-weight:800;cursor:pointer}.btn:hover{background:var(--accent-dark)}.btn-sub{background:#fff;color:var(--fg);border:1px solid var(--border)}.result{padding:13px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);font-size:13px;line-height:1.65}.result strong{color:var(--fg)}.metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.metric{padding:11px;border:1px solid var(--border);border-radius:8px;background:#fff}.metric span{display:block;color:var(--muted);font-size:11px;font-weight:700}.metric b{display:block;margin-top:3px;color:var(--fg);font-size:17px}.notice{margin:12px 0 0;padding:11px 13px;border-radius:8px;background:#fff8e8;color:#854d0e;font-size:12px;line-height:1.7}.quick-use{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:18px;padding:13px;border:1px solid #BFDBFE;border-radius:10px;background:#F8FBFF}.quick-use div{padding:3px 6px;color:var(--fg-2);font-size:12px;line-height:1.55}.quick-use b{display:block;margin-bottom:2px;color:var(--accent-dark);font-size:13px}.signal-table{width:100%;border-collapse:collapse;margin-top:13px;font-size:12px}.signal-table th,.signal-table td{padding:8px;border-bottom:1px solid var(--border);text-align:right}.signal-table th:first-child,.signal-table td:first-child{text-align:left}.signal-table th{color:var(--muted);font-size:11px}.ok{color:#15803d;font-weight:800}.warn{color:#b45309;font-weight:800}.bad{color:#e11d48;font-weight:800}.help-list{padding-left:18px;margin:8px 0}.help-list li{margin:6px 0;font-size:13px;color:var(--fg-2);line-height:1.55}@media(max-width:780px){.lab-wrap{padding:20px 12px 32px}.lab-card{padding:15px}.lab-grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:repeat(3,1fr)}.quick-use{grid-template-columns:1fr 1fr}textarea{min-height:320px}}
   </style>
 </head>
 <body>
@@ -22,19 +22,28 @@
       <div class="notice"><strong>중요:</strong> 실제 Pine Script 컴파일·차트 적용·Strategy Report는 TradingView Pine Editor에서 수행합니다. 이 도구의 계산 결과는 학습용 비교 값이며 실제 체결·수수료·슬리피지를 반영하지 않습니다.</div>
     </section>
 
-    <section class="lab-card lab-grid">
+    <section class="lab-card">
+      <div class="quick-use" aria-label="간단 사용 순서">
+        <div><b>1. 예제 선택</b>아래의 MA 교차 예제를 먼저 누릅니다.</div>
+        <div><b>2. 코드 확인</b>검은 입력창에 코드가 채워졌는지 확인합니다.</div>
+        <div><b>3. 테스트 실행</b><strong>문법·전략 테스트</strong>를 누릅니다.</div>
+        <div><b>4. 결과 읽기</b>오른쪽의 신호·수익률·낙폭을 비교합니다.</div>
+      </div>
+      <div class="lab-grid">
       <div>
-        <div class="toolbar"><button type="button" class="btn-sub btn" data-template="ma">MA 교차 예제</button><button type="button" class="btn-sub btn" data-template="rsi">RSI 예제</button><button type="button" class="btn-sub btn" data-template="indicator">지표 예제</button><button type="button" class="btn" id="runLab">문법·전략 테스트</button></div>
-        <label class="label" for="pineLabCode">Pine Script 입력</label>
-        <textarea id="pineLabCode" spellcheck="false" aria-label="Pine Script 코드"></textarea>
+        <div class="toolbar"><button type="button" class="btn-sub btn" data-template="ma">1. MA 교차 예제 넣기</button><button type="button" class="btn-sub btn" data-template="rsi">RSI 예제 넣기</button><button type="button" class="btn-sub btn" data-template="indicator">지표 예제 넣기</button><button type="button" class="btn" id="runLab">3. 문법·전략 테스트</button></div>
+        <label class="label" for="pineLabCode">2. Pine Script 코드 (예제를 넣은 뒤 기간 숫자만 바꿔보세요)</label>
+        <textarea id="pineLabCode" spellcheck="false" aria-label="Pine Script 코드" placeholder="먼저 ‘MA 교차 예제 넣기’를 누르세요. 코드가 이곳에 표시됩니다."></textarea>
       </div>
       <aside>
         <h2 style="margin:0 0 8px;font-size:16px;font-weight:900;color:var(--fg)">테스트 결과</h2>
         <div id="labStatus" class="result">예제 코드를 불러오거나 수정한 뒤 테스트하세요.</div>
         <div class="metric-grid"><div class="metric"><span>마지막 종가</span><b id="lastClose">-</b></div><div class="metric"><span>최신 신호</span><b id="lastSignal">-</b></div><div class="metric"><span>완료 거래</span><b id="tradeCount">-</b></div><div class="metric"><span>단순 수익률</span><b id="strategyReturn">-</b></div><div class="metric"><span>최대 낙폭</span><b id="maxDrawdown">-</b></div><div class="metric"><span>테스트 봉</span><b id="barCount">90</b></div></div>
+        <div class="notice"><strong>결과 읽는 법:</strong> <strong>최신 신호</strong>는 마지막 봉에서 나온 매수(BUY)·매도(SELL) 조건입니다. <strong>완료 거래</strong>는 매수 뒤 매도까지 끝난 횟수이며, <strong>단순 수익률</strong>과 <strong>최대 낙폭</strong>은 이 화면의 고정 90개 학습용 가격에서만 계산됩니다.</div>
         <div class="notice">지원: <code>//@version=5/6</code>, <code>indicator()</code>, <code>strategy()</code>, <code>ta.sma/ema/rsi(close, 기간)</code>, <code>ta.crossover/crossunder()</code>, <code>strategy.entry/close()</code>. 외부 종목·웹훅·<code>request.security</code>·주문 전송은 실행하지 않습니다.</div>
         <a href="/learning/tradingview-pine.html" style="display:inline-block;margin-top:12px;color:var(--accent-dark);font-size:13px;font-weight:800;text-decoration:none">TradingView · Pine 학습 가이드 →</a>
       </aside>
+      </div>
     </section>
 
     <section class="lab-card">

@@ -66,6 +66,8 @@ function parseLab(code) {
   return { issues, kind, vars, indicators, conditions };
 }
 function runLab() {
+  // 비어 있는 상태에서 실행해도 첫 학습 흐름이 끊기지 않도록 기본 예제를 채운다.
+  if (!lab$('pineLabCode').value.trim()) lab$('pineLabCode').value = LAB_TEMPLATES.ma;
   const code = lab$('pineLabCode').value;
   const parsed = parseLab(code);
   lab$('lastClose').textContent = format(prices.at(-1));
