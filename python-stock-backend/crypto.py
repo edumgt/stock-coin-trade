@@ -264,6 +264,51 @@ def order_buy():
         return jsonify(result)
 
 
+@trade_bp.post("/order/preview")
+def order_preview():
+    """Return a non-mutating estimate for a crypto market order."""
+    member_id = session["member_id"]
+    body = request.get_json(silent=True) or {}
+    market_code = str(body.get("marketCode", "")).upper().strip()
+    side = str(body.get("side", "")).upper().strip()
+    if side not in {"BUY", "SELL"}:
+        return jsonify({"error": "side는 BUY 또는 SELL이어야 합니다."}), 400
+    with session_scope() as db:
+        member = db.get(Member, member_id)
+        market = db.query(UpbitMarket).filter(UpbitMarket.market_code == market_code).first()
+        if not market:
+            return jsonify({"error": "존재하지 않는 마켓입니다."}), 400
+        try:
+            price = _upbit_trade_price(market_code)
+        except Exception:
+            return jsonify({"error": "현재가를 가져오지 못했습니다."}), 503
+        held = db.query(HoldCrypto).filter_by(member_id=member_id, upbit_market_id=market.upbit_market_id).first()
+        held_quantity = held.buy_crypto_count if held else 0.0
+        if side == "BUY":
+            try:
+                amount = int(str(body.get("buyKrw", "")).replace(",", ""))
+            except (TypeError, ValueError):
+                return jsonify({"error": "buyKrw는 정수여야 합니다."}), 400
+            if amount <= 0:
+                return jsonify({"error": "buyKrw는 0보다 커야 합니다."}), 400
+            quantity = round(amount / price, 8)
+            executable = amount <= member.asset
+        else:
+            try:
+                quantity = float(body.get("sellCount", 0))
+            except (TypeError, ValueError):
+                return jsonify({"error": "sellCount는 숫자여야 합니다."}), 400
+            if quantity <= 0:
+                return jsonify({"error": "sellCount는 0보다 커야 합니다."}), 400
+            amount = round(quantity * price)
+            executable = quantity <= held_quantity
+        return jsonify({"executable": executable, "marketCode": market_code, "koreanName": market.korean_name,
+                        "side": side, "estimatedPrice": price, "quantity": quantity, "estimatedAmount": amount,
+                        "cashBefore": member.asset, "heldQuantity": held_quantity,
+                        "reason": None if executable else ("보유 현금이 부족합니다." if side == "BUY" else "매도 가능 수량이 부족합니다."),
+                        "notice": "미리보기는 주문·보유자산을 변경하지 않으며 실제 체결 가격과 다를 수 있습니다."})
+
+
 def execute_crypto_sell(db, member: Member, market_code: str, sell_count: float, source: str = "WEB") -> dict:
     """매도 체결. 라우트와 봇 거래 스케줄러가 함께 사용하는 단일 진입점이다."""
     market = db.query(UpbitMarket).filter(UpbitMarket.market_code == market_code).first()

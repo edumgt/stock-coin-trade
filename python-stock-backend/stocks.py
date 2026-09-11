@@ -39,6 +39,43 @@ def sell():
     return _place_order(stock_trading.SELL)
 
 
+@stock_bp.post("/orders/preview")
+def order_preview():
+    """Validate a stock order and show its cash/position impact without filling it."""
+    data = request.get_json(silent=True) or {}
+    symbol = str(data.get("symbol", "")).upper().strip()
+    side = str(data.get("side", "")).upper().strip()
+    try:
+        quantity = int(data.get("quantity", 0))
+    except (TypeError, ValueError):
+        quantity = 0
+    if side not in (stock_trading.BUY, stock_trading.SELL) or quantity <= 0:
+        return jsonify({"message": "side(BUY/SELL)와 1 이상의 정수 quantity를 입력하세요."}), 400
+    info = stock_trading.get_stock_info(symbol)
+    if not info:
+        return jsonify({"message": "지원하지 않는 KRX 종목입니다."}), 400
+    try:
+        price = stock_trading.current_price(symbol)
+    except Exception:
+        return jsonify({"message": "현재 시세를 확인할 수 없습니다."}), 503
+    with session_scope() as db:
+        member = db.get(Member, session["member_id"])
+        position = db.query(StockPosition).filter_by(member_id=member.member_id, symbol=symbol).first()
+        held_quantity = position.quantity if position else 0
+        amount = price * quantity
+        executable = amount <= member.asset if side == stock_trading.BUY else quantity <= held_quantity
+        return jsonify({
+            "executable": executable, "symbol": symbol, "name": info["name"], "side": side,
+            "quantity": quantity, "estimatedPrice": price, "estimatedAmount": amount,
+            "cashBefore": member.asset,
+            "cashAfter": member.asset - amount if side == stock_trading.BUY else member.asset + amount,
+            "positionBefore": held_quantity,
+            "positionAfter": held_quantity + quantity if side == stock_trading.BUY else held_quantity - quantity,
+            "reason": None if executable else ("보유 현금이 부족합니다." if side == stock_trading.BUY else "매도 가능 수량이 부족합니다."),
+            "notice": "주문 미리보기는 체결·잔고를 변경하지 않으며, 실제 주문 시점 가격은 달라질 수 있습니다.",
+        })
+
+
 @stock_bp.post("/orders/pine")
 def pine_order():
     """Order endpoint used by the Pine strategy practice screen.

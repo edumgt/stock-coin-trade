@@ -221,6 +221,30 @@ def history():
           "source": row.source, "ts": int(row.created_at.timestamp() * 1000)} for row in rows]})
 
 
+@alternative_bp.post("/orders/preview")
+def order_preview():
+    data = request.get_json(silent=True) or {}
+    symbol, side = str(data.get("symbol", "")).upper(), str(data.get("side", "")).upper()
+    try:
+        quantity = int(data.get("quantity", 0))
+    except (TypeError, ValueError):
+        quantity = 0
+    if symbol not in CATALOG or side not in {"BUY", "SELL"} or quantity <= 0:
+        return jsonify({"message": "상품, BUY/SELL, 1 이상의 수량을 확인해주세요."}), 400
+    quote = _quote(symbol)
+    with session_scope() as db:
+        member = db.get(Member, session["member_id"])
+        position = db.query(AlternativePosition).filter_by(member_id=member.member_id, symbol=symbol).first()
+        held_quantity = position.quantity if position else 0
+        amount = quote["tradeAmountPerUnit"] * quantity
+        executable = amount <= member.asset if side == "BUY" else quantity <= held_quantity
+        return jsonify({"executable": executable, "symbol": symbol, "name": quote["name"], "category": quote["category"],
+                        "side": side, "quantity": quantity, "estimatedPrice": quote["price"], "estimatedAmount": amount,
+                        "marginRate": quote["marginRate"], "cashBefore": member.asset, "heldQuantity": held_quantity,
+                        "reason": None if executable else ("보유 현금이 부족합니다." if side == "BUY" else "매도 가능 수량이 부족합니다."),
+                        "notice": "미리보기는 교육용 기준 시세를 사용하며 주문·잔고를 변경하지 않습니다."})
+
+
 def execute_alternative_order(db, member: Member, symbol: str, side: str, quantity: int, source: str = "WEB") -> dict:
     """대체자산 주문 체결. 라우트와 봇 거래 스케줄러가 함께 사용하는 단일 진입점이다."""
     if symbol not in CATALOG or side not in {"BUY", "SELL"} or quantity <= 0:

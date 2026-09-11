@@ -155,6 +155,18 @@ docker compose down -v
 
 ## API 요약
 
+### 모의투자 주문·분석 API
+
+모든 주문 API는 로그인 세션이 필요합니다. `preview` API는 현재 시세와 보유 현금·수량을 기준으로 실행 가능 여부만 계산하며, 주문·잔고·거래 이력을 변경하지 않습니다.
+
+| Method | Path | 설명 |
+|---|---|---|
+| `POST` | `/api/stocks/orders/preview` | 주식 시장가 주문의 예상 체결 금액·현금·보유수량 변화 확인 |
+| `POST` | `/api/trade/order/preview` | 코인 시장가 매수/매도의 예상 수량·금액 확인 |
+| `POST` | `/api/alternatives/orders/preview` | 선물·옵션·금속·부동산 모의 주문의 증거금/현금 영향 확인 |
+| `GET` | `/api/member/trading-activity?days=30` | 주식·코인·대체자산 체결을 합산한 기간별 거래 횟수·회전금액 통계 |
+| `GET` | `/api/member/portfolio-analysis` | 자산배분, HHI 분산도, 레버리지 노출, 손익·업종 집중도 분석 |
+
 ### PostgreSQL 퀀트 API
 
 로컬 `local-db` 프로필은 PostgreSQL도 함께 실행하며, 첫 기동 시 `database/quant-postgres.sql`이 월별 시계열 분석용 스키마와 명시적인 샘플 OHLCV를 준비합니다. 운영 환경에서는 `QUANT_DATABASE_URL`로 별도의 PostgreSQL을 지정합니다.

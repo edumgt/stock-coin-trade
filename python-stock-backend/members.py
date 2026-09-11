@@ -2,13 +2,14 @@ import bcrypt
 import requests
 import threading
 import time
+from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request, session
 
 from sqlalchemy import text
 
 import stock_trading
 from db import engine, session_scope
-from models import HoldCrypto, HtsWatchMemo, Member, StockPosition, UpbitMarket
+from models import AlternativeOrder, CryptoOrder, HoldCrypto, HtsWatchMemo, Member, StockOrder, StockPosition, UpbitMarket
 from alternatives import get_positions as get_alternative_positions, position_value
 from stock_market import cached_price
 
@@ -257,6 +258,45 @@ def portfolio_analysis():
         "leverage": {"value": round(leverage_value), "ratio": leverage_ratio, "cashBufferRatio": cash_buffer_ratio},
         "positionStats": position_stats, "topSector": top_sector, "checks": checks,
         "notice": "자산배분·분산도(HHI)·레버리지 노출·손익 통계 등 여러 기법을 함께 본 모의투자 교육용 리포트이며, 실제 투자 자문이나 개인별 권유가 아닙니다.",
+    })
+
+
+@member_bp.get("/trading-activity")
+def trading_activity():
+    """Consolidated, read-only order activity for the requested recent period."""
+    member_id = session.get("member_id")
+    if not member_id:
+        return jsonify({"error": "UNAUTHORIZED", "message": "로그인이 필요합니다."}), 401
+    try:
+        days = max(1, min(int(request.args.get("days", 30)), 365))
+    except (TypeError, ValueError):
+        days = 30
+    cutoff = datetime.now() - timedelta(days=days)
+    with session_scope() as db:
+        stock = db.query(StockOrder).filter(StockOrder.member_id == member_id, StockOrder.created_at >= cutoff).all()
+        crypto = db.query(CryptoOrder).filter(CryptoOrder.member_id == member_id, CryptoOrder.created_at >= cutoff).all()
+        alternatives = db.query(AlternativeOrder).filter(AlternativeOrder.member_id == member_id, AlternativeOrder.created_at >= cutoff).all()
+    orders = (
+        [{"assetClass": "STOCK", "side": row.order_type, "amount": row.amount, "source": row.source, "createdAt": row.created_at} for row in stock]
+        + [{"assetClass": "CRYPTO", "side": row.order_type, "amount": row.amount, "source": row.source, "createdAt": row.created_at} for row in crypto]
+        + [{"assetClass": "ALTERNATIVE", "side": row.order_type, "amount": row.amount, "source": row.source, "createdAt": row.created_at} for row in alternatives]
+    )
+    totals = {name: {"count": 0, "buyAmount": 0, "sellAmount": 0} for name in ("STOCK", "CRYPTO", "ALTERNATIVE")}
+    daily = {}
+    for order in orders:
+        bucket = totals[order["assetClass"]]
+        bucket["count"] += 1
+        bucket["buyAmount" if order["side"] == "BUY" else "sellAmount"] += int(order["amount"])
+        day = order["createdAt"].date().isoformat() if order["createdAt"] else "unknown"
+        daily[day] = daily.get(day, 0) + 1
+    return jsonify({
+        "days": days,
+        "from": cutoff.date().isoformat(),
+        "orderCount": len(orders),
+        "turnover": sum(int(order["amount"]) for order in orders),
+        "byAssetClass": totals,
+        "dailyOrderCounts": [{"date": day, "count": count} for day, count in sorted(daily.items())],
+        "notice": "체결 주문을 자산군별로 합산한 모의투자 활동 통계입니다. 미리보기 요청은 포함하지 않습니다.",
     })
 
 
