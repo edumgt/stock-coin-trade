@@ -85,7 +85,7 @@ async function loadTradeHistory() {
   await initPage({ requireAuth:true });
   tradeHistoryGridApi = createHistoryGrid();
   if (!tradeHistoryGridApi) {
-    document.getElementById('historyStatus').textContent = 'AG Grid를 불러오지 못했습니다.';
+    document.getElementById('historyStatus').textContent = '목록 화면을 불러오지 못했습니다.';
     return;
   }
   document.getElementById('historyQuickFilter')?.addEventListener('input', event => tradeHistoryGridApi.setGridOption('quickFilterText', event.target.value));

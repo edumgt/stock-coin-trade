@@ -43,4 +43,4 @@ async function loadUsage() {
   } catch (error) { usage$('usageStatus').textContent = error.message; }
 }
 
-(async () => { const user = await initPage({ requireAuth:true }); if (!user) return; usageGridApi = createUsageGrid(); if (!usageGridApi) { usage$('usageStatus').textContent = 'AG Grid를 불러오지 못했습니다.'; return; } usage$('usageFilter').addEventListener('input', e => usageGridApi.setGridOption('quickFilterText', e.target.value)); usage$('usageRefresh').addEventListener('click', loadUsage); await loadUsage(); })();
+(async () => { const user = await initPage({ requireAuth:true }); if (!user) return; usageGridApi = createUsageGrid(); if (!usageGridApi) { usage$('usageStatus').textContent = '목록 화면을 불러오지 못했습니다.'; return; } usage$('usageFilter').addEventListener('input', e => usageGridApi.setGridOption('quickFilterText', e.target.value)); usage$('usageRefresh').addEventListener('click', loadUsage); await loadUsage(); })();
