@@ -24,6 +24,7 @@ from demo_seed import seed_bababa_dataset, seed_demo_investors, seed_ganada_data
 from market_bots import ensure_bot_accounts
 from members import ensure_member_tables, member_bp
 from openapi import open_api_bp
+from ohlcv_db import ohlcv_db_bp
 from quant import quant_bp
 from scheduler import start_scheduler
 from stock_market import (
@@ -59,6 +60,7 @@ app.register_blueprint(api_key_bp)
 app.register_blueprint(broker_test_bp)
 app.register_blueprint(aws_broker_test_bp)
 app.register_blueprint(open_api_bp)
+app.register_blueprint(ohlcv_db_bp)
 app.register_blueprint(quant_bp)
 app.register_blueprint(alternative_bp)
 app.register_blueprint(error_analysis_bp)

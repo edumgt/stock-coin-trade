@@ -213,7 +213,7 @@ plot(ta.sma(ratio, 20), color=color.orange)</pre>
     </section>
   </main>
   <footer class="footer"><div>EDUMGT · TradingView(Pine) 학습 · 투자 교육용 콘텐츠</div></footer>
-  <script src="/js/config.js"></script><script src="/js/common.js?v=20260813-common-menu-3"></script>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20260911-ohlcv-db-menu"></script>
   <script>
     const seasonData={month:[['1월',1.8,58,15],['2월',0.6,53,15],['3월',1.1,56,15],['4월',1.5,60,15],['5월',-0.4,47,15],['6월',-0.7,45,15],['7월',0.9,55,15],['8월',-1.2,42,15],['9월',-0.8,44,15],['10월',1.3,59,15],['11월',2.1,63,15],['12월',2.5,67,15]],weekday:[['월요일',-0.15,48,780],['화요일',0.22,53,780],['수요일',0.08,51,780],['목요일',0.17,54,780],['금요일',0.31,56,780]]};
     function calculateMetrics(){const annual=Number(document.getElementById('annualReturn').value)||0,rf=Number(document.getElementById('riskFree').value)||0,vol=Math.abs(Number(document.getElementById('volatility').value))||1,mdd=Math.abs(Number(document.getElementById('mdd').value))||1,sharpe=(annual-rf)/vol,calmar=annual/mdd;document.getElementById('sharpeOut').textContent=sharpe.toFixed(2);document.getElementById('mddOut').textContent='-'+mdd.toFixed(2)+'%';document.getElementById('calmarOut').textContent=calmar.toFixed(2);document.getElementById('metricComment').textContent=sharpe>=1?'위험 대비 수익이 양호합니다. 다른 구간에서도 유지되는지 확인하세요.':'위험 대비 수익이 낮습니다. 변동성이나 낙폭을 낮출 규칙을 실험해 보세요.'}

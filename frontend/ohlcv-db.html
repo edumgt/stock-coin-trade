@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OHLCV DB — 모의투자</title>
+  <link rel="icon" href="/img/favicon.png">
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:500; font-display:swap; src:url('/fonts/Pretendard-Medium.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:600; font-display:swap; src:url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+    .ohlcv-pipeline { grid-template-columns:1fr auto 1fr auto 1fr auto 1fr !important; }
+    .ohlcv-pipeline article code { display:block; margin-top:6px; padding:3px 6px; border-radius:5px; color:#0d4ebb; background:#eaf2ff; font-size:11px; }
+    .ohlcv-summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .ohlcv-summary-grid article { padding:15px; border:1px solid var(--quant-line); border-radius:9px; background:#fbfdff; }
+    .ohlcv-summary-grid span { display:block; color:#60738b; font-size:12px; font-weight:600; }
+    .ohlcv-summary-grid strong { display:block; margin-top:5px; color:var(--quant-ink); font-size:25px; line-height:1.1; }
+    .ohlcv-summary-grid small { display:block; margin-top:5px; color:#71839a; font-size:11px; }
+    .ohlcv-aggregate-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .ohlcv-aggregate-table th,.ohlcv-aggregate-table td { padding:10px 12px; border-bottom:1px solid var(--quant-line); text-align:right; white-space:nowrap; }
+    .ohlcv-aggregate-table th { color:#526a86; background:#f4f8fd; font-size:11px; }
+    .ohlcv-aggregate-table th:first-child,.ohlcv-aggregate-table td:first-child { text-align:left; }
+    .ohlcv-aggregate-table tbody tr:hover { background:#f8fbff; }
+    .ohlcv-table-wrap { overflow:auto; border:1px solid var(--quant-line); border-radius:9px; }
+    .ohlcv-table-toolbar { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .ohlcv-table-toolbar p { margin:0; color:#687b92; font-size:12px; }
+    .ohlcv-table-toolbar input { width:min(100%,230px); padding:8px 10px; border:1px solid #b9cae2; border-radius:7px; font:inherit; font-size:12px; }
+    .ohlcv-table-toolbar button { padding:8px 10px; border:1px solid #b9cae2; border-radius:7px; color:#315579; background:#fff; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+    .ohlcv-table-toolbar button:disabled { opacity:.45; cursor:default; }
+    @media (max-width:1050px) { .ohlcv-pipeline { grid-template-columns:repeat(2,minmax(0,1fr)) !important; } .ohlcv-pipeline > i { display:none; } }
+    @media (max-width:760px) { .ohlcv-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ohlcv-table-toolbar { align-items:stretch; flex-direction:column; } .ohlcv-table-toolbar input { width:100%; box-sizing:border-box; } }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="/css/style.css?v=20260911-ui-system">
+  <link rel="stylesheet" href="/css/quant-lab.css?v=20260911-system-erd">
+</head>
+<body>
+  <div id="header-mount"></div>
+  <main class="quant-page">
+    <div class="quant-shell">
+
+      <section class="quant-hero">
+        <span>DOCKER CLASS · OHLCV DB</span>
+        <h1>docker-class 배치 파이프라인이 적재하는 종목별 과거 시세 DB</h1>
+        <p>이 화면이 설명하는 PostgreSQL(<code>pg-stock</code>)은 <code>/home/ubuntu/docker-class</code> 학습 저장소의 cron 배치가 KOSPI·KOSDAQ 전 종목의 일봉 OHLCV를 수집해 쌓는 <b>별도의 로컬 학습용 DB</b>입니다. 이 앱은 집계 확인을 위해 읽기 전용으로만 조회하며, 실거래·모의투자 백엔드와는 데이터를 주고받지 않습니다. <a href="/quant.html?tab=schema" style="color:#0d4ebb;font-weight:700;text-decoration:none;">퀀트 연구용 PostgreSQL(quant.html)</a>과도 별개의 인스턴스입니다.</p>
+      </section>
+
+      <section class="quant-stats">
+        <b>수동 확인 스냅샷 · 2026-09-11 기준</b>
+        <span>적재된 전체 종목 48개</span>
+        <span>ohlcv 11,435행</span>
+        <span>기간 2025-01-02 ~ 2025-12-30</span>
+        <span>2025년 수집 진행률 450 / 2,765 종목</span>
+      </section>
+
+      <section class="quant-card quant-guide-card">
+        <header><b>집계</b><div><h2>적재 데이터 집계</h2><p><code>tickers</code>와 <code>ohlcv</code> 테이블을 읽기 전용으로 조회합니다. 페이지를 다시 열면 최신 적재 상태가 표시됩니다.</p></div></header>
+        <div class="guide-body">
+          <div class="ohlcv-summary-grid" aria-label="OHLCV 핵심 집계">
+            <article><span>전체 종목 수</span><strong id="ohlcv-total-tickers">–</strong><small><code>COUNT(DISTINCT ticker_code)</code></small></article>
+            <article><span>전체 OHLCV 건수</span><strong id="ohlcv-total-rows">–</strong><small>종목·거래일별 일봉 행</small></article>
+            <article><span>종목당 평균 건수</span><strong id="ohlcv-average-rows">–</strong><small>전체 행 ÷ 적재 종목</small></article>
+            <article><span>데이터 기간</span><strong id="ohlcv-data-year">–</strong><small id="ohlcv-data-range">집계 조회 중</small></article>
+          </div>
+
+          <div>
+            <h3 style="margin:0 0 9px;color:var(--quant-ink);font-size:15px">연도별 집계</h3>
+            <div class="ohlcv-table-wrap">
+              <table class="ohlcv-aggregate-table">
+                <thead><tr><th>연도</th><th>OHLCV 건수</th><th>적재 종목 수</th><th>종목당 평균 건수</th><th>기간</th></tr></thead>
+                <tbody id="ohlcv-year-summary"><tr><td colspan="5">집계 조회 중…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <div class="ohlcv-table-toolbar"><div><h3 style="margin:0 0 4px;color:var(--quant-ink);font-size:15px">종목별 전체 · 연도별 건수</h3><p id="ohlcv-ticker-count">집계 조회 중…</p></div><input id="ohlcv-ticker-filter" type="search" placeholder="종목 코드 검색" aria-label="종목 코드 검색"><div><button id="ohlcv-page-prev" type="button" disabled>이전</button> <button id="ohlcv-page-next" type="button" disabled>다음</button></div></div>
+            <div class="ohlcv-table-wrap">
+              <table class="ohlcv-aggregate-table">
+                <thead><tr><th>종목 코드</th><th>시장</th><th>전체 건수</th><th>연도별 건수</th><th>최초 일자</th><th>최종 일자</th></tr></thead>
+                <tbody id="ohlcv-ticker-summary"></tbody>
+              </table>
+            </div>
+          </div>
+          <p class="guide-note" id="ohlcv-quality-note">OHLC 가격 범위·결측·중복 검증 결과를 함께 조회합니다.</p>
+        </div>
+      </section>
+
+      <section class="quant-card quant-guide-card">
+        <header><b><i class="fa-brands fa-docker" aria-hidden="true"></i></b><div><h2>4단계 파이프라인</h2><p>수집 → 3단계 동기화 → DB 적재 → 백업까지 전부 cron으로 자동화되어 있습니다.</p></div></header>
+        <div class="guide-body">
+          <div class="dataset-grid ohlcv-pipeline schema-flow">
+            <article>
+              <b>1</b>
+              <h3>수집 (매 1분)</h3>
+              <p>FinanceDataReader로 KOSPI·KOSDAQ 전 종목(약 2,765개) 목록을 구하고, yfinance로 종목·연도별 OHLCV를 <code>data-1/</code>에 CSV로 저장합니다.</p>
+              <code>fetch_ohlcv_batch.sh → fetch_ohlcv.py</code>
+            </article>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            <article>
+              <b>2</b>
+              <h3>3단계 동기화</h3>
+              <p><code>rsync --update</code>로 <code>data-1 → data-2</code>(10초 간격) → <code>data-3</code>(1분 간격) 순으로 새 파일만 전달합니다. 3단계로 나눈 덕분에 수집 작업이 최종 적재 대상 폴더를 직접 건드리지 않습니다.</p>
+              <code>sync-loop-10s.sh · sync-data2-to-data3.sh</code>
+            </article>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            <article>
+              <b>3</b>
+              <h3>DB 적재 (매시 정각)</h3>
+              <p><code>data-3/</code>의 모든 CSV를 읽어 <code>tickers</code>·<code>ohlcv</code> 테이블에 적재합니다. PK <code>(ticker_code, trade_date)</code> + <code>ON CONFLICT DO NOTHING</code>이라 재실행해도 중복 없이 새 행만 들어갑니다.</p>
+              <code>load_data3_to_db.sh → load_data3_to_db.py</code>
+            </article>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            <article>
+              <b>4</b>
+              <h3>백업 (2시간마다)</h3>
+              <p>실행 중인 <code>pg-stock</code> 컨테이너를 <code>docker commit</code>으로 스냅샷 떠서 Docker Hub로 push합니다. 트랜잭션 정합 백업이 아닌 crash-consistent 백업이라는 한계를 README에 명시해 두었습니다.</p>
+              <code>backup_pg_to_dockerhub.sh → edumgt/pg-stock-backup</code>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="quant-card quant-guide-card">
+        <header><b>01</b><div><h2>테이블 구조 — 종목마다 테이블을 만들지 않는 이유</h2><p>종목별로 테이블을 따로 만들면 수천 개 종목을 감당하기 어려워, 종목 마스터 1개 + 공용 시세 1개로 구성합니다.</p></div></header>
+        <div class="guide-body">
+          <div class="dataset-grid">
+            <article>
+              <h3>tickers (종목 마스터)</h3>
+              <dl>
+                <dt>ticker_code</dt><dd>종목 코드. PK. 예: <code>005930</code></dd>
+                <dt>name / market</dt><dd>종목명과 시장 구분(KOSPI 등). 적재 배치는 현재 코드만 채우고 나머지는 비워 둡니다.</dd>
+                <dt>created_at</dt><dd>처음 발견되어 등록된 시각.</dd>
+              </dl>
+            </article>
+            <article>
+              <h3>ohlcv (전 종목 공용 시세)</h3>
+              <dl>
+                <dt>ticker_code, trade_date</dt><dd>복합 PK. 한 종목의 하루치 캔들 1행.</dd>
+                <dt>open / high / low / close</dt><dd>시가·고가·저가·종가.</dd>
+                <dt>adj_close / volume</dt><dd>수정종가와 거래량.</dd>
+              </dl>
+            </article>
+            <article>
+              <h3>인덱스 · 적재 방식</h3>
+              <dl>
+                <dt>idx_ohlcv_trade_date</dt><dd>날짜 범위 조회 최적화용 보조 인덱스.</dd>
+                <dt>적재 스크립트</dt><dd><code>execute_values</code> + <code>ON CONFLICT (ticker_code, trade_date) DO NOTHING</code>으로 idempotent하게 삽입.</dd>
+              </dl>
+            </article>
+          </div>
+          <div class="guide-example">
+            <span>ohlcv 예시 행 (003080, 2025-01-02)</span>
+            <code>003080 | 2025-01-02 | 2,490.0 | 2,495.0 | 2,470.0 | 2,490.0 | 2,315.59 | 7,549</code>
+          </div>
+          <p class="guide-note">CSV 원본 컬럼(<code>Date, Open, High, Low, Close, Adj Close, Volume</code>)은 yfinance 응답 그대로이며, 적재 스크립트가 <code>trade_date/open/high/low/close/adj_close/volume</code>으로 이름을 바꿔 넣습니다.</p>
+        </div>
+      </section>
+
+      <section class="quant-card quant-guide-card">
+        <header><b>02</b><div><h2>접속 · 운영 정보</h2><p>이 DB는 <code>docker-class</code> 저장소를 클론한 로컬/사내 환경에서만 뜨는 컨테이너입니다.</p></div></header>
+        <div class="guide-body">
+          <div class="schema-details">
+            <article>
+              <h3>실행 위치</h3>
+              <p><code>docker-class/postgresql/docker-compose.yml</code> → 컨테이너명 <code>pg-stock</code>, 이미지 <code>postgres:latest</code>. 호스트 <code>127.0.0.1:5433</code>으로만 노출되며 이 앱의 웹 서버·API와는 네트워크로 연결되어 있지 않습니다.</p>
+            </article>
+            <article>
+              <h3>접속 계정</h3>
+              <p>DB명 <code>admin</code>. 계정·비밀번호는 저장소에 커밋하지 않고 <code>docker-class/postgresql/.env.example</code>을 복사한 <code>.env</code>로 관리합니다. 운영자는 해당 README의 "접속 정보" 절을 참고하세요.</p>
+            </article>
+            <article>
+              <h3>데이터 범위</h3>
+              <p>2026-09-11 기준 2025년 데이터를 우선 수집 중이며(2,765종목 중 450종목 진행), 이후 2020~2024년 순으로 이어서 수집합니다. 최초 상장폐지·거래정지 종목 처리는 별도 검증이 필요합니다.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+  <script src="/js/config.js"></script>
+  <script src="/js/common.js?v=20260911-ohlcv-db-menu"></script>
+  <script>
+    const OHLCV_PAGE_SIZE = 100;
+    let ohlcvPageOffset = 0;
+    const number = value => Number(value || 0).toLocaleString();
+    const date = value => value ? String(value).slice(0, 10) : '–';
+    async function loadOhlcvSummary() {
+      const response = await apiFetch('/api/ohlcv-db/summary');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      const { totals, yearly, quality, markets } = data;
+      document.getElementById('ohlcv-total-tickers').textContent = `${number(totals.ticker_count)}개`;
+      document.getElementById('ohlcv-total-rows').textContent = `${number(totals.ohlcv_rows)}건`;
+      document.getElementById('ohlcv-average-rows').textContent = totals.ticker_count ? (Number(totals.ohlcv_rows) / Number(totals.ticker_count)).toFixed(1) + '건' : '–';
+      document.getElementById('ohlcv-data-year').textContent = totals.last_date ? date(totals.last_date).slice(0, 4) + '년' : '–';
+      document.getElementById('ohlcv-data-range').textContent = `${date(totals.first_date)} ~ ${date(totals.last_date)}`;
+      document.getElementById('ohlcv-year-summary').innerHTML = yearly.map(row => `<tr><td>${row.year}</td><td>${number(row.row_count)}</td><td>${number(row.ticker_count)}</td><td>${Number(row.average_rows).toFixed(1)}</td><td>${date(totals.first_date)} ~ ${date(totals.last_date)}</td></tr>`).join('');
+      const marketText = markets.map(row => `${row.market} ${number(row.ticker_count)}종목`).join(' · ');
+      document.getElementById('ohlcv-quality-note').textContent = `검증 격리 ${number(quality.quarantined_rows)}건 (${number(quality.affected_tickers)}종목) · 시장별 ${marketText}`;
+    }
+    async function loadOhlcvTickerSummary() {
+      const query = document.getElementById('ohlcv-ticker-filter').value.trim();
+      const response = await apiFetch(`/api/ohlcv-db/tickers?q=${encodeURIComponent(query)}&limit=${OHLCV_PAGE_SIZE}&offset=${ohlcvPageOffset}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      const start = data.total ? data.offset + 1 : 0;
+      const end = Math.min(data.offset + data.rows.length, data.total);
+      document.getElementById('ohlcv-ticker-count').textContent = `${number(data.total)}개 중 ${number(start)}–${number(end)}개 표시`;
+      document.getElementById('ohlcv-ticker-summary').innerHTML = data.rows.map(row => `<tr><td><code>${row.ticker_code}</code>${row.name ? ` · ${row.name}` : ''}</td><td>${row.market || '–'}</td><td>${number(row.total_rows)}</td><td>${Object.entries(row.yearly_rows || {}).sort(([a], [b]) => a.localeCompare(b)).map(([year, count]) => `${year}: ${number(count)}`).join('<br>')}</td><td>${date(row.first_date)}</td><td>${date(row.last_date)}</td></tr>`).join('') || '<tr><td colspan="6">일치하는 종목 코드가 없습니다.</td></tr>';
+      document.getElementById('ohlcv-page-prev').disabled = data.offset === 0;
+      document.getElementById('ohlcv-page-next').disabled = data.offset + data.rows.length >= data.total;
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      initPage();
+      Promise.all([loadOhlcvSummary(), loadOhlcvTickerSummary()]).catch(error => {
+        document.getElementById('ohlcv-quality-note').textContent = error.message || 'OHLCV DB 집계를 불러오지 못했습니다.';
+      });
+      document.getElementById('ohlcv-ticker-filter').addEventListener('input', () => { ohlcvPageOffset = 0; loadOhlcvTickerSummary().catch(() => {}); });
+      document.getElementById('ohlcv-page-prev').addEventListener('click', () => { ohlcvPageOffset = Math.max(0, ohlcvPageOffset - OHLCV_PAGE_SIZE); loadOhlcvTickerSummary().catch(() => {}); });
+      document.getElementById('ohlcv-page-next').addEventListener('click', () => { ohlcvPageOffset += OHLCV_PAGE_SIZE; loadOhlcvTickerSummary().catch(() => {}); });
+    });
+  </script>
+</body>
+</html>
