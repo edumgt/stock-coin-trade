@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pine Script 간단 테스트 — 모의투자</title>
+  <link rel="icon" href="/img/favicon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css?v=20260911-ui-system">
+  
+  <style>
+    .lab-wrap{max-width:1180px;margin:0 auto;padding:30px 18px 48px}.lab-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:20px;margin-top:16px}.lab-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:16px}.label{display:block;margin-bottom:6px;font-size:12px;font-weight:800;color:var(--fg-2)}textarea{width:100%;min-height:390px;padding:15px;border:0;border-radius:9px;background:#131722;color:#d1d4dc;resize:vertical;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.btn{border:0;border-radius:7px;padding:9px 12px;background:var(--accent);color:#fff;font-size:13px;font-weight:800;cursor:pointer}.btn:hover{background:var(--accent-dark)}.btn-sub{background:#fff;color:var(--fg);border:1px solid var(--border)}.result{padding:13px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);font-size:13px;line-height:1.65}.result strong{color:var(--fg)}.metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.metric{padding:11px;border:1px solid var(--border);border-radius:8px;background:#fff}.metric span{display:block;color:var(--muted);font-size:11px;font-weight:700}.metric b{display:block;margin-top:3px;color:var(--fg);font-size:17px}.notice{margin:12px 0 0;padding:11px 13px;border-radius:8px;background:#fff8e8;color:#854d0e;font-size:12px;line-height:1.7}.signal-table{width:100%;border-collapse:collapse;margin-top:13px;font-size:12px}.signal-table th,.signal-table td{padding:8px;border-bottom:1px solid var(--border);text-align:right}.signal-table th:first-child,.signal-table td:first-child{text-align:left}.signal-table th{color:var(--muted);font-size:11px}.ok{color:#15803d;font-weight:800}.warn{color:#b45309;font-weight:800}.bad{color:#e11d48;font-weight:800}.help-list{padding-left:18px;margin:8px 0}.help-list li{margin:6px 0;font-size:13px;color:var(--fg-2);line-height:1.55}@media(max-width:780px){.lab-wrap{padding:20px 12px 32px}.lab-card{padding:15px}.lab-grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:repeat(3,1fr)}textarea{min-height:320px}}
+  </style>
+</head>
+<body>
+  <div id="header-mount"></div>
+  <main class="lab-wrap">
+    <section style="padding:27px;border:1px solid #c9daff;border-radius:14px;background:linear-gradient(135deg,#e6f0ff,#fafcff)">
+      <div style="font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--accent-dark)">PINE SCRIPT · SAFE PRACTICE</div>
+      <h1 style="margin:6px 0;font-size:28px;font-weight:900;color:var(--fg)">Pine Script 간단 테스트</h1>
+      <p style="max-width:790px;margin:0;color:var(--fg-2);font-size:14px;line-height:1.75">예제 코드를 수정해 이동평균·RSI 신호와 간단한 과거봉 시뮬레이션을 확인합니다. 이 화면은 TradingView 서버나 계좌에 연결되지 않으며, 주문을 만들지 않습니다.</p>
+      <div class="notice"><strong>중요:</strong> 실제 Pine Script 컴파일·차트 적용·Strategy Report는 TradingView Pine Editor에서 수행합니다. 이 도구의 계산 결과는 학습용 비교 값이며 실제 체결·수수료·슬리피지를 반영하지 않습니다.</div>
+    </section>
+
+    <section class="lab-card lab-grid">
+      <div>
+        <div class="toolbar"><button type="button" class="btn-sub btn" data-template="ma">MA 교차 예제</button><button type="button" class="btn-sub btn" data-template="rsi">RSI 예제</button><button type="button" class="btn-sub btn" data-template="indicator">지표 예제</button><button type="button" class="btn" id="runLab">문법·전략 테스트</button></div>
+        <label class="label" for="pineLabCode">Pine Script 입력</label>
+        <textarea id="pineLabCode" spellcheck="false" aria-label="Pine Script 코드"></textarea>
+      </div>
+      <aside>
+        <h2 style="margin:0 0 8px;font-size:16px;font-weight:900;color:var(--fg)">테스트 결과</h2>
+        <div id="labStatus" class="result">예제 코드를 불러오거나 수정한 뒤 테스트하세요.</div>
+        <div class="metric-grid"><div class="metric"><span>마지막 종가</span><b id="lastClose">-</b></div><div class="metric"><span>최신 신호</span><b id="lastSignal">-</b></div><div class="metric"><span>완료 거래</span><b id="tradeCount">-</b></div><div class="metric"><span>단순 수익률</span><b id="strategyReturn">-</b></div><div class="metric"><span>최대 낙폭</span><b id="maxDrawdown">-</b></div><div class="metric"><span>테스트 봉</span><b id="barCount">90</b></div></div>
+        <div class="notice">지원: <code>//@version=5/6</code>, <code>indicator()</code>, <code>strategy()</code>, <code>ta.sma/ema/rsi(close, 기간)</code>, <code>ta.crossover/crossunder()</code>, <code>strategy.entry/close()</code>. 외부 종목·웹훅·<code>request.security</code>·주문 전송은 실행하지 않습니다.</div>
+        <a href="/learning/tradingview-pine.html" style="display:inline-block;margin-top:12px;color:var(--accent-dark);font-size:13px;font-weight:800;text-decoration:none">TradingView · Pine 학습 가이드 →</a>
+      </aside>
+    </section>
+
+    <section class="lab-card">
+      <h2 style="margin:0;font-size:17px;font-weight:900;color:var(--fg)">최근 신호</h2>
+      <p style="margin:5px 0 0;color:var(--muted);font-size:12px">고정된 90개 학습용 가격 데이터에서 계산됩니다. 같은 코드라면 항상 같은 결과가 나와 조건 변경을 비교하기 좋습니다.</p>
+      <table class="signal-table"><thead><tr><th>봉</th><th>종가</th><th>빠른 값</th><th>느린 값</th><th>신호</th></tr></thead><tbody id="signalRows"><tr><td colspan="5" style="text-align:center;color:var(--muted)">테스트 전</td></tr></tbody></table>
+    </section>
+    <section class="lab-card">
+      <h2 style="margin:0;font-size:17px;font-weight:900;color:var(--fg)">TradingView에서 최종 확인할 항목</h2>
+      <ul class="help-list"><li><strong>차트·시간봉·데이터 공급자</strong>를 정한 뒤 Pine Editor에 같은 코드를 넣고 <em>Add to chart</em>를 선택합니다.</li><li><strong>Strategy Report</strong>에서 순이익만 보지 말고 거래 수, 최대 낙폭, 수수료·슬리피지 가정과 개별 거래를 함께 확인합니다.</li><li>실시간 봉은 마감 전 값이 바뀔 수 있습니다. 재도색 가능성, 알림 중복, 실제 주문 실패 처리는 별도로 설계합니다.</li></ul>
+    </section>
+  </main>
+  <script src="/js/config.js"></script>
+  <script src="/js/common.js?v=20260911-pine-lab"></script>
+  <script src="/js/pine-script-lab.js?v=20260911-1"></script>
+</body>
+</html>

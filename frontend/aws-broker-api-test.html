@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>증권사 OpenAPI 시세 테스트(AWS SSM) — 모의투자</title>
+  <link rel="icon" href="/img/favicon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css?v=20260911-ui-system">
+  
+  <style>
+    .test-wrap{max-width:none;margin:0;padding:32px 20px 56px}.test-card{margin-top:18px;padding:24px;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:var(--shadow-sm)}.broker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}.broker-card{padding:20px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}.broker-card h2{margin:0;color:var(--fg);font-size:19px;font-weight:900}.broker-card p{min-height:42px;margin:8px 0 16px;color:var(--fg-2);font-size:13px;line-height:1.6}.controls{display:flex;gap:8px}.controls input{min-width:0;flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit}.run{padding:10px 13px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer}.run:disabled{opacity:.65;cursor:wait}.result{display:block;min-height:150px;margin-top:14px;padding:14px;border-radius:9px;background:#111827;color:#E5E7EB;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}.result--error{background:#4C0519;color:#FFE4E6}.notice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}.note{padding:13px 14px;border-radius:9px;background:#FFF8E8;color:#854D0E;font-size:13px;line-height:1.65}.note ul{margin:7px 0 0;padding-left:18px}.footer{border-top:1px solid var(--border);background:var(--surface)}.footer div{max-width:none;margin:0;padding:14px 20px;color:var(--muted);font-size:12px}
+    .test-list{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+    .test-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .test-row label{font-size:12px;font-weight:800;color:var(--fg-2);flex:1;min-width:120px}
+    .run-sm{padding:7px 11px;border:0;border-radius:7px;background:var(--surface);border:1px solid var(--border);color:var(--fg);font-weight:800;font-size:12px;cursor:pointer}
+    .run-sm:disabled{opacity:.6;cursor:wait}
+    .result--sm{min-height:0;max-height:220px;overflow:auto;margin-top:0;padding:11px;font-size:11px}
+    @media(max-width:720px){.test-wrap{padding:20px 12px 36px}.test-card{padding:17px}.broker-grid,.notice-grid{grid-template-columns:1fr}.test-row label{flex:1 1 100%}}
+  </style>
+</head>
+<body>
+  <div id="header-mount"></div>
+  <main class="test-wrap">
+    <section class="test-card">
+      <div style="font-size:12px;font-weight:900;letter-spacing:.09em;color:var(--accent-dark)">READ-ONLY · AWS SSM PARAMETER STORE TRACK</div>
+      <h1 style="margin:7px 0;font-size:28px;font-weight:900;color:var(--fg)">KB증권 · 한국투자증권 OpenAPI 시세 테스트 (AWS SSM)</h1>
+      <p style="margin:0;color:var(--fg-2);line-height:1.7"><code>/broker-api-test.html</code>과 같은 조회를 수행하지만, App Key·Secret·계좌번호를 <code>kb.key</code>/<code>kis.key</code> 파일이 아니라 <strong>AWS Systems Manager Parameter Store</strong>(SecureString)에서 읽습니다. 이 페이지·백엔드 모듈은 기존 키 파일 트랙과 완전히 분리된 별도 구현이며, 기존 트랙은 이 모듈과 무관하게 그대로 동작합니다.</p>
+      <div class="notice-grid">
+        <div class="note"><strong>테스트 주의사항</strong><ul><li>모두 조회 전용입니다. 주문·정정·취소 API는 호출하지 않습니다.</li><li>KIS Testbed는 토큰 발급이 1분당 1회로 제한되어 있어 연속 요청하지 마세요.</li><li>모의 환경의 가격·거래량·체결시각은 실전 시세와 다를 수 있습니다.</li></ul></div>
+        <div class="note"><strong>AWS 사전 준비</strong><ul><li><code>/stock-coin-trade/kis/app_key</code>, <code>.../kis/secret</code>, <code>.../kis/account</code></li><li><code>/stock-coin-trade/kb/app_key</code>, <code>.../kb/secret</code></li><li>파라미터 미생성 시 화면에 "SSM Parameter Store에 …이(가) 없습니다" 오류가 표시됩니다. 자세한 절차는 README의 "AWS SSM Parameter Store 연동 트랙" 참고.</li></ul></div>
+      </div>
+      <div class="test-list"><div class="test-row"><label>AWS SSM 연결·파라미터 준비 상태</label><button class="run-sm" data-test="ssm-status">값 없이 상태 점검</button></div><div id="ssm-status-result" class="result result--sm" role="status">점검 대기 중 · SecureString 원문은 복호화하거나 표시하지 않습니다.</div></div>
+      <div class="broker-grid">
+        <section class="broker-card">
+          <h2>한국투자증권 Testbed</h2>
+          <p>국내주식 현재가 · <code>FHKST01010100</code></p>
+          <div class="controls"><input id="kis-symbol" value="005930" inputmode="numeric" maxlength="6" aria-label="한국투자증권 종목코드"><button class="run" data-broker="kis">시세 조회</button></div>
+          <div id="kis-result" class="result" role="status">조회 대기 중</div>
+
+          <div class="test-list">
+            <div class="test-row">
+              <label>모의투자 계좌</label>
+              <button class="run-sm" data-test="kis-balance">잔고/평가액 조회</button>
+            </div>
+            <div id="kis-balance-result" class="result result--sm" role="status">잔고 조회 대기 중 (SSM의 kis/account 파라미터 필요)</div>
+          </div>
+        </section>
+
+        <section class="broker-card">
+          <h2>KB증권 Open API</h2>
+          <p>Client Credentials OAuth와 국내주식 현재가(IVU10140) 읽기 전용 점검</p>
+          <div class="controls"><button class="run" data-broker="kb">토큰 발급 점검</button></div>
+          <div id="kb-result" class="result" role="status">점검 대기 중</div>
+
+          <div class="test-list">
+            <div class="test-row">
+              <label for="kb-symbol">국내주식 현재가 조회</label>
+            </div>
+            <div class="test-row">
+              <input id="kb-symbol" value="005930" inputmode="numeric" maxlength="6" aria-label="KB증권 종목코드" style="flex:1;min-width:0;padding:8px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--fg);font:inherit;font-size:12px">
+              <button class="run-sm" data-test="kb-quote">현재가 조회</button>
+            </div>
+            <div id="kb-quote-result" class="result result--sm" role="status">조회 대기 중</div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div>EDUMGT · 증권사 OpenAPI 읽기 전용 연결 점검 · AWS SSM 트랙</div></footer>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20260813-common-menu-3"></script><script src="/js/aws-broker-api-test.js"></script><script>document.addEventListener('DOMContentLoaded',()=>initPage())</script>
+</body>
+</html>

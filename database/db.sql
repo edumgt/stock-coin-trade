@@ -135,6 +135,23 @@ INSERT INTO `crypto_rank` (`crypto_rank_id`, `api_crypto_id`, `name`, `market_ca
 	(100, 13631, 'Manta Network', 746491001.73, -10.5419, 0.753821, 2.97407, 'MANTA');
 /*!40000 ALTER TABLE `crypto_rank` ENABLE KEYS */;
 
+-- 코인 모의 주문 이력: 현재 보유 상태(hold_crypto)와 분리해 체결 기록을 보존한다.
+CREATE TABLE IF NOT EXISTS `crypto_order` (
+  `crypto_order_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `member_id` bigint(20) NOT NULL,
+  `market_code` varchar(30) NOT NULL,
+  `korean_name` varchar(255) DEFAULT NULL,
+  `order_type` varchar(4) NOT NULL,
+  `quantity` double NOT NULL,
+  `price` double NOT NULL,
+  `amount` bigint(20) NOT NULL,
+  `source` varchar(20) NOT NULL DEFAULT 'WEB',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`crypto_order_id`),
+  KEY `idx_crypto_order_member_created` (`member_id`,`created_at`),
+  CONSTRAINT `fk_crypto_order_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- 테이블 mockinv.hold_crypto 구조 내보내기
 CREATE TABLE IF NOT EXISTS `hold_crypto` (
   `hold_crypto_id` bigint(20) NOT NULL AUTO_INCREMENT,
@@ -183,6 +200,30 @@ CREATE TABLE IF NOT EXISTS `hts_watch_memo` (
   PRIMARY KEY (`hts_watch_memo_id`),
   UNIQUE KEY `uq_hts_watch_memo_member_symbol` (`member_id`,`symbol`),
   CONSTRAINT `fk_hts_watch_memo_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 시스템 오류 분석: 서버 API 실패와 브라우저 JavaScript 오류를 통합 저장한다.
+-- 토큰·비밀번호·API 키는 애플리케이션에서 마스킹한 뒤 기록한다.
+CREATE TABLE IF NOT EXISTS `system_error_log` (
+  `system_error_log_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `occurred_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `source` varchar(20) NOT NULL,
+  `severity` varchar(10) NOT NULL DEFAULT 'ERROR',
+  `http_status` int DEFAULT NULL,
+  `method` varchar(10) DEFAULT NULL,
+  `path` varchar(500) DEFAULT NULL,
+  `error_type` varchar(160) DEFAULT NULL,
+  `message` text NOT NULL,
+  `reason` text DEFAULT NULL,
+  `stack_trace` text DEFAULT NULL,
+  `request_meta` text DEFAULT NULL,
+  `fingerprint` varchar(64) DEFAULT NULL,
+  `member_id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`system_error_log_id`),
+  KEY `idx_system_error_occurred` (`occurred_at`),
+  KEY `idx_system_error_source_status` (`source`,`http_status`),
+  KEY `idx_system_error_fingerprint` (`fingerprint`),
+  CONSTRAINT `fk_system_error_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 테이블 mockinv.upbit_market 구조 내보내기

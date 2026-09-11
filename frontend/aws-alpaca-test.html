@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alpaca Test(AWS SSM) — 모의투자</title>
+  <link rel="icon" href="/img/favicon.png"><script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css?v=20260911-ui-system">
+  
+  <style>
+    .test-wrap{max-width:none;margin:0;padding:32px 20px 56px}.card{margin-top:18px;padding:24px;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:var(--shadow-sm)}.kicker{font-size:12px;font-weight:900;letter-spacing:.09em;color:var(--accent-dark)}.result{display:block;min-height:158px;margin-top:16px;padding:15px;border-radius:9px;background:#111827;color:#e5e7eb;font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}.result--error{background:#4c0519;color:#ffe4e6}.run{margin-top:16px;padding:10px 14px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer}.run:disabled{opacity:.65;cursor:wait}.notice{margin-top:14px;padding:13px 14px;border-radius:9px;background:#fff8e8;color:#854d0e;font-size:13px;line-height:1.65}.footer{border-top:1px solid var(--border);background:var(--surface)}.footer div{max-width:none;margin:0;padding:14px 20px;color:var(--muted);font-size:12px}
+    .test-list{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px}
+    .test-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .test-row label{font-size:13px;font-weight:800;color:var(--fg-2);flex:1;min-width:140px}
+    .run-sm{padding:8px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--fg);font-weight:800;font-size:12px;cursor:pointer}
+    .run-sm:disabled{opacity:.6;cursor:wait}
+    .result--sm{min-height:0;max-height:240px;overflow:auto;margin-top:0;padding:12px;font-size:11.5px}
+  </style>
+</head>
+<body>
+  <div id="header-mount"></div>
+  <main class="test-wrap"><section class="card">
+    <div class="kicker">READ-ONLY · ALPACA PAPER API · AWS SSM PARAMETER STORE TRACK</div>
+    <h1 style="margin:7px 0;font-size:28px;font-weight:900;color:var(--fg)">Alpaca Test (AWS SSM)</h1>
+    <p style="margin:0;color:var(--fg-2);line-height:1.7"><code>/alpaca-test.html</code>과 같은 Paper 조회를 수행하지만, API Key·Secret을 <code>al.key</code> 파일이 아니라 <strong>AWS Systems Manager Parameter Store</strong>(SecureString)에서 읽습니다. 이 페이지·백엔드 모듈은 기존 키 파일 트랙과 완전히 분리된 별도 구현이며, 기존 트랙은 이 모듈과 무관하게 그대로 동작합니다.</p>
+    <div class="notice"><strong>테스트 범위:</strong> 계정·포지션만 조회 전용으로 확인합니다. 주문, 취소, 포지션 변경 등 거래 API는 호출하지 않습니다.</div>
+    <div class="notice"><strong>AWS 사전 준비:</strong> <code>/stock-coin-trade/alpaca/api_key</code>, <code>/stock-coin-trade/alpaca/secret_key</code> 파라미터가 필요합니다. 자세한 절차는 README의 "AWS SSM Parameter Store 연동 트랙" 참고.</div>
+    <button id="run-test" class="run">Paper API 연결 테스트</button>
+    <div id="result" class="result" role="status">테스트 대기 중</div>
+
+    <div class="test-list">
+      <div class="test-row"><label>보유 포지션</label><button class="run-sm" data-test="positions">포지션 조회</button></div>
+      <div id="positions-result" class="result result--sm" role="status">조회 대기 중</div>
+      <div class="test-row"><label>미국 시장 개장 상태</label><button class="run-sm" data-test="clock">마켓 시계 조회</button></div>
+      <div id="clock-result" class="result result--sm" role="status">조회 대기 중</div>
+      <div class="test-row"><label for="asset-symbol">종목 거래 가능 여부</label><input id="asset-symbol" value="AAPL" maxlength="10" aria-label="Alpaca 종목 심볼" style="width:110px;padding:8px;border:1px solid var(--border);border-radius:7px;background:var(--surface);font:inherit"><button class="run-sm" data-test="asset">종목 정보 조회</button></div>
+      <div id="asset-result" class="result result--sm" role="status">조회 대기 중</div>
+    </div>
+  </section></main>
+  <footer class="footer"><div>EDUMGT · Alpaca Paper API 읽기 전용 연결 점검 · AWS SSM 트랙</div></footer>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20260813-common-menu-3"></script><script src="/js/aws-alpaca-test.js"></script><script>document.addEventListener('DOMContentLoaded',()=>initPage())</script>
+</body>
+</html>

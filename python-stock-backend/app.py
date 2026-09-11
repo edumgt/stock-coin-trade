@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, g, session, got_request_exception
 import threading
 import time
 import requests as _req
@@ -12,10 +12,13 @@ from alternatives import alternative_bp, ensure_tables
 from ai import ai_bp
 from ai_sheet import ai_sheet_bp
 from alpaca_test_api import alpaca_test_bp
+from alpaca_test_aws_api import aws_alpaca_test_bp
 from api_keys import api_key_bp
 from broker_test_api import broker_test_bp
+from broker_test_aws_api import aws_broker_test_bp
 from crypto import ensure_crypto_tables, market_bp, trade_bp
 from crypto_exchange_test_api import crypto_exchange_test_bp
+from error_analysis import ensure_error_analysis_table, error_analysis_bp, record_error
 from demo_seed import seed_bababa_dataset, seed_demo_investors, seed_ganada_dataset
 from market_bots import ensure_bot_accounts
 from members import ensure_member_tables, member_bp
@@ -49,12 +52,15 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(ai_bp)
 app.register_blueprint(ai_sheet_bp)
 app.register_blueprint(alpaca_test_bp)
+app.register_blueprint(aws_alpaca_test_bp)
 app.register_blueprint(stock_bp)
 app.register_blueprint(api_key_bp)
 app.register_blueprint(broker_test_bp)
+app.register_blueprint(aws_broker_test_bp)
 app.register_blueprint(open_api_bp)
 app.register_blueprint(quant_bp)
 app.register_blueprint(alternative_bp)
+app.register_blueprint(error_analysis_bp)
 
 ensure_tables()
 ensure_member_tables()
@@ -63,7 +69,35 @@ seed_demo_investors()
 seed_ganada_dataset()
 seed_bababa_dataset()
 ensure_bot_accounts()
+ensure_error_analysis_table()
 start_scheduler()
+
+
+@got_request_exception.connect_via(app)
+def _capture_unhandled_exception(sender, exception, **extra):
+    """Keep the exception until after_request persists its diagnostic details."""
+    g.unhandled_error = exception
+
+
+@app.after_request
+def _record_failed_response(response):
+    """Capture handled API failures too, not only Flask exceptions."""
+    if response.status_code < 400 or request.path.startswith("/api/error-analysis/"):
+        return response
+    try:
+        body = response.get_json(silent=True) or {}
+        exc = getattr(g, "unhandled_error", None)
+        message = body.get("message") or body.get("error") or str(exc) or response.status
+        record_error(
+            source="SERVER", severity="CRITICAL" if response.status_code >= 500 else "WARNING",
+            status=response.status_code, method=request.method, path=request.full_path.rstrip("?"),
+            error_type=type(exc).__name__ if exc else "HTTPError",
+            message=message, stack_trace="".join(__import__("traceback").format_exception(exc)) if exc else None,
+            request_meta={"endpoint": request.endpoint, "remoteAddr": request.remote_addr}, member_id=session.get("member_id"),
+        )
+    except Exception:
+        pass
+    return response
 
 
 # ── Health ──────────────────────────────────────────────────────────────────

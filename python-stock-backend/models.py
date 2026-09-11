@@ -157,3 +157,23 @@ class ApiKey(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     last_used_at = Column(DateTime, nullable=True)
+
+
+class SystemErrorLog(Base):
+    """서버 및 브라우저에서 수집한 진단 로그. 민감정보는 저장 전에 마스킹한다."""
+    __tablename__ = "system_error_log"
+
+    system_error_log_id = Column(BigInteger, primary_key=True, autoincrement=True)
+    occurred_at = Column(DateTime, nullable=False, server_default=func.now())
+    source = Column(String(20), nullable=False)  # SERVER | CLIENT
+    severity = Column(String(10), nullable=False, default="ERROR")
+    http_status = Column(Integer, nullable=True)
+    method = Column(String(10), nullable=True)
+    path = Column(String(500), nullable=True)
+    error_type = Column(String(160), nullable=True)
+    message = Column(Text, nullable=False)
+    reason = Column(Text, nullable=True)
+    stack_trace = Column(Text, nullable=True)
+    request_meta = Column(Text, nullable=True)
+    fingerprint = Column(String(64), nullable=True)
+    member_id = Column(BigInteger, ForeignKey("member.member_id"), nullable=True)

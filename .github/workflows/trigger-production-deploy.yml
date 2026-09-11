@@ -6,9 +6,50 @@ on:
 
 permissions: {}
 
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REGISTRY: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com
+
 jobs:
+  # ── 1. 이미지를 빌드해 Docker Hub 대신 ECR로만 푸시 ──────────────────
+  build-push-ecr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: AWS 자격 증명 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: ECR 로그인
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: frontend 이미지 빌드 및 ECR 푸시
+        run: |
+          docker build -f docker/frontend.Dockerfile \
+            -t "$ECR_REGISTRY/stock-coin-trade-frontend:latest" \
+            -t "$ECR_REGISTRY/stock-coin-trade-frontend:${{ github.sha }}" .
+          docker push "$ECR_REGISTRY/stock-coin-trade-frontend:latest"
+          docker push "$ECR_REGISTRY/stock-coin-trade-frontend:${{ github.sha }}"
+
+      - name: python-backend 이미지 빌드 및 ECR 푸시
+        run: |
+          docker build -f docker/python-backend.Dockerfile \
+            -t "$ECR_REGISTRY/stock-coin-trade-python-backend:latest" \
+            -t "$ECR_REGISTRY/stock-coin-trade-python-backend:${{ github.sha }}" .
+          docker push "$ECR_REGISTRY/stock-coin-trade-python-backend:latest"
+          docker push "$ECR_REGISTRY/stock-coin-trade-python-backend:${{ github.sha }}"
+
+  # ── 2. investment-analysis에 운영 배포 요청 (ECR 푸시 성공 후에만) ────
   dispatch:
     runs-on: ubuntu-latest
+    needs: build-push-ecr
     steps:
       - name: Request production deployment
         uses: actions/github-script@v7
@@ -19,5 +60,5 @@ jobs:
               owner: 'edumgt',
               repo: 'investment-analysis',
               event_type: 'stock-coin-trade-main-updated',
-              client_payload: { sha: context.sha },
+              client_payload: { sha: context.sha, image_tag: context.sha },
             });

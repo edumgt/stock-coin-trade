@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TradingView(Pine) 학습 — 모의투자</title>
   <link rel="icon" href="/img/favicon.png">
-  <link rel="stylesheet" href="/css/style.css?v=20260811-menu-fix-2">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css?v=20260911-ui-system">
+
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','sans-serif']}}}}</script>
   <style>
     .learn-wrap{max-width:none;margin:0;padding:32px 20px 48px}.learn-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:25px;box-shadow:var(--shadow-sm);margin-top:18px}.kicker{font-size:12px;font-weight:900;letter-spacing:.09em;color:var(--accent-dark)}.lesson-title{font-size:22px;font-weight:900;color:var(--fg);margin:0 0 5px}.desc{font-size:14px;color:var(--muted);line-height:1.7}.objective{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}.objective div{padding:13px;border-radius:9px;background:rgba(255,255,255,.78);border:1px solid #C9DAFF;font-size:13px;font-weight:700;color:var(--fg)}.objective b{display:block;color:var(--accent-dark);font-size:12px;margin-bottom:3px}.metric-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:20px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field label{display:block;font-size:12px;font-weight:800;color:var(--fg-2);margin-bottom:4px}.field input,.field select{width:100%;border:1px solid var(--border);border-radius:7px;padding:8px 10px;background:#fff;color:var(--fg);font-size:14px}.btn{border:0;border-radius:7px;background:var(--accent);color:#fff;padding:9px 13px;font-size:13px;font-weight:800;cursor:pointer}.btn:hover{background:var(--accent-dark)}.result{border-radius:10px;background:var(--surface-2);padding:15px;margin-top:14px}.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.result-item{background:#fff;border:1px solid var(--border);border-radius:8px;padding:11px}.result-item span{display:block;color:var(--muted);font-size:11px;font-weight:700}.result-item strong{font-size:18px;color:var(--fg)}.tip{padding:12px 14px;border-radius:8px;background:#FFF8E8;color:#854D0E;font-size:13px;line-height:1.65;margin-top:14px}.season-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}.season-table th,.season-table td{padding:10px;border-bottom:1px solid var(--border);text-align:right}.season-table th{background:var(--surface-2);color:var(--muted);font-size:11px}.season-table th:first-child,.season-table td:first-child{text-align:left;font-weight:800}.positive{color:var(--up);font-weight:800}.negative{color:var(--down);font-weight:800}.bar{height:7px;border-radius:10px;background:#E8EDF7;overflow:hidden;min-width:80px}.bar i{display:block;height:100%;background:var(--accent);border-radius:10px}.tv-guide-figure{margin:16px 0 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface-2)}.tv-guide-figure img{display:block;width:100%;height:auto}.tv-guide-figure figcaption{padding:9px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}.code{background:#131722;color:#D1D4DC;border-radius:10px;padding:17px;overflow:auto;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre}.code .comment{color:#787B86}.code .key{color:#82B1FF}.checklist{padding-left:20px;margin:12px 0 0}.checklist li{margin:7px 0;font-size:14px;color:var(--fg-2)}.footer{border-top:1px solid var(--border);background:var(--surface)}.footer div{max-width:none;margin:0;padding:14px 20px;color:var(--muted);font-size:12px}@media(max-width:760px){.learn-wrap{padding:20px 12px 30px}.learn-card{padding:17px}.objective,.metric-grid{grid-template-columns:1fr}.result-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.lesson-title{font-size:19px}}
@@ -21,7 +22,7 @@
     <section style="padding:28px;border-radius:15px;background:linear-gradient(135deg,#E4F0FF,#F9FBFF);border:1px solid #C9DAFF;">
       <div class="kicker">LEARNING · TRADINGVIEW(PINE)</div>
       <h1 style="font-size:30px;line-height:1.25;font-weight:900;margin:7px 0;color:var(--fg);">TradingView · Pine Script 첫 실습</h1>
-      <p style="max-width:820px;margin:0;color:var(--fg-2);font-size:15px;line-height:1.75;">가입과 결제·자격 확인, 기본 차트 설정부터 모의투자, 가장 쉬운 Pine Script, 전략 검증까지 순서대로 진행합니다. 백테스트·계절성·리스크 관리 실습도 이어집니다.</p>
+      <p style="max-width:820px;margin:0;color:var(--fg-2);font-size:15px;line-height:1.75;">가입과 결제·자격 확인, 기본 차트 설정부터 모의투자, Pine Script v6, 전략 검증까지 순서대로 진행합니다. 백테스트·계절성·리스크 관리 실습도 이어집니다.</p>
       <div class="objective"><div><b>01 · 준비</b>계정 보안과 차트·종목·시간봉 설정</div><div><b>02 · 첫 실행</b>종가 선을 그리는 가장 쉬운 Pine Script</div><div><b>03 · 모의 검증</b>전략 테스터와 앱 모의주문으로 연습</div></div>
     </section>
 
@@ -111,6 +112,14 @@
     </section>
 
     <section class="learn-card">
+      <div class="kicker">PRACTICE · WEB APP</div><h2 class="lesson-title">이 앱에서 먼저 조건을 빠르게 점검하기</h2>
+      <p class="desc"><strong>Pine 간단 테스트</strong>는 고정 학습 데이터에서 <code>ta.sma</code>·<code>ta.ema</code>·<code>ta.rsi</code>·교차 조건을 계산해 보도록 만든 사전 연습 화면입니다. 계정 로그인·실제 주문·TradingView 연결 없이 동작합니다. 따라서 문법의 모든 기능을 컴파일하거나 TradingView 결과와 동일하다고 보장하지는 않습니다.</p>
+      <ul class="checklist"><li>먼저 이 화면에서 기간과 교차 조건을 하나씩 바꾸고, 신호 수·단순 수익률·최대 낙폭이 어떻게 달라지는지 비교합니다.</li><li>그 다음 같은 코드를 TradingView Pine Editor에 붙여 실제 종목·시간봉·거래비용으로 Strategy Report를 확인합니다.</li><li>Pine Script 최신 공식 문서는 <strong>v6</strong>입니다. 기존 v5 코드도 남아 있으므로 코드 상단 버전을 확인하고 필요하면 공식 마이그레이션 가이드를 참고합니다.</li></ul>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px"><a class="btn" href="/pine-script-lab.html" style="text-decoration:none">Pine 간단 테스트 열기</a><a href="https://www.tradingview.com/pine-script-docs/welcome/" target="_blank" rel="noopener noreferrer" style="padding:9px 13px;border:1px solid var(--border);border-radius:7px;text-decoration:none;color:var(--fg);font-size:13px;font-weight:800;background:#fff">Pine Script v6 공식 문서 ↗</a></div>
+      <div class="tip"><strong>검증 원칙:</strong> 전략은 과거·실시간 봉에서 가상 주문을 계산하는 도구입니다. 표준 캔들로 테스트하고, 비표준 차트(Heikin Ashi·Renko 등)의 합성 가격 결과를 실제 체결 가능 가격으로 해석하지 마세요. 재도색과 봉 마감 전 신호도 반드시 분리해 점검합니다.</div>
+    </section>
+
+    <section class="learn-card">
       <div class="kicker">STEP 4 · 첫 Pine Script</div><h2 class="lesson-title">종가 선 하나를 차트에 그려 보기</h2>
       <p class="desc">처음부터 매수·매도 전략을 만들지 않습니다. 아래 세 줄을 Pine Editor에 붙여넣고 <strong>차트에 넣기</strong>를 누릅니다. 차트에 파란 선이 보이면 스크립트 작성과 적용을 성공한 것입니다.</p>
       <figure class="tv-guide-figure"><img src="/images/tradingview-pine-editor-basic-test-guide.svg" alt="Pine Editor에 기본 지표를 입력하고 차트에 적용하는 예시" width="1600" height="780"><figcaption>Pine Editor를 열고 코드를 붙여넣은 뒤 차트에 넣기를 누릅니다.</figcaption></figure>
@@ -146,9 +155,9 @@ plot(close, color=color.blue, linewidth=2)</pre>
     </section>
 
     <section class="learn-card">
-      <div class="kicker">STEP 6 · PINE SCRIPT 전략</div><h2 class="lesson-title">이동평균 전략을 직접 수정하기</h2><p class="desc">첫 종가 선을 적용한 뒤에만 진행하세요. 다음 예제는 단기·장기 이동평균 교차에 손절과 익절 규칙을 더한 Pine Script v5 전략입니다. TradingView의 Pine Editor에 붙여넣고 <em>Strategy Tester</em>에서 결과를 확인해 보세요.</p>
+      <div class="kicker">STEP 6 · PINE SCRIPT 전략</div><h2 class="lesson-title">이동평균 전략을 직접 수정하기</h2><p class="desc">첫 종가 선을 적용한 뒤에만 진행하세요. 다음 예제는 단기·장기 이동평균 교차에 손절과 익절 규칙을 더한 Pine Script v6 전략입니다. TradingView의 Pine Editor에 붙여넣고 <em>Strategy Tester</em>에서 결과를 확인해 보세요.</p>
       <pre class="code"><span class="comment">// 이동평균 교차 + 리스크 관리 예제</span>
-<span class="key">//@version=5</span>
+<span class="key">//@version=6</span>
 strategy(<span class="key">"MA Risk Strategy"</span>, overlay=true, initial_capital=10000000)
 
 fast = ta.sma(close, 20)

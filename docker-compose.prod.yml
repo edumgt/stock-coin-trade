@@ -1,0 +1,9 @@
+# 운영 배포용 오버레이. 소스에서 빌드하지 않고 ECR에 미리 푸시된 이미지를 그대로 당겨 실행한다.
+# 사용: docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+#      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-build --remove-orphans
+services:
+  frontend:
+    image: ${ECR_REGISTRY:-086015456585.dkr.ecr.ap-northeast-2.amazonaws.com}/stock-coin-trade-frontend:${IMAGE_TAG:-latest}
+
+  python-backend:
+    image: ${ECR_REGISTRY:-086015456585.dkr.ecr.ap-northeast-2.amazonaws.com}/stock-coin-trade-python-backend:${IMAGE_TAG:-latest}

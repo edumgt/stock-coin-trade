@@ -16,5 +16,11 @@
     } catch (error) { result.classList.add('error'); result.textContent = `조회 실패\n${error.message}`; }
     finally { button.disabled = false; }
   };
-  document.querySelectorAll('[data-test]').forEach((button) => button.addEventListener('click', () => run(button.dataset.test)));
+  const boot = () => {
+    document.querySelectorAll('[data-test]').forEach((button) => button.addEventListener('click', () => run(button.dataset.test)));
+    // 첫 화면에서도 연결 상태를 바로 확인할 수 있게 기본 시세를 1회 조회한다.
+    run('ticker');
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+  else boot();
 })();

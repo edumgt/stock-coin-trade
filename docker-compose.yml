@@ -81,6 +81,14 @@ services:
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
       CMC_API_KEY: ${CMC_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # AWS SSM Parameter Store 연동 트랙(aws_secret_store.py, *_aws.py)에서만
+      # 사용한다. kis.key/kb.key/al.key 기반 기존 모듈에는 영향이 없다. EC2에
+      # IAM 인스턴스 프로파일이 붙어 있으면 액세스 키 3종은 비워 둬도 된다.
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_SSM_PARAMETER_PREFIX: ${AWS_SSM_PARAMETER_PREFIX:-/stock-coin-trade}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
       # 기존 회원·보유자산을 변경하지 않고 없는 샘플 투자자만 추가한다.
       DEMO_SEED_ENABLED: ${DEMO_SEED_ENABLED:-true}
     # 키 파일은 이미지에 복사하지 않고 읽기 전용으로만 전달한다.

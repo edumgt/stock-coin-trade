@@ -4,6 +4,23 @@
    폰트 17px 이상 한글 선명, 퍼플/바이올렛 사용 금지
    Accent: #2962FF (TradingView blue)
 ─────────────────────────────────────────────────────────────────────────── */
+/* 페이지마다 중복 선언하지 않도록 웹폰트를 한 곳에서 제공한다. */
+@font-face {
+    font-family: 'Pretendard';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/Pretendard-Regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Pretendard';
+    font-style: normal;
+    font-weight: 600 900;
+    font-display: swap;
+    src: url('/fonts/Pretendard-Bold.woff2') format('woff2');
+}
+
+html { font-size: 17px; }
 * {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI',
                  'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
@@ -52,12 +69,17 @@
 }
 
 html, body {
+    margin: 0;
     background-color: var(--bg);
     color: var(--fg);
-    font-size: 17px;
+    font-size: 1rem;
     line-height: 1.55;
     min-height: 100vh;
 }
+
+/* Tailwind 사용 여부와 관계없이 입력 요소의 글꼴·크기를 본문과 맞춘다. */
+body :is(button, input, select, textarea) { font: inherit; }
+body :is(h1, h2, h3, h4) { letter-spacing: -0.025em; }
 
 /* ── Shared application frame ────────────────────────────────────────────
    Header/footer live in the outer grid.  Only main is scrollable, preventing
@@ -92,11 +114,12 @@ body.app-shell-layout > footer {
     color: #CBD5E1;
 }
 body.app-shell-layout > footer:not(#site-footer) { padding: 12px clamp(16px, 2vw, 36px); }
+#site-footer { padding: 12px clamp(16px, 2vw, 36px); font-size: 12px; line-height: 1.45; }
 
 /* Korean UI text never falls below the readable desktop/mobile baseline. */
-body.app-shell-layout :is(p, span, a, button, input, select, textarea, label, li, td, th),
-body.alternatives-layout :is(p, span, a, button, input, select, textarea, label, li, td, th),
-.trading-root :is(p, span, a, button, input, select, textarea, label, li, td, th) {
+body.app-shell-layout > main :is(p, span, a, button, input, select, textarea, label, li, td, th),
+body.alternatives-layout > main :is(p, span, a, button, input, select, textarea, label, li, td, th),
+.trading-root .trading-body :is(p, span, a, button, input, select, textarea, label, li, td, th) {
     font-size: max(16px, 1em);
 }
 
@@ -259,6 +282,23 @@ body.alternatives-layout :is(p, span, a, button, input, select, textarea, label,
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     position: sticky; top: 0; z-index: 100;
 }
+
+/* ── GNB: 기능은 넓은 개별 화면으로, 탐색은 상단 메뉴로 ─────────────── */
+.gnb-shell { display:flex; align-items:center; gap:18px; min-height:58px; padding:0 22px; }
+.gnb-brand { flex:0 0 auto; color:var(--accent-dark); text-decoration:none; font-size:18px; font-weight:900; letter-spacing:.04em; white-space:nowrap; }
+.gnb-brand i { margin-right:6px; }
+.gnb-nav { display:flex; align-items:stretch; gap:2px; min-width:0; flex:1; overflow-x:auto; scrollbar-width:thin; }
+.gnb-link,.gnb-group summary { display:flex; align-items:center; gap:6px; height:58px; padding:0 10px; color:var(--fg-2); text-decoration:none; font-size:13px; font-weight:750; white-space:nowrap; cursor:pointer; list-style:none; }
+.gnb-group summary::-webkit-details-marker { display:none; }.gnb-group summary i { font-size:10px; transition:transform .15s; }.gnb-group[open] summary i { transform:rotate(180deg); }
+.gnb-link:hover,.gnb-group summary:hover { color:var(--accent-dark); background:var(--accent-light); }
+.gnb-group { position:relative; flex:0 0 auto; }.gnb-dropdown { position:fixed; z-index:220; display:grid; min-width:210px; padding:6px; border:1px solid var(--border); border-radius:9px; background:#fff; box-shadow:var(--shadow-md); }
+.gnb-dropdown a { display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:6px; color:var(--fg-2); text-decoration:none; font-size:13px; font-weight:650; white-space:nowrap; }.gnb-dropdown a:hover { background:var(--accent-light); color:var(--accent-dark); }
+.gnb-user { flex:0 0 auto; white-space:nowrap; }
+/* AI 3개 기능의 상단 바로가기 */
+.gnb-shortcuts { display:flex; align-items:center; gap:3px; min-width:0; overflow-x:auto; }
+.gnb-shortcuts a { padding:7px 9px; border-radius:6px; color:var(--accent-dark); text-decoration:none; font-size:12px; font-weight:800; white-space:nowrap; }
+.gnb-shortcuts a:hover { background:var(--accent-light); }
+@media (max-width:900px) { .gnb-shell { gap:10px; padding:0 12px; }.gnb-nav { order:3; flex-basis:100%; height:42px; }.gnb-shell { flex-wrap:wrap; padding-bottom:3px; }.gnb-link,.gnb-group summary { height:40px; padding:0 8px; font-size:12px; }.gnb-dropdown { position:absolute; }.gnb-user span { display:none; } }
 
 .hamburger-btn {
     width: 36px; height: 36px;
@@ -549,11 +589,40 @@ td, th { vertical-align: middle; }
 }
 
 /* ── AI Panel ───────────────────────────────────────────────────────────── */
+/* Tailwind CDN의 button 초기화보다 우선해 공개 API 테스트 버튼을 명확히 표시한다. */
+body[data-exchange] .row button {
+    padding: 10px 13px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: var(--accent) !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    cursor: pointer;
+}
+body[data-exchange] .row button:disabled { opacity: .6; }
+
 #ai-panel {
     background: #FFFFFF !important;
     border-left: 1px solid var(--border) !important;
     box-shadow: -4px 0 24px rgba(0,0,0,0.08) !important;
 }
+
+/* 우측 오프캔버스는 메뉴 전용이다. AI의 3개 기능은 상단 GNB 전용 화면에서 사용한다. */
+#ai-panel .right-tool-nav { flex: 1; }
+.dataset-composer-open { width:100%; margin-top:20px; padding:11px 13px; border:0; border-radius:8px; color:#fff; background:var(--accent); font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+.dataset-composer-modal { position:fixed; z-index:500; inset:0; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.46); backdrop-filter:blur(3px); }
+.dataset-composer-modal.open { display:flex; }
+.dataset-composer-dialog { width:min(620px,100%); max-height:calc(100dvh - 40px); overflow:auto; border:1px solid var(--border); border-radius:14px; background:var(--surface); box-shadow:0 24px 70px rgba(15,23,42,.3); }
+.dataset-composer-dialog header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:17px 20px; border-bottom:1px solid var(--border); }
+.dataset-composer-dialog h2 { margin:0; color:var(--fg); font-size:18px; font-weight:900; }
+.dataset-composer-close { width:32px; height:32px; border:1px solid var(--border); border-radius:7px; color:var(--muted); background:var(--surface-2); font-size:22px; line-height:1; cursor:pointer; }
+.dataset-composer-body { padding:20px; }
+.dataset-composer-body input,
+.dataset-composer-body select,
+.dataset-composer-body textarea { font-size:14px !important; }
+.dataset-composer-body textarea { min-height:230px; }
+.dataset-composer-body .btn { font-size:14px !important; }
+@media(max-width:600px) { .dataset-composer-modal { padding:12px; }.dataset-composer-dialog header,.dataset-composer-body { padding:15px; } }
 
 /* ── Content control bar (hamburger ← | AI 분석 →) ─────────────────────── */
 #content-ctrl-bar {
@@ -566,3 +635,17 @@ td, th { vertical-align: middle; }
     top: unset;
     flex-shrink: 0;
 }
+
+/* API 테스트 화면: 실제 호출 범위와 성공 기준을 화면 안에서 확인한다. */
+.api-test-guide { margin-top:20px; border:1px solid #BFDBFE; border-radius:11px; background:#F8FBFF; color:var(--fg); }
+.api-test-guide summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; cursor:pointer; font-size:14px; font-weight:900; }
+.api-test-guide summary span { color:var(--accent-dark); font-size:12px; font-weight:700; }
+.api-test-guide-scroll { overflow-x:auto; border-top:1px solid #DBEAFE; }
+.api-test-guide table { width:100%; min-width:820px; border-collapse:collapse; font-size:12px; line-height:1.55; }
+.api-test-guide th,.api-test-guide td { padding:10px 12px; border-bottom:1px solid #DBEAFE; text-align:left; vertical-align:top; }
+.api-test-guide thead th { color:#1E3A8A; background:#EFF6FF; font-weight:850; }
+.api-test-guide tbody th { color:var(--fg); font-weight:800; white-space:nowrap; }
+.api-test-guide code { overflow-wrap:anywhere; color:#1D4ED8; font-size:11px; }
+.api-test-guide-note { margin:0; padding:11px 14px; color:#475569; font-size:12px; line-height:1.65; }
+.api-test-guide-note + .api-test-guide-note { padding-top:0; }
+@media(max-width:600px) { .api-test-guide summary { align-items:flex-start; flex-direction:column; }.api-test-guide summary span { font-size:11px; } }
