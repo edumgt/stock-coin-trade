@@ -20,14 +20,14 @@
       <h1 style="margin:7px 0;font-size:28px;font-weight:900;color:var(--fg)">KB증권 Open API 연결 테스트</h1>
       <p style="margin:0;color:var(--fg-2);line-height:1.7">서버만 프로젝트 루트의 <code>kb.key</code> 또는 서버 환경변수에서 App Key·Secret을 읽습니다. 브라우저에는 Key·Secret·Access Token을 보내지 않으며, 이 페이지는 주문·정정·취소를 실행하지 않습니다.</p>
       <div class="notice"><strong>점검 순서:</strong> 먼저 토큰 발급을 1회 확인한 뒤 현재가·종목정보·호가·일봉을 한 항목씩 조회합니다. KB B2C Open API는 운영 환경이므로 모든 요청은 실제 시세 조회이며, 이 화면은 주문·잔고 조회를 제공하지 않습니다.</div>
-      <div class="controls"><button class="run" data-broker="kb">Access Token 발급 점검</button></div>
+      <div class="controls"><span class="api-source-badge api-source-badge--kb">KB API · OAuth</span><button class="run" data-broker="kb">Access Token 발급 점검</button></div>
       <div id="kb-result" class="result" role="status">점검 대기 중</div>
 
       <div class="test-list">
-        <div class="test-row"><label for="kb-symbol">국내주식 현재가 조회 (공식 IVU10140 TR)</label></div>
+        <div class="test-row"><label for="kb-symbol">국내주식 현재가 조회 (공식 IVU10140 TR) <span class="api-source-badge api-source-badge--kb">KB API</span></label></div>
         <div class="test-row"><input id="kb-symbol" value="005930" inputmode="numeric" maxlength="6" aria-label="KB증권 종목코드" placeholder="6자리 종목코드"><button class="run-sm" data-test="kb-quote">현재가 조회</button></div>
         <div id="kb-quote-result" class="result result--sm" role="status">조회 대기 중</div>
-        <div class="test-row" style="margin-top:12px"><label for="kb-symbol">같은 종목의 추가 조회</label><button class="run-sm" data-test="kb-base-info">종목기본정보</button><button class="run-sm" data-test="kb-orderbook">호가</button><button class="run-sm" data-test="kb-chart">통합차트(일봉)</button></div>
+        <div class="test-row" style="margin-top:12px"><label for="kb-symbol">같은 종목의 추가 조회 <span class="api-source-badge api-source-badge--kb">KB API · 호가/차트</span></label><button class="run-sm" data-test="kb-base-info">종목기본정보</button><button class="run-sm" data-test="kb-orderbook">호가</button><button class="run-sm" data-test="kb-chart">통합차트(일봉)</button></div>
         <div id="kb-base-info-result" class="result result--sm" role="status">종목기본정보 조회 대기 중</div>
         <div id="kb-orderbook-result" class="result result--sm" role="status">호가 조회 대기 중</div>
         <div id="kb-chart-result" class="result result--sm" role="status">통합차트 조회 대기 중</div>

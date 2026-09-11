@@ -33,14 +33,14 @@
       <div class="test-list"><div class="test-row"><label>AWS SSM 연결·파라미터 준비 상태</label><button class="run-sm" data-test="ssm-status">값 없이 상태 점검</button></div><div id="ssm-status-result" class="result result--sm" role="status">점검 대기 중 · SecureString 원문은 복호화하거나 표시하지 않습니다.</div></div>
       <div class="broker-grid">
         <section class="broker-card">
-          <h2>한국투자증권 Testbed</h2>
+          <h2>한국투자증권 Testbed <span class="api-source-badge">KIS API · AWS SSM 조회</span></h2>
           <p>국내주식 현재가 · <code>FHKST01010100</code></p>
           <div class="controls"><input id="kis-symbol" value="005930" inputmode="numeric" maxlength="6" aria-label="한국투자증권 종목코드"><button class="run" data-broker="kis">시세 조회</button></div>
           <div id="kis-result" class="result" role="status">조회 대기 중</div>
 
           <div class="test-list">
             <div class="test-row">
-              <label>모의투자 계좌</label>
+              <label>모의투자 계좌 <span class="api-source-badge">KIS API</span></label>
               <button class="run-sm" data-test="kis-balance">잔고/평가액 조회</button>
             </div>
             <div id="kis-balance-result" class="result result--sm" role="status">잔고 조회 대기 중 (SSM의 kis/account 파라미터 필요)</div>
@@ -48,14 +48,14 @@
         </section>
 
         <section class="broker-card">
-          <h2>KB증권 Open API</h2>
+          <h2>KB증권 Open API <span class="api-source-badge api-source-badge--kb">KB API · AWS SSM 조회</span></h2>
           <p>Client Credentials OAuth와 국내주식 현재가(IVU10140) 읽기 전용 점검</p>
           <div class="controls"><button class="run" data-broker="kb">토큰 발급 점검</button></div>
           <div id="kb-result" class="result" role="status">점검 대기 중</div>
 
           <div class="test-list">
             <div class="test-row">
-              <label for="kb-symbol">국내주식 현재가 조회</label>
+              <label for="kb-symbol">국내주식 현재가 조회 <span class="api-source-badge api-source-badge--kb">KB API</span></label>
             </div>
             <div class="test-row">
               <input id="kb-symbol" value="005930" inputmode="numeric" maxlength="6" aria-label="KB증권 종목코드" style="flex:1;min-width:0;padding:8px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--fg);font:inherit;font-size:12px">

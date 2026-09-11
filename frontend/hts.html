@@ -15,7 +15,7 @@
     .hts-app { height:100dvh; display:grid; grid-template-rows:50px 48px minmax(0,1fr) 28px; min-width:960px; }
     .topbar { display:flex; align-items:center; gap:14px; padding:0 16px; color:#eff6ff; background:linear-gradient(90deg,#0e2546,#183b66); border-bottom:1px solid #345274; }
     .brand { display:flex; align-items:center; gap:8px; padding-right:15px; border-right:1px solid rgba(255,255,255,.2); font-size:15px; font-weight:800; letter-spacing:.02em; white-space:nowrap; }
-    .brand-mark { display:grid; place-items:center; width:24px; height:24px; color:#12375e; background:#7fd5ff; border-radius:5px; font-size:12px; }
+    .brand-mark { display:grid; place-items:center; width:24px; height:24px; color:#12375e; background:#7fd5ff; border-radius:5px; font-size:12px; }.home-link { padding:6px 9px; border:1px solid rgba(211,233,250,.45); border-radius:4px; color:#eaf6ff; background:rgba(255,255,255,.09); font-size:11px; font-weight:800; text-decoration:none; white-space:nowrap; }.home-link:hover { background:rgba(255,255,255,.18); }
     .command-wrap { position:relative; width:350px; }
     #screenCommand { width:100%; height:32px; padding:0 74px 0 12px; border:1px solid #6684a3; border-radius:4px; outline:none; color:#112844; background:#fff; font:600 13px inherit; }
     #screenCommand:focus { border-color:#75caff; box-shadow:0 0 0 3px rgba(115,203,255,.22); }
@@ -30,6 +30,7 @@
     .window { min-height:0; overflow:hidden; border:1px solid #aebdcb; border-radius:4px; background:#fff; box-shadow:0 1px 2px rgba(25,47,72,.1); }
     .titlebar { display:flex; align-items:center; height:35px; padding:0 9px; color:#173658; background:linear-gradient(#fafdff,#e7f0f8); border-bottom:1px solid #bdcbd9; font-size:13px; font-weight:800; }
     .screen-no { margin-right:7px; padding:2px 5px; color:#0f609b; background:#d7edff; border:1px solid #a2d1ee; border-radius:3px; font-size:10px; letter-spacing:.03em; }
+    .broker-badge { display:inline-flex; align-items:center; width:max-content; margin-left:7px; padding:3px 6px; border:1px solid #9bcce8; border-radius:10px; color:#0b659e; background:#e8f6ff; font-size:9px; font-weight:800; letter-spacing:.01em; white-space:nowrap; }.broker-badge.kb { border-color:#dbc795; color:#806219; background:#fff8df; }.broker-badge small { margin-left:3px; font-size:8px; font-weight:700; }.broker-controls { display:flex; align-items:center; gap:4px; margin-left:auto; }.broker-control { padding:4px 7px; border:1px solid #b9cad8; border-radius:3px; color:#506d84; background:#fff; font:700 10px inherit; cursor:pointer; }.broker-control.active { color:#075f9b; border-color:#7eb9dd; background:#e8f5ff; }.broker-control.active.kb { color:#79611d; border-color:#d8be78; background:#fff6d7; }.broker-control:disabled { opacity:.55; cursor:wait; }
     .window-actions { display:flex; gap:5px; margin-left:auto; color:#708399; font-size:12px; }
     .watch { display:flex; flex-direction:column; } .watch-tabs { display:flex; padding:6px 7px 0; border-bottom:1px solid #d5dfe8; }
     .watch-tab { flex:1; padding:7px 2px; border:0; border-bottom:2px solid transparent; color:#718196; background:#fff; font:700 11px inherit; cursor:pointer; }
@@ -91,6 +92,8 @@
       '4990': {title:'주식 주문', guide:'<b>4990</b>을 입력하면 HTS 주문창을 열어 매수·매도 절차를 연습할 수 있습니다.'}
     };
     let selected = stocks[0];
+    let activeBroker = 'kis';
+    let brokerOrderbook = null;
     let watchGridApi;
     let loggedInUser = null;
     const memoBySymbol = {};
@@ -120,6 +123,91 @@
     document.getElementById('watchMemo').addEventListener('input',e=>document.getElementById('memoCount').textContent=`${e.target.value.length} / 500`);
     document.getElementById('memoSave').onclick=async()=>{if(!loggedInUser){location.href='/member/login.html';return;}const button=document.getElementById('memoSave'),memo=document.getElementById('watchMemo').value;button.disabled=true;try{const res=await fetch(`/api/member/hts-memos/${encodeURIComponent(selected.code)}`,{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({memo})});const data=await res.json();if(!res.ok)throw new Error(data.error||'메모 저장에 실패했습니다.');if(data.memo)memoBySymbol[selected.code]=data.memo;else delete memoBySymbol[selected.code];renderWatch();toast(data.deleted?'메모를 삭제했습니다.':'메모를 저장했습니다.');}catch(e){toast(e.message)}finally{button.disabled=false;syncMemoEditor();}};
     document.getElementById('screenCommand').addEventListener('keydown',e=>{if(e.key==='Enter')openScreen(e.target.value)});document.querySelectorAll('.tool').forEach(btn=>btn.onclick=()=>openScreen(btn.dataset.command));document.querySelectorAll('.quick button').forEach(btn=>btn.onclick=()=>{document.getElementById('orderQty').value=btn.dataset.qty==='100'?'100':btn.dataset.qty;toast(`${btn.textContent} 기준 수량을 입력했습니다.`)});document.getElementById('orderSubmit').onclick=()=>toast(`${selected.name} ${document.getElementById('orderQty').value.trim()}주 모의 매수 주문을 연습했습니다. 실제 주문은 실행되지 않습니다.`);document.querySelectorAll('.modal-tab').forEach(tab=>tab.onclick=()=>setModalOrderSide(tab.dataset.side));document.getElementById('orderModalClose').onclick=closeOrderModal;document.getElementById('modalCancel').onclick=closeOrderModal;document.getElementById('htsOrderModal').addEventListener('click',e=>{if(e.target.id==='htsOrderModal')closeOrderModal();});document.getElementById('analysisClose').onclick=closeAnalysisModal;document.getElementById('analysisModal').addEventListener('click',e=>{if(e.target.id==='analysisModal')closeAnalysisModal();});document.getElementById('modalOrderPrice').addEventListener('input',updateOrderAmount);document.getElementById('modalOrderQty').addEventListener('input',updateOrderAmount);document.getElementById('modalOrderType').addEventListener('change',e=>{const price=document.getElementById('modalOrderPrice');price.disabled=e.target.value==='market';if(e.target.value==='market')price.value='시장가';else price.value=fmt(selected.price);updateOrderAmount();});document.getElementById('modalSubmit').onclick=()=>{const qty=document.getElementById('modalOrderQty').value||'0';toast(`${selected.name} ${qty}주 ${modalOrderSide==='buy'?'매수':'매도'} 주문 확인을 연습했습니다. 실제 주문은 실행되지 않습니다.`);closeOrderModal();};document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeOrderModal();closeAnalysisModal();}});
-    renderCandles();renderSupply();initWatchGrid();selectStock(selected);initMemo();
+    function brokerLabel(){ return activeBroker === 'kis' ? 'KIS 모의투자' : 'KB증권 Open API'; }
+    function setBrokerUi(){
+      document.querySelectorAll('[data-broker-badge]').forEach((badge, index)=>{
+        badge.classList.toggle('kb', activeBroker === 'kb');
+        const feature = index === 1 ? '일봉 API' : index === 2 ? '호가 API' : index >= 3 ? '주문 연동 준비' : '시세 API';
+        badge.innerHTML = `${activeBroker === 'kis' ? 'KIS' : 'KB'} <small>${feature}</small>`;
+      });
+      document.querySelectorAll('.broker-control').forEach(button=>button.classList.toggle('active', button.dataset.broker === activeBroker));
+      const status = document.getElementById('brokerStatus');
+      if (status) status.textContent = `${brokerLabel()} 조회 연결 대기`;
+    }
+    function addBrokerBadge(target, label){
+      const badge = document.createElement('span'); badge.className = 'broker-badge'; badge.dataset.brokerBadge = '';
+      badge.innerHTML = `KIS <small>${label}</small>`; target.appendChild(badge);
+    }
+    function installBrokerUi(){
+      addBrokerBadge(document.querySelector('.stock-title'), '시세 API');
+      addBrokerBadge(document.querySelector('.chart-legend'), '일봉 API');
+      addBrokerBadge(document.querySelector('.orderbook .titlebar'), '호가 API');
+      addBrokerBadge(document.querySelector('.order-box .titlebar'), '주문 연동 준비');
+      addBrokerBadge(document.querySelector('.hts-order-title'), '주문 연동 준비');
+      const controls = document.createElement('span'); controls.className = 'broker-controls'; controls.setAttribute('aria-label', '증권사 시세 연결');
+      controls.innerHTML = '<button class="broker-control active" data-broker="kis" type="button">KIS 조회</button><button class="broker-control kb" data-broker="kb" type="button">KB 조회</button>';
+      document.querySelector('.toolbar').insertBefore(controls, document.querySelector('.toolbar-note'));
+      controls.querySelectorAll('button').forEach(button=>button.addEventListener('click', ()=>refreshBrokerData(button.dataset.broker)));
+      const status = document.createElement('span'); status.id = 'brokerStatus'; document.querySelector('.statusbar').insertBefore(status, document.getElementById('statusScreen'));
+      setBrokerUi();
+    }
+    function installHomeLink(){ const link=document.createElement('a'); link.className='home-link'; link.href='/'; link.textContent='⌂ 홈으로'; document.querySelector('.topbar .brand').after(link); }
+    function toNumber(value){ const number = Number(String(value ?? '').replace(/,/g, '')); return Number.isFinite(number) ? number : 0; }
+    function kbValue(raw, names){
+      const stack = [raw];
+      while (stack.length) { const item = stack.pop(); if (!item || typeof item !== 'object') continue; for (const [key, value] of Object.entries(item)) { if (names.includes(key.toLowerCase()) && value !== '') return value; if (value && typeof value === 'object') stack.push(value); } }
+      return undefined;
+    }
+    function normalizeBrokerQuote(data){
+      if (activeBroker === 'kis') return data.quote;
+      const raw = data.quote?.raw || {};
+      return { price: kbValue(raw, ['now_prc','cur_prc','stck_prpr','price','close_prc']), change: kbValue(raw, ['bdy_cmpr','prdy_vrss','chg_prc','change']), changeRate: kbValue(raw, ['up_dwn_r_p2','prdy_ctrt','chg_rt','change_rate']), volume: kbValue(raw, ['acml_vlm','acml_vol','acc_vol','volume']) };
+    }
+    function renderBrokerQuote(quote){
+      const price = toNumber(quote.price); if (!price) throw new Error('증권사 응답에 현재가가 없습니다. 해당 API 사용 권한을 확인하세요.');
+      const change = toNumber(quote.change), rate = Number(String(quote.changeRate ?? 0).replace('%', '').replace(/,/g, '')) || 0;
+      selected = {...selected, price, rate, volume: quote.volume ? fmt(toNumber(quote.volume)) : selected.volume};
+      const isUp = rate >= 0, cls = isUp ? 'up' : 'down', tri = isUp ? '▲' : '▼';
+      document.getElementById('mainPrice').innerHTML = `${fmt(price)} <small class="${cls}">${tri} ${Math.abs(rate).toFixed(2)}%</small>`;
+      document.getElementById('changeText').textContent = `${isUp ? '+' : '-'}${fmt(Math.abs(change))}원`; document.getElementById('changeText').className = cls;
+      document.getElementById('volumeText').textContent = selected.volume; document.getElementById('bookPrice').textContent = `${fmt(price)} ${tri} ${fmt(Math.abs(change))}`;
+      document.getElementById('orderPrice').value = fmt(price); renderWatch(); syncOrderModal(); syncAnalysisModal();
+    }
+    function renderBrokerOrderbook(levels){
+      if (!levels?.length) return; let rows = '';
+      [...levels].reverse().slice(0, 5).forEach((level, index)=>{ rows += `<div class="book-row ask"><span class="num">${5-index}</span><span class="num">${fmt(toNumber(level.askQty))}</span><span class="price">${fmt(toNumber(level.askPrice))}</span><span class="bar" style="width:${30+index*10}%"></span><span class="num">${fmt(toNumber(level.askQty))}</span></div>`; });
+      rows += '<div class="splitline"></div>';
+      levels.slice(0, 5).forEach((level, index)=>{ rows += `<div class="book-row bid"><span class="num">${index+1}</span><span class="num">${fmt(toNumber(level.bidQty))}</span><span class="price">${fmt(toNumber(level.bidPrice))}</span><span class="bar" style="width:${30+index*10}%"></span><span class="num">${fmt(toNumber(level.bidQty))}</span></div>`; });
+      document.getElementById('orderBook').innerHTML = rows;
+    }
+    function normalizeBrokerOrderbook(data){
+      if (activeBroker === 'kis') return data.orderbook?.levels || [];
+      const raw = data.result?.raw || {};
+      return Array.from({length:10}, (_, index)=>{ const level=index+1; return { level, askPrice:raw[`s${level}_aprc`], askQty:raw[`s_pstn_s${level}_aprc_q`], bidPrice:raw[`b${level}_aprc`], bidQty:raw[`b_pstn_b${level}_aprc_q`] }; }).filter(level=>level.askPrice || level.bidPrice);
+    }
+    function renderBrokerCandles(candles){
+      const rows = candles.map(row=>({open:toNumber(row.open), high:toNumber(row.high), low:toNumber(row.low), close:toNumber(row.close)})).filter(row=>row.high && row.low);
+      if (rows.length < 2) return; const min = Math.min(...rows.map(row=>row.low)), max = Math.max(...rows.map(row=>row.high)), range = Math.max(1, max-min);
+      document.getElementById('candles').innerHTML = rows.slice().reverse().map((row, index)=>{ const x=16+index*(668/(rows.length-1)), y=value=>270-(value-min)/range*235, up=row.close>=row.open; return `<line x1="${x.toFixed(1)}" y1="${y(row.high).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y(row.low).toFixed(1)}" class="${up?'candle-up':'candle-down'}" stroke-width="1.5"/><rect x="${(x-4).toFixed(1)}" y="${y(Math.max(row.open,row.close)).toFixed(1)}" width="8" height="${Math.max(3,Math.abs(y(row.open)-y(row.close))).toFixed(1)}" class="${up?'candle-up':'candle-down'}"/>`; }).join('');
+    }
+    async function getBroker(path){ const response = await fetch(path); const data = await response.json(); if (!response.ok || !data.ok) throw new Error(data.message || '증권사 API 요청에 실패했습니다.'); return data; }
+    async function refreshBrokerData(broker){
+      activeBroker = broker; brokerOrderbook = null; const controls = document.querySelectorAll('.broker-control'); controls.forEach(button=>button.disabled=true); setBrokerUi();
+      try {
+        const base = `/api/broker-test/${broker}`;
+        const quoteData = await getBroker(`${base}/quote?symbol=${encodeURIComponent(selected.code)}`);
+        renderBrokerQuote(normalizeBrokerQuote(quoteData));
+        const [bookData, chartData] = await Promise.all([getBroker(`${base}/orderbook?symbol=${encodeURIComponent(selected.code)}`), getBroker(`${base}/chart?symbol=${encodeURIComponent(selected.code)}`)]);
+        const levels = normalizeBrokerOrderbook(bookData); brokerOrderbook = {levels}; renderBrokerOrderbook(levels);
+        const candles = broker === 'kis' ? chartData.chart?.candles : chartData.result?.raw?.out2;
+        if (Array.isArray(candles) && candles.length) renderBrokerCandles(candles);
+        document.getElementById('brokerStatus').textContent = `${brokerLabel()} 시세·호가${Array.isArray(candles) && candles.length ? '·일봉' : ''} 조회 완료`;
+        toast(`${brokerLabel()} ${selected.name} 시세를 반영했습니다.`);
+      } catch (error) {
+        document.getElementById('brokerStatus').textContent = `${brokerLabel()} 연결 확인 필요`;
+        toast(error.message);
+      } finally { controls.forEach(button=>button.disabled=false); }
+    }
+    installHomeLink();installBrokerUi();renderCandles();renderSupply();initWatchGrid();selectStock(selected);initMemo();
   </script>
 </body></html>

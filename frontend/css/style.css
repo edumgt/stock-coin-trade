@@ -68,6 +68,25 @@ html { font-size: 17px; }
     --down:          #1565C0;
 }
 
+/* 증권사 API를 실제로 호출하는 UI 영역의 출처 표시. */
+.api-source-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 7px;
+    padding: 3px 7px;
+    border: 1px solid #9bcce8;
+    border-radius: 999px;
+    color: #075f9b;
+    background: #e8f6ff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.2;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.api-source-badge--kb { border-color: #d9c17f; color: #765d17; background: #fff7dc; }
+.api-source-badge--order { border-color: #d9a6ad; color: #a12d3c; background: #fff0f2; }
+
 html, body {
     margin: 0;
     background-color: var(--bg);
