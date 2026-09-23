@@ -129,69 +129,36 @@ git ls-files | grep -E '\.key$|\.pem$|\.env$'</pre>
     </section>
 
 <section class="card">
-      <div class="kicker">선택 B · MCP · VS Code</div><h2 class="title">MCP로 VS Code에서 자연어로 KIS API 사용하기</h2>
-      <p class="desc">3단계의 <code>broker-api-test.html</code> 연결 테스트와는 별개로, 한국투자증권이 공식 배포하는 <strong>MCP(Model Context Protocol) 서버</strong>를 VS Code(GitHub Copilot Chat 에이전트 모드)·Claude Desktop·Cursor에 연결하면 자연어로 KIS Open API를 호출할 수 있습니다. 이 프로젝트의 <code>broker_test.py</code>를 감싼 것이 아니라, 한투 공식 저장소의 <code>MCP/Kis Trading MCP</code> 서버를 별도로 clone해 그대로 사용합니다. 국내·해외 주식, 선물옵션, 채권, ETF 등 <strong>166개 API</strong>를 도구로 제공합니다.</p>
+      <div class="kicker">선택 B · MCP · VS Code / Codex</div><h2 class="title">MCP로 자연어로 KIS API 사용하기</h2>
+      <p class="desc">이 저장소에는 한국투자증권의 공식 Code Assistant MCP와 Trading MCP 연결 설정이 포함되어 있습니다. 코드 검색용은 API와 샘플을 찾고, 거래용은 모의투자 시세·잔고·주문 API를 호출합니다. 웹앱 서버와는 별도 프로세스로 실행됩니다.</p>
 
       <div class="steps">
-        <div class="step"><span class="num">1</span><div><h3>공식 MCP 서버 clone과 의존성 설치</h3><p>저장소 루트에서 실행합니다. 이 clone은 이 프로젝트의 Git 이력에 포함되지 않습니다(<code>.gitignore</code>의 <code>/mcp/</code>). Python 3.11+와 <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener noreferrer">uv</a>가 필요합니다.</p></div></div>
-        <div class="step"><span class="num">2</span><div><h3>모의투자 키 재사용</h3><p>이미 발급받은 <code>kis.key</code>의 모의 App Key·Secret을 그대로 재사용합니다. 실전 키는 설정하지 않아 실전 거래 도구는 비활성 상태로 남습니다.</p></div></div>
-        <div class="step"><span class="num">3</span><div><h3><code>.vscode/mcp.json</code>에 서버 등록</h3><p>계좌번호는 저장소 어디에도 저장하지 않고, VS Code가 서버를 처음 실행할 때 안전한 입력창(<code>inputs</code>)으로 물어보도록 구성합니다.</p></div></div>
-        <div class="step"><span class="num">4</span><div><h3>Copilot Chat 에이전트 모드에서 사용</h3><p>워크스페이스를 열고 계좌번호를 입력하면, 채팅에서 자연어로 시세·잔고 조회를 요청할 수 있습니다.</p></div></div>
+        <div class="step"><span class="num">1</span><div><h3>공식 서버 설치</h3><p>저장소 루트에서 설치 스크립트를 실행합니다. 공식 소스와 의존성은 Git에서 제외된 <code>mcp/</code>에 저장됩니다. Python 3.12+와 Git이 필요합니다.</p></div></div>
+        <div class="step"><span class="num">2</span><div><h3>모의투자 키 확인</h3><p>기존 <code>kis.key</code>의 모의 App Key·Secret·계좌번호 또는 <code>.env</code>의 <code>KIS_PAPER_*</code> 값을 재사용합니다. 계좌번호는 <code>12345678-01</code> 형식입니다.</p></div></div>
+        <div class="step"><span class="num">3</span><div><h3>개발 도구에서 연결</h3><p>VS Code Copilot Chat은 <code>.vscode/mcp.json</code>, Codex CLI·IDE는 <code>.codex/config.toml</code>을 사용합니다. 세션을 다시 시작한 뒤 두 MCP 서버가 보이는지 확인합니다.</p></div></div>
+        <div class="step"><span class="num">4</span><div><h3>도구 호출 확인</h3><p>거래 MCP는 모의 주문 도구도 제공하므로 요청 내용과 계좌를 확인한 뒤 실행합니다.</p></div></div>
       </div>
 
-      <pre class="code"># 1. 공식 MCP 서버 저장소를 로컬에 clone
-mkdir -p mcp
-git clone --depth 1 https://github.com/koreainvestment/open-trading-api.git mcp/open-trading-api
+      <pre class="code">bash scripts/setup_kis_mcp.sh
+python3 scripts/kis_mcp.py code --check
+python3 scripts/kis_mcp.py trade --check</pre>
 
-# 2. 의존성 설치
-cd "mcp/open-trading-api/MCP/Kis Trading MCP"
-uv sync</pre>
+      <p class="desc" style="margin-top:14px">IDE 없이 로컬에서 MCP 도구를 직접 질의하려면 <code>"mcp/open-trading-api/MCP/KIS Code Assistant MCP/.venv/bin/python" scripts/mcp_query_window.py</code>를 실행하세요. 브라우저에 로컬 질의 창이 열립니다. 사용 방법은 저장소 <code>README.md</code>의 “로컬 MCP 질의 창” 절에 있습니다.</p>
 
-      <pre class="code"># mcp/kis-trade-mcp.env — gitignore 처리됨(/mcp/), Git에 절대 커밋하지 않습니다
-KIS_PAPER_APP_KEY=&lt;kis.key의 App-KEY 값&gt;
-KIS_PAPER_APP_SECRET=&lt;kis.key의 Secret 값&gt;</pre>
+      <div class="notice">거래 실행기는 실전 키를 공식 서버에 전달하지 않습니다. 공식 서버의 <code>ENV=live</code>는 <code>.env.live</code> 전송 설정 파일 이름이며, 거래용 자격 증명은 <code>KIS_PAPER_*</code>입니다.</div>
 
-      <pre class="code">// .vscode/mcp.json — .vscode/는 이미 .gitignore에 포함되어 있습니다
-{
-  "inputs": [
-    { "type": "promptString", "id": "kis-paper-account", "description": "KIS 모의투자 계좌번호 앞 8자리" },
-    { "type": "promptString", "id": "kis-hts-id", "description": "한국투자증권 HTS ID (선택)" }
-  ],
-  "servers": {
-    "kis-trade-mcp": {
-      "type": "stdio",
-      "command": "uv",
-      "args": ["--directory", "${workspaceFolder}/mcp/open-trading-api/MCP/Kis Trading MCP", "run", "python", "server.py"],
-      "envFile": "${workspaceFolder}/mcp/kis-trade-mcp.env",
-      "env": {
-        "ENV": "live",
-        "MCP_TYPE": "stdio",
-        "KIS_PAPER_STOCK": "${input:kis-paper-account}",
-        "KIS_PROD_TYPE": "01",
-        "KIS_HTS_ID": "${input:kis-hts-id}"
-      }
-    }
-  }
-}</pre>
-
-      <div class="notice"><code>ENV=live</code>는 실전 거래를 뜻하지 않습니다 — MCP 서버가 로드할 전송 설정 파일(<code>.env.live</code>) 이름일 뿐이며, 실전·모의 구분은 <code>KIS_APP_KEY</code>(실전, 비워둠) 대 <code>KIS_PAPER_APP_KEY</code>(모의, 설정함)로 결정됩니다.</div>
-
-      <p class="desc" style="margin-top:14px"><strong>사용:</strong> VS Code에서 이 워크스페이스를 열고 Copilot Chat을 에이전트 모드로 전환하면 계좌번호 입력 프롬프트가 표시됩니다. 이후 채팅에서 자연어로 질문합니다.</p>
       <div class="table-wrap"><table class="table"><thead><tr><th>질문 예시</th><th>호출되는 영역</th></tr></thead><tbody>
         <tr><td>"삼성전자 현재가 조회해줘"</td><td>국내주식 시세</td></tr>
         <tr><td>"모의투자 계좌 잔고 보여줘"</td><td>계좌·잔고</td></tr>
         <tr><td>"KODEX 200 ETF NAV 비교추이 확인해줘"</td><td>ETF/ETN</td></tr>
       </tbody></table></div>
 
-      <label class="check"><input type="checkbox"> <code>uv sync</code>가 오류 없이 끝났다.</label>
-      <label class="check"><input type="checkbox"> <code>mcp/kis-trade-mcp.env</code>에는 모의(Paper) 키만 넣었고 실전 키는 비워뒀다.</label>
-      <label class="check"><input type="checkbox"> <code>.vscode/mcp.json</code>과 <code>mcp/</code>가 <code>.gitignore</code>에 포함되어 있음을 확인했다.</label>
-      <label class="check"><input type="checkbox"> VS Code 계좌번호 입력창에 실전 계좌가 아닌 모의투자 계좌번호를 입력했다.</label>
+      <label class="check"><input type="checkbox"> 설치 스크립트와 두 <code>--check</code> 명령이 오류 없이 끝났다.</label>
+      <label class="check"><input type="checkbox"> <code>kis.key</code> 또는 <code>.env</code>에 모의투자 키와 계좌가 입력되어 있다.</label>
+      <label class="check"><input type="checkbox"> 개발 도구에서 코드 검색용과 모의 거래용 MCP가 표시된다.</label>
 
-      <div class="danger"><strong>중요:</strong> 실전 거래용 <code>KIS_APP_KEY</code>/<code>KIS_APP_SECRET</code>는 설정하지 마세요. 설정하는 순간 MCP 도구가 실제 자금으로 주문을 실행할 수 있습니다. 이 페이지의 구성은 모의투자 전용입니다.</div>
-
-      <p class="desc" style="margin-top:14px">전체 도구 목록, Docker+SSE 실행 방식, 문제 해결 가이드는 공식 MCP README를 참조하세요.</p>
-      <a class="btn" href="https://github.com/koreainvestment/open-trading-api/blob/main/MCP/README.MD" target="_blank" rel="noopener noreferrer">공식 MCP README 보기 ↗</a><a class="btn-alt" href="https://github.com/koreainvestment/open-trading-api/tree/main/MCP/Kis%20Trading%20MCP" target="_blank" rel="noopener noreferrer">Kis Trading MCP 저장소 ↗</a><a class="btn-alt" href="https://code.visualstudio.com/docs/copilot/chat/mcp-servers" target="_blank" rel="noopener noreferrer">VS Code MCP 문서 ↗</a>
+      <p class="desc" style="margin-top:14px">설치와 설정의 자세한 내용은 저장소 <code>README.md</code>의 “KIS MCP” 절을 참고하세요.</p>
+      <a class="btn" href="https://github.com/koreainvestment/open-trading-api/tree/main/MCP" target="_blank" rel="noopener noreferrer">공식 KIS MCP 저장소 ↗</a><a class="btn-alt" href="https://code.visualstudio.com/docs/agent-customization/mcp-servers" target="_blank" rel="noopener noreferrer">VS Code MCP 문서 ↗</a>
     </section>
   </main>
   <footer class="footer"><div>EDUMGT · KIS 모의투자 실습 2단계 · KIS Developers 키 발급과 설정 · 교육용 콘텐츠</div></footer>

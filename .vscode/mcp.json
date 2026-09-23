@@ -1,0 +1,14 @@
+{
+  "servers": {
+    "kis-code-assistant": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["${workspaceFolder}/scripts/kis_mcp.py", "code"]
+    },
+    "kis-trading-paper": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["${workspaceFolder}/scripts/kis_mcp.py", "trade"]
+    }
+  }
+}

@@ -1,0 +1,10 @@
+[mcp_servers.kis-code-assistant]
+command = "python3"
+args = ["scripts/kis_mcp.py", "code"]
+startup_timeout_sec = 60
+
+[mcp_servers.kis-trading-paper]
+default_tools_approval_mode = "prompt"
+command = "python3"
+args = ["scripts/kis_mcp.py", "trade"]
+startup_timeout_sec = 60

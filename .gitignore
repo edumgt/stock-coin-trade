@@ -5,6 +5,9 @@ Thumbs.db
 # IDE / editor settings
 .idea/
 .vscode/
+!.vscode/
+.vscode/*
+!.vscode/mcp.json
 *.iml
 
 # Build outputs

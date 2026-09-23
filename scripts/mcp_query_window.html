@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KIS MCP 질의 창</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172334;background:#f3f6fb}
+    *{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:0 auto;padding:28px 20px 50px}
+    header{margin-bottom:20px}h1{font-size:28px;margin:0 0 7px}p{line-height:1.6;color:#536175;margin:0}
+    .layout{display:grid;grid-template-columns:minmax(310px,420px) minmax(0,1fr);gap:18px}
+    .card{background:white;border:1px solid #dce4ef;border-radius:14px;padding:20px;box-shadow:0 4px 16px #203c6510}
+    label{display:block;font-weight:700;font-size:14px;margin:17px 0 7px}select,input,textarea{width:100%;border:1px solid #bdcbdd;border-radius:8px;padding:10px 11px;background:#fff;color:#172334;font:inherit}
+    textarea{min-height:175px;resize:vertical;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}
+    input:focus,select:focus,textarea:focus{outline:2px solid #7ba9ff;outline-offset:1px}
+    .row{display:flex;gap:9px;align-items:end}.row select{flex:1}.row button{flex:none}
+    button{border:0;border-radius:8px;background:#2563eb;color:white;font:inherit;font-size:14px;font-weight:700;line-height:1.2;padding:11px 14px;cursor:pointer}
+    button:hover{background:#174cc3}button:disabled{opacity:.55;cursor:wait}.secondary{background:#e8effa;color:#234375}.secondary:hover{background:#d8e6fa}
+    .hint{font-size:12px;color:#69778b;margin-top:6px;line-height:1.5}.warning{margin-top:15px;border:1px solid #f1d39a;background:#fff8ea;border-radius:8px;padding:11px 12px;color:#7b5215;font-size:13px;line-height:1.55}
+    .details{margin-top:14px}.details summary{cursor:pointer;font-weight:700;font-size:13px;color:#415572}.details pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:210px;overflow:auto;color:#43546b;font-size:12px;line-height:1.45}
+    .actions{display:flex;align-items:center;gap:12px;margin-top:16px}.status{font-size:13px;color:#536175}.status.error{color:#ba273e}
+    .result{margin:13px 0 0;min-height:420px;max-height:72vh;overflow:auto;padding:16px;border:1px solid #dce4ef;border-radius:9px;background:#f8faff;color:#142137;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}
+    .result-title{font-size:16px;font-weight:800;margin:0}.quick[hidden]{display:none}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+    @media(max-width:800px){.layout{grid-template-columns:1fr}.result{min-height:250px}main{padding:19px 12px}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>KIS MCP 질의 창</h1>
+    <p>이 컴퓨터에서 공식 KIS MCP 도구를 직접 조회하고 실행합니다. 도구 호출 결과를 그대로 보여줍니다.</p>
+  </header>
+  <div class="layout">
+    <section class="card" aria-label="MCP 도구 입력">
+      <label for="server">MCP 서버</label>
+      <div class="row"><select id="server"><option value="code">코드 검색 · Code Assistant</option><option value="trade">모의 거래 · Trading</option></select><button class="secondary" id="refresh" type="button">도구 새로고침</button></div>
+      <p class="hint">거래 서버는 모의투자 키와 계좌가 설정되어 있어야 연결됩니다.</p>
+      <label for="tool">도구</label>
+      <select id="tool"><option value="">도구 목록을 불러오는 중…</option></select>
+      <div class="quick" id="quick">
+        <label for="keyword">코드 검색어</label>
+        <input id="keyword" type="text" placeholder="예: 현재가, 잔고, order_cash">
+        <p class="hint">검색어는 <code>description</code> 조건에 입력됩니다. 아래 JSON 인자를 편집해 다른 조건을 사용할 수 있습니다.</p>
+      </div>
+      <label for="arguments">도구 인자 · JSON 객체</label>
+      <textarea id="arguments" spellcheck="false">{}</textarea>
+      <p class="hint">선택한 도구의 입력 스키마에 맞춰 값을 입력하세요. 비밀키는 이 창에 입력하지 마세요.</p>
+      <details class="details"><summary>도구 설명과 입력 스키마</summary><pre id="schema">도구를 선택하세요.</pre></details>
+      <div class="warning" id="trade-warning" hidden>거래 MCP에는 모의 주문·취소 도구가 있습니다. 실행 버튼을 누르면 도구명과 인자를 다시 확인합니다.</div>
+      <div class="actions"><button id="run" type="button">질의 실행</button><span class="status" id="status" role="status">준비 중</span></div>
+    </section>
+    <section class="card" aria-label="MCP 결과">
+      <h2 class="result-title">MCP 응답</h2>
+      <p class="hint">결과에는 계좌 정보 등이 포함될 수 있습니다. 공유 전 내용을 확인하세요.</p>
+      <pre class="result" id="result" aria-live="polite">도구를 선택하고 질의를 실행하세요.</pre>
+    </section>
+  </div>
+</main>
+<script>
+  const token = '__CONSOLE_TOKEN__';
+  const $ = id => document.getElementById(id);
+  let tools = [];
+  let busy = false;
+
+  async function post(path, data) {
+    const response = await fetch(path, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-MCP-Console-Token': token},
+      body: JSON.stringify(data)
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+    return payload;
+  }
+
+  function status(message, error = false) {
+    $('status').textContent = message;
+    $('status').classList.toggle('error', error);
+  }
+
+  function selectedTool() { return tools.find(tool => tool.name === $('tool').value); }
+
+  function updateTool() {
+    const tool = selectedTool();
+    const isCodeSearch = $('server').value === 'code' && tool?.name.startsWith('search_');
+    $('quick').hidden = !isCodeSearch;
+    $('trade-warning').hidden = $('server').value !== 'trade';
+    $('keyword').value = '';
+    $('arguments').value = '{}';
+    $('schema').textContent = tool ? `${tool.description}\n\n입력 스키마\n${JSON.stringify(tool.inputSchema, null, 2)}` : '도구를 선택하세요.';
+  }
+
+  async function loadTools() {
+    if (busy) return;
+    busy = true;
+    $('refresh').disabled = true;
+    $('run').disabled = true;
+    $('tool').replaceChildren(new Option('불러오는 중…', ''));
+    tools = [];
+    status('MCP 서버 연결 중…');
+    try {
+      const payload = await post('/api/tools', {server: $('server').value});
+      tools = payload.tools;
+      $('tool').replaceChildren(...tools.map(tool => new Option(tool.title === tool.name ? tool.name : `${tool.title} · ${tool.name}`, tool.name)));
+      updateTool();
+      status(`${tools.length}개 도구 연결됨`);
+    } catch (error) {
+      $('tool').replaceChildren(new Option('도구를 불러오지 못했습니다', ''));
+      $('schema').textContent = 'MCP 서버를 확인하세요.';
+      status(error.message, true);
+    } finally {
+      busy = false;
+      $('refresh').disabled = false;
+      $('run').disabled = tools.length === 0;
+    }
+  }
+
+  function formatResult(result) {
+    if (result.structuredContent != null) return JSON.stringify(result.structuredContent, null, 2);
+    const parts = (result.content || []).map(item => {
+      if (item.type !== 'text') return JSON.stringify(item, null, 2);
+      try { return JSON.stringify(JSON.parse(item.text), null, 2); }
+      catch { return item.text; }
+    });
+    return parts.join('\n\n') || JSON.stringify(result, null, 2);
+  }
+
+  function validateArguments(tool, args, server) {
+    if (server === 'code' && ('api_type' in args || 'params' in args)) {
+      throw new Error('이 인자는 거래용입니다. MCP 서버를 “모의 거래”, 도구를 “domestic_stock”으로 바꾸세요.');
+    }
+    const properties = tool.inputSchema?.properties || {};
+    const unknown = Object.keys(args).filter(key => !(key in properties));
+    if (unknown.length) throw new Error(`이 도구에서 받지 않는 인자: ${unknown.join(', ')}. 도구 설명과 입력 스키마를 확인하세요.`);
+    const missing = (tool.inputSchema?.required || []).filter(key => !(key in args));
+    if (missing.length) throw new Error(`필수 인자가 없습니다: ${missing.join(', ')}`);
+  }
+
+  async function runTool() {
+    if (busy || !selectedTool()) return;
+    let argumentsValue;
+    try {
+      argumentsValue = JSON.parse($('arguments').value);
+      if (argumentsValue === null || Array.isArray(argumentsValue) || typeof argumentsValue !== 'object') throw new Error('JSON 객체를 입력하세요.');
+    } catch (error) {
+      status(`인자 오류: ${error.message}`, true);
+      return;
+    }
+    const keyword = $('keyword').value.trim();
+    if (!$('quick').hidden && keyword) {
+      argumentsValue = {...argumentsValue, query: argumentsValue.query || keyword, description: argumentsValue.description || keyword};
+    }
+    const server = $('server').value;
+    const tool = $('tool').value;
+    try {
+      validateArguments(selectedTool(), argumentsValue, server);
+    } catch (error) {
+      status(error.message, true);
+      $('result').textContent = error.message;
+      return;
+    }
+    let confirmTrade = false;
+    if (server === 'trade') {
+      confirmTrade = window.confirm(`모의 거래 MCP 도구를 실행합니다.\n\n도구: ${tool}\n인자: ${JSON.stringify(argumentsValue, null, 2)}\n\n계속할까요?`);
+      if (!confirmTrade) { status('실행 취소됨'); return; }
+    }
+    busy = true;
+    $('run').disabled = true;
+    $('refresh').disabled = true;
+    status('MCP 응답 대기 중…');
+    $('result').textContent = '요청 중…';
+    try {
+      const payload = await post('/api/call', {server, tool, arguments: argumentsValue, confirm_trade: confirmTrade});
+      $('result').textContent = formatResult(payload.result);
+      status(payload.result.isError ? 'MCP 도구가 오류를 반환했습니다.' : '응답 완료', !!payload.result.isError);
+    } catch (error) {
+      $('result').textContent = error.message;
+      status(error.message, true);
+    } finally {
+      busy = false;
+      $('run').disabled = false;
+      $('refresh').disabled = false;
+    }
+  }
+
+  $('server').addEventListener('change', loadTools);
+  $('refresh').addEventListener('click', loadTools);
+  $('tool').addEventListener('change', updateTool);
+  $('run').addEventListener('click', runTool);
+  $('keyword').addEventListener('keydown', event => { if (event.key === 'Enter') runTool(); });
+  loadTools();
+</script>
+</body>
+</html>
