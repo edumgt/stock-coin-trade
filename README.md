@@ -483,15 +483,17 @@ python3 scripts/kis_mcp.py code --check
 python3 scripts/kis_mcp.py trade --check
 ```
 
-### 로컬 MCP 질의 창
+### VS Code 탐색기 하단 KIS MCP 패널
 
-IDE 채팅 없이 공식 MCP 도구를 직접 호출하려면 아래 명령을 실행하세요. 브라우저에서 `http://127.0.0.1:8765/`가 열립니다. 창은 이 컴퓨터에서만 접근할 수 있으며 웹앱 배포 경로에는 포함되지 않습니다.
+이 저장소의 [`vscode-kis-mcp/`](vscode-kis-mcp/) 확장을 설치하면 VS Code **탐색기 하단**에 **KIS MCP** 보기가 나타납니다. **API 검색 예시**와 **삼성전자 시세** 버튼으로 바로 시작하거나, 서버·도구를 선택하고 JSON 인자를 넣어 호출할 수 있습니다. 응답은 패널 안에서 확인·복사합니다. Trading 도구는 모의투자 환경으로 고정되며, 그 밖의 거래 호출은 실행 전 확인창을 표시합니다.
 
-```bash
-"mcp/open-trading-api/MCP/KIS Code Assistant MCP/.venv/bin/python" scripts/mcp_query_window.py
-```
+새 VS Code 환경에서는 `vscode-kis-mcp/`에서 `vsce package --no-dependencies`로 VSIX를 만든 뒤 `code --install-extension kis-mcp-explorer-0.1.0.vsix`로 설치하세요. 설치 후 **Developer: Reload Window**를 실행하고 탐색기에서 **KIS MCP**를 펼치거나 명령 팔레트의 **KIS MCP: 탐색기 패널 열기**를 사용하세요. 패널은 기존 `scripts/kis_mcp.py`로 공식 서버에 연결합니다.
 
-코드 검색 서버와 모의 거래 서버를 선택하고 도구의 설명·입력 스키마를 확인한 뒤 JSON 인자를 입력해 실행할 수 있습니다. 코드 검색 도구는 검색어 입력란을 빠르게 사용할 수 있습니다. 거래 도구는 매번 호출 내용 확인 창을 거칩니다. 종료는 실행 터미널에서 `Ctrl+C`입니다. 설치가 끝나지 않았다면 먼저 `bash scripts/setup_kis_mcp.sh`를 실행하세요.
+### VS Code 보조 사이드바에서 KIS MCP 사용
+
+현재 설치된 Codex 확장은 VS Code 보조 사이드바에 표시됩니다. `.vscode/settings.json`은 이 프로젝트를 열 때 보조 사이드바를 보이도록 설정합니다. 현재 창에서 `Ctrl+Shift+P` → **Codex: Open Codex Sidebar**를 실행해 패널을 여세요. Codex IDE 확장은 프로젝트 `.codex/config.toml`의 `kis-code-assistant`와 `kis-trading-paper` MCP 서버를 사용합니다. 설정을 처음 추가했거나 도구가 보이지 않으면 Codex 패널의 설정 메뉴에서 확장을 다시 시작하세요.
+
+패널에 `KIS Code Assistant MCP로 국내주식 현재가 API와 필수 인자를 찾아줘`처럼 입력하면 API 문서를 조회할 수 있습니다. `KIS Trading MCP로 모의투자 삼성전자(005930) 현재가를 조회해줘`는 모의 서버의 시세 도구를 호출합니다. 모의 주문 도구는 실행 전 요청 내용을 확인하세요. 공식 [Codex IDE 확장 안내](https://learn.chatgpt.com/docs/codex/ide)와 [MCP 설정 안내](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)를 참고하세요.
 
 거래 실행기는 실전 키를 전달하지 않고 공식 서버의 `~/KIS/config/kis_devlp.yaml` 출력 위치를 Git 무시된 `mcp/home/`으로 격리합니다. 코드에서 사용하는 `ENV=live`는 공식 서버의 `.env.live` 전송 설정 파일 이름이며, 거래에 사용할 키는 `KIS_PAPER_*`입니다. 거래 MCP에는 모의 주문 도구가 있으므로 호출 내용을 확인하고 사용하세요.
 

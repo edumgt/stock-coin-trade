@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "mcp" / "open-trading-api" / "MCP"
 SERVERS = {
     "code": (SOURCE / "KIS Code Assistant MCP", ["run", "server.py", "--stdio"]),
-    "trade": (SOURCE / "Kis Trading MCP", ["run", "python", "server.py"]),
+    "trade": (SOURCE / "Kis Trading MCP", ["run", "python", str(ROOT / "scripts" / "kis_trading_server.py")]),
 }
 
 

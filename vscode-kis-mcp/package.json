@@ -1,0 +1,31 @@
+{
+  "name": "kis-mcp-explorer",
+  "displayName": "KIS MCP Explorer",
+  "description": "Use the official KIS MCP servers from the Explorer sidebar.",
+  "version": "0.1.0",
+  "publisher": "stock-coin-trade",
+  "private": true,
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "extensionKind": ["workspace"],
+  "main": "./extension.js",
+  "activationEvents": ["onView:kisMcp.panel", "onCommand:kisMcp.open", "onCommand:kisMcp.refresh"],
+  "capabilities": { "untrustedWorkspaces": { "supported": false } },
+  "contributes": {
+    "views": {
+      "explorer": [
+        { "id": "kisMcp.panel", "name": "KIS MCP", "type": "webview", "contextualTitle": "KIS MCP Explorer" }
+      ]
+    },
+    "commands": [
+      { "command": "kisMcp.open", "title": "KIS MCP: 탐색기 패널 열기" },
+      { "command": "kisMcp.refresh", "title": "KIS MCP: 서버 새로고침", "icon": "$(refresh)" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "kisMcp.refresh", "when": "view == kisMcp.panel", "group": "navigation" }
+      ]
+    }
+  },
+  "files": ["extension.js", "mcp-client.js", "media/**", "README.md"]
+}

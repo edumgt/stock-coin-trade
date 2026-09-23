@@ -1,0 +1,40 @@
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 14px 12px 20px; color: var(--vscode-foreground); font-family: var(--vscode-font-family); font-size: 12px; line-height: 1.45; }
+button, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: default; opacity: .48; }
+.hero { padding: 14px 13px 13px; border: 1px solid var(--vscode-panel-border); border-radius: 10px; background: linear-gradient(145deg, color-mix(in srgb, var(--vscode-textLink-foreground) 13%, var(--vscode-sideBar-background)), var(--vscode-sideBar-background) 70%); }
+.eyebrow { display: block; color: var(--vscode-textLink-foreground); font-size: 9px; font-weight: 700; letter-spacing: .12em; }
+h1 { margin: 5px 0 4px; font-size: 17px; line-height: 1.2; letter-spacing: -.02em; }
+.hero p { margin: 0; color: var(--vscode-descriptionForeground); font-size: 11px; }
+.server-card, .workspace, .result-section { margin-top: 14px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; min-height: 24px; margin-bottom: 7px; }
+.section-head strong { font-size: 12px; }
+.icon-button, .text-button { border: 0; padding: 2px 5px; color: var(--vscode-textLink-foreground); background: none; }
+.icon-button { font-size: 19px; line-height: 1; }
+.server-card { padding: 9px 11px 10px; border: 1px solid var(--vscode-panel-border); border-radius: 8px; background: var(--vscode-editor-background); }
+.server-card .section-head { margin-bottom: 2px; }
+.server-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 0; }
+.server-row + .server-row { border-top: 1px solid var(--vscode-panel-border); }
+.server-name { font-weight: 600; white-space: nowrap; }
+.server-name small { color: var(--vscode-descriptionForeground); font-size: 10px; font-weight: normal; }
+.status { overflow: hidden; max-width: 52%; color: var(--vscode-descriptionForeground); font-size: 10px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.status.connected { color: var(--vscode-testing-iconPassed, #4db879); }
+.status.failed, .result.error { color: var(--vscode-errorForeground); }
+.step { color: var(--vscode-descriptionForeground); font-size: 10px; letter-spacing: .08em; }
+.presets { display: flex; gap: 6px; margin: 2px 0 13px; }
+.presets button { flex: 1; min-width: 0; border: 1px solid var(--vscode-button-secondaryBackground); border-radius: 5px; padding: 6px 5px; color: var(--vscode-button-secondaryForeground); background: var(--vscode-button-secondaryBackground); font-size: 10px; }
+.presets button:hover { background: var(--vscode-button-secondaryHoverBackground); }
+label { display: flex; justify-content: space-between; margin: 10px 0 5px; font-size: 11px; font-weight: 600; }
+label span { color: var(--vscode-descriptionForeground); font-size: 10px; font-weight: 400; }
+select, textarea { width: 100%; border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 5px; outline: none; color: var(--vscode-input-foreground); background: var(--vscode-input-background); }
+select { height: 30px; padding: 0 7px; }
+textarea { min-height: 122px; padding: 8px; resize: vertical; font-family: var(--vscode-editor-font-family); font-size: 11px; line-height: 1.5; }
+select:focus, textarea:focus { border-color: var(--vscode-focusBorder); }
+.hint { margin: 5px 0 0; color: var(--vscode-descriptionForeground); font-size: 10px; line-height: 1.4; overflow-wrap: anywhere; }
+.primary { display: flex; width: 100%; align-items: center; justify-content: space-between; margin-top: 12px; border: 0; border-radius: 5px; padding: 8px 11px; color: var(--vscode-button-foreground); background: var(--vscode-button-background); font-weight: 600; }
+.primary:hover { background: var(--vscode-button-hoverBackground); }
+.result { min-height: 78px; max-height: 300px; overflow: auto; border: 1px solid var(--vscode-panel-border); border-radius: 6px; padding: 9px; color: var(--vscode-foreground); background: var(--vscode-editor-background); font-family: var(--vscode-editor-font-family); font-size: 10px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.result.empty { color: var(--vscode-descriptionForeground); font-family: var(--vscode-font-family); }
+footer { margin-top: 14px; color: var(--vscode-descriptionForeground); font-size: 10px; text-align: center; }
