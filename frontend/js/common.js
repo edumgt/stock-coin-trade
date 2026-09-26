@@ -983,6 +983,40 @@ function mountApiTestGuide() {
   host.appendChild(element);
 }
 
+// API 테스트 화면 상단에 "인증 정보를 어디서 읽는지"를 호스트 기준으로 안내한다.
+// 페이지 <body>의 data-cred-source 값으로 유형을 지정한다: broker | aws | public
+function mountCredentialSourceNote() {
+  const type = document.body.dataset.credSource;
+  if (!type) return;
+  const main = document.body.querySelector(':scope > main');
+  if (!main || document.getElementById('credSourceNote')) return;
+  const h = location.hostname;
+  const isLocal = h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.endsWith('.local')
+    || /^10\./.test(h) || /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+  let title, body;
+  if (type === 'public') {
+    title = '공개 API · 인증 키 불필요';
+    body = '이 화면은 공개 시장 데이터를 서버 경유로 조회합니다. API Key·Secret을 사용하지 않으므로 .env·Secrets Manager 모두 필요 없습니다.';
+  } else if (type === 'aws') {
+    title = '인증 정보 출처: AWS Secrets Manager (고정)';
+    body = '이 화면은 로컬·운영 모두 AWS Secrets Manager(<code>stock-coin-trade/*</code>)에서 키를 읽습니다. 로컬은 AWS 프로필, 운영 서버는 인스턴스 IAM 역할로 접근합니다.';
+  } else { // broker: 호스트에 따라 .env 또는 Secrets Manager
+    if (isLocal) {
+      title = '인증 정보 출처: 로컬 .env';
+      body = `현재 로컬 실행(<code>${h}</code>)입니다. 증권사·Alpaca 키를 저장소 루트의 <code>.env</code>(<code>ALPACA_*</code>, <code>KIS_PAPER_*</code>, <code>KB_*</code>)에서 읽습니다.`;
+    } else {
+      title = '인증 정보 출처: AWS Secrets Manager';
+      body = `현재 운영 서버(<code>${h}</code>)입니다. 증권사·Alpaca 키를 AWS Secrets Manager(<code>stock-coin-trade/alpaca·kis·kb</code>)에서 읽습니다. 서버 <code>.env</code>의 <code>CREDENTIAL_SOURCE=aws</code>로 전환됩니다.`;
+    }
+  }
+  const el = document.createElement('div');
+  el.id = 'credSourceNote';
+  el.setAttribute('role', 'note');
+  el.style.cssText = 'margin:0 0 16px;padding:11px 14px;border-radius:9px;border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a5f;font-size:12.5px;line-height:1.65';
+  el.innerHTML = `<b style="color:#1d4ed8">🔑 ${title}</b><br>${body}`;
+  main.insertBefore(el, main.firstChild);
+}
+
 async function initPage({ requireAuth = false } = {}) {
   const user = await getCurrentUser();
   if (requireAuth && !user?.loggedIn) {
@@ -992,6 +1026,7 @@ async function initPage({ requireAuth = false } = {}) {
   renderHeader(user);
   mountDatasetComposerModal();
   mountApiTestGuide();
+  mountCredentialSourceNote();
   ensureSiteFooter();
   const hasMain = document.body.querySelector(':scope > main');
   const hasFooter = document.body.querySelector(':scope > footer');
