@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alpaca Paper Trading 3일차 전체 과정 — EDUMGT</title>
+  <title>Alpaca 미국주식 조회·분석 API 과정 — EDUMGT</title>
   <link rel="icon" href="/img/favicon.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css?v=20260920-chart">
@@ -17,14 +17,27 @@
   <div id="header-mount"></div>
   <main class="learn-wrap">
     <section style="padding:28px;border:1px solid #C9DAFF;border-radius:15px;background:linear-gradient(135deg,#E4F0FF,#F9FBFF);">
-      <div class="kicker">PRACTICE · ALPACA API</div>
-      <h1 style="margin:7px 0;font-size:30px;line-height:1.25;font-weight:900;color:var(--fg);">Alpaca API로 미국주식·암호화폐 Paper Trading 시작하기</h1>
-      <p class="desc" style="max-width:850px">Alpaca의 개발자 API와 Python SDK(<code>alpaca-py</code>)로 계정 조회, 시세, 주문 흐름을 연습합니다. 이 실습은 <strong>Paper Trading</strong>에서만 시작하며, 실제 주문 코드는 실행 전에 별도로 검토합니다.</p>
+      <div class="kicker">U.S. MARKET DATA · ALPACA API</div>
+      <h1 style="margin:7px 0;font-size:30px;line-height:1.25;font-weight:900;color:var(--fg);">Alpaca API로 미국주식 조회·분석 데이터 수집하기</h1>
+      <p class="desc" style="max-width:980px">Alpaca의 Market Data API를 AAPL·NVDA 같은 미국주식의 시세를 조회하고 분석 입력 데이터를 수집하는 용도로 사용합니다. 계정·포지션·주문 연습은 <strong>Paper Trading</strong>에만 한정하고, 시장 데이터 조회와 주문 기능을 분리합니다.</p>
       <nav class="alpaca-stage-nav" aria-label="Alpaca Paper 실습 단계"><a href="/learning/alpaca-signup.html">1 가입</a><a href="/learning/alpaca-key.html">2 Key</a><a href="/learning/alpaca-install.html">3 설치</a><a href="/learning/alpaca-setup.html">4 설정</a><a href="/alpaca-test.html">5 조회</a><a href="/alpaca-order-flow-test.html">6 주문</a><a href="/alpaca-api-history.html">7 이력</a></nav>
       <figure style="margin:22px 0 0;border:1px solid rgba(0,0,0,.12);border-radius:12px;overflow:hidden;background:#FFDF28;box-shadow:0 8px 24px rgba(0,0,0,.12)">
         <img src="https://alpaca.markets/static/images/meta-image-homepage.png" alt="Alpaca의 주식·옵션·암호화폐 API 소개 화면과 웹·모바일 거래 화면" width="2400" height="1260" loading="lazy" style="display:block;width:100%;height:auto">
         <figcaption style="padding:10px 13px;background:var(--surface);color:var(--muted);font-size:12px;line-height:1.55">Alpaca 공식 홈페이지 소개 이미지 · 실제 제공 상품과 계정별 기능은 <a href="https://alpaca.markets" target="_blank" rel="noopener noreferrer" style="color:var(--accent-dark);font-weight:700">공식 웹사이트</a>에서 확인하세요.</figcaption>
       </figure>
+    </section>
+
+    <section class="card">
+      <div class="kicker">미장 분석 API 역할</div><h2 class="title">미국주식 조회는 분석 데이터 수집, 주문은 Paper 검증으로 분리합니다</h2>
+      <p class="desc">Alpaca는 이 시스템에서 미국주식 시장 데이터를 가져오는 외부 API 역할을 담당합니다. 삼성전자 <code>005930</code> 같은 국내 종목은 KIS·KB증권 영역에서 다루고, Alpaca 화면에는 미국 거래소 영문 티커를 입력합니다.</p>
+      <div class="grid">
+        <div class="box"><b>현재 제공 · 최근 시세</b><p><code>Market Data API</code>로 영문 티커의 최근 매수·매도 호가와 최근 체결 가격·수량·시각을 조회합니다. AAPL·NVDA처럼 분석할 미국주식의 현재 시장 상태를 확인하는 입력 데이터입니다.</p></div>
+        <div class="box"><b>현재 제공 · 시장·계정 상태</b><p>미국 시장 개장 여부와 Paper 계정의 포지션·최근 주문을 조회해 시세 데이터와 모의 운용 상태를 함께 점검합니다.</p></div>
+        <div class="box"><b>기능 보완 방향 · 시계열 분석</b><p>과거 일봉·분봉 OHLCV, 기간 수익률, 이동평균, 변동성, 거래량 비교와 라인·캔들 차트를 Market Data 기반 분석 기능으로 확장합니다.</p></div>
+        <div class="box"><b>안전 경계 · 조회와 주문 분리</b><p>분석 화면은 읽기 전용 데이터 API만 호출합니다. 주문 흐름은 별도 화면에서 고정된 Paper 주문을 검증하며 Live Trading으로 전환하지 않습니다.</p></div>
+      </div>
+      <div class="notice"><strong>현재 구현 범위:</strong> 최근 호가·체결 조회까지 동작합니다. 과거 봉과 기술지표·차트는 보완 예정 범위로 명확히 구분하며, 아직 제공하지 않는 분석 결과를 표시하지 않습니다.</div>
+      <a class="btn" href="/alpaca-test.html">미국주식 시세 조회 열기</a>
     </section>
 
     <section class="card">
@@ -201,7 +214,7 @@ curl -s &#x27;http://localhost:3333/api/alpaca-test/market/quote?symbol=AAPL&#x2
 </section>
 <!-- curriculum:end -->
 </main>
-  <footer class="footer"><div>EDUMGT · Alpaca API Paper Trading · 교육용 콘텐츠</div></footer>
-  <script src="/js/config.js"></script><script src="/js/common.js?v=20260926-navstate3"></script><script>document.addEventListener('DOMContentLoaded',()=>initPage())</script>
+  <footer class="footer"><div>EDUMGT · Alpaca 미국주식 Market Data 분석 · Paper Trading 교육용 콘텐츠</div></footer>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20260926-navstate5"></script><script>document.addEventListener('DOMContentLoaded',()=>initPage())</script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alpaca Paper 연결·조회 — EDUMGT</title>
+  <title>Alpaca 미국주식 시세 조회·분석 API — EDUMGT</title>
   <link rel="icon" href="/img/favicon.png"><script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css?v=20260920-chart">
   <link rel="stylesheet" href="/css/alpaca-lab.css?v=20260920-1">
@@ -22,12 +22,12 @@
 <body>
   <div id="header-mount"></div>
   <main class="test-wrap"><section class="card">
-    <div class="kicker">READ-ONLY · ALPACA PAPER API</div>
-    <h1 style="margin:7px 0;font-size:28px;font-weight:900;color:var(--fg)">Alpaca Test</h1>
-    <p style="margin:0;color:var(--fg-2);line-height:1.7">서버가 <code>al.key</code> 또는 환경변수에서만 키를 읽어 Alpaca Paper 계정의 읽기 전용 상태 조회를 수행합니다. API Key·Secret·계정번호·잔고는 응답과 화면에 표시하지 않습니다.</p>
+    <div class="kicker">U.S. STOCK DATA · ALPACA MARKET DATA API</div>
+    <h1 style="margin:7px 0;font-size:28px;font-weight:900;color:var(--fg)">미국주식 시세 조회 · 분석 API 점검</h1>
+    <p style="margin:0;color:var(--fg-2);line-height:1.7">Alpaca를 미국주식 분석에 필요한 시장 데이터를 조회하는 API로 사용합니다. 서버가 <code>al.key</code> 또는 환경변수에서만 키를 읽으며, AAPL·NVDA 같은 미국주식 영문 티커의 최근 호가·체결과 Paper 계정 상태를 분리해 확인합니다. API Key·Secret·계정번호·잔고는 응답과 화면에 표시하지 않습니다.</p>
     <nav class="alpaca-stage-nav" aria-label="Alpaca Paper 실습 단계"><a href="/learning/alpaca-signup.html">1 가입</a><a href="/learning/alpaca-key.html">2 Key</a><a href="/learning/alpaca-install.html">3 설치</a><a href="/learning/alpaca-setup.html">4 설정</a><a class="active" href="/alpaca-test.html">5 조회</a><a href="/alpaca-order-flow-test.html">6 주문</a><a href="/alpaca-api-history.html">7 이력</a></nav>
     <div class="alpaca-status-grid"><div id="alpacaConfig" class="alpaca-status">○ 서버 설정</div><div id="alpacaMode" class="alpaca-status">○ Paper 고정</div><div class="alpaca-status ok">✓ 조회 5종</div><div class="alpaca-status ok">✓ 호출 이력 기록</div></div>
-    <div class="notice"><strong>테스트 범위:</strong> 계정·포지션·주문내역·시장상태·시세를 모두 조회 전용으로만 확인합니다. 주문, 취소, 포지션 변경 등 거래 API는 호출하지 않습니다.</div>
+    <div class="notice"><strong>미장 분석 API 범위:</strong> 현재 화면은 계정·포지션·주문내역·미국 시장상태와 미국주식의 최근 호가·체결을 읽기 전용으로 확인합니다. 이 시세 조회를 분석 데이터 수집의 출발점으로 사용하며, 과거 일봉·분봉, 거래량 시계열, 기술지표 계산과 차트는 후속 기능으로 확장합니다. 주문, 취소, 포지션 변경 등 거래 API는 이 화면에서 호출하지 않습니다.</div>
     <button id="run-test" class="run">Paper API 연결 테스트</button>
     <div id="result" class="result" role="status">테스트 대기 중</div>
 
@@ -41,11 +41,11 @@
       <div class="test-row"><label>시장 개장 여부</label><button class="run-sm" data-test="clock">Clock 조회</button></div>
       <div id="clock-result" class="result result--sm" role="status">조회 대기 중</div>
 
-      <div class="test-row"><label for="quote-symbol">시세(최근 호가·체결)</label><input id="quote-symbol" value="AAPL" maxlength="5" aria-label="Alpaca 티커"><button class="run-sm" data-test="quote">시세 조회</button></div>
+      <div class="test-row"><label for="quote-symbol">미국주식 시세 · 분석 입력(최근 호가·체결)</label><input id="quote-symbol" value="NVDA" maxlength="5" aria-label="미국주식 영문 티커"><button class="run-sm" data-test="quote">미장 시세 조회</button></div>
       <div id="quote-result" class="result result--sm" role="status">조회 대기 중</div>
     </div>
   </section></main>
-  <footer class="footer"><div>EDUMGT · Alpaca Paper API 읽기 전용 연결 점검</div></footer>
-  <script src="/js/config.js"></script><script src="/js/common.js?v=20260926-navstate3"></script><script src="/js/alpaca-test.js?v=20260920-lab"></script>
+  <footer class="footer"><div>EDUMGT · Alpaca 미국주식 Market Data API · 읽기 전용 분석 데이터 점검</div></footer>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20260926-navstate5"></script><script src="/js/alpaca-test.js?v=20260920-lab"></script>
 </body>
 </html>
