@@ -1,7 +1,7 @@
 # 모의투자 · OpenAPI 실습 플랫폼
 
 <p align="center">
-  <img src="./archi.png" alt="시스템 아키텍처 다이어그램" width="900">
+  <img src="./frontend/images/system/architecture.png" alt="시스템 아키텍처 다이어그램" width="900">
 </p>
 
 ## AWS 에 Lambda 구성, API GW 구성, 해당 repo FE EC2 구성

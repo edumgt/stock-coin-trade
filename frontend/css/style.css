@@ -232,7 +232,7 @@ body.alternatives-layout > main :is(p, span, a, button, input, select, textarea,
     background: #9CB5E8;
     transform: translateY(-50%);
 }
-.oc-nav-item--sub.active {
+.oc-nav-item.active {
     color: #FFFFFF;
     background: linear-gradient(135deg, #2962FF, #1746B5);
     border-color: #1746B5;

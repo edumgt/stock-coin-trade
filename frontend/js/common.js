@@ -62,7 +62,7 @@ if (!document.getElementById('gnb-core-style')) {
     #oc-panel .oc-nav-item--sub{position:relative!important;margin:2px 4px 2px 12px!important;padding:.52rem .65rem .52rem 1.45rem!important;border:1px solid transparent!important;border-radius:7px!important;background:#fff!important;color:#475569!important;font-weight:500!important}
     #oc-panel .oc-nav-item--sub:hover{border-color:#C9DAFF!important;background:#EDF4FF!important;color:#1746B5!important}
     #oc-panel .oc-nav-item--sub::before{content:''!important;position:absolute!important;left:.62rem!important;top:50%!important;width:5px!important;height:5px!important;border-radius:50%!important;background:#86A5DF!important;transform:translateY(-50%)!important}
-    #oc-panel .oc-nav-item--sub.active{border-color:#1746B5!important;background:linear-gradient(135deg,#2962FF,#1746B5)!important;color:#fff!important;font-weight:800!important;box-shadow:0 3px 9px rgba(41,98,255,.24)!important}
+    #oc-panel .oc-nav-item.active,#ai-panel .oc-nav-item.active{border-color:#1746B5!important;background:linear-gradient(135deg,#2962FF,#1746B5)!important;color:#fff!important;font-weight:800!important;box-shadow:0 3px 9px rgba(41,98,255,.24)!important}
     #oc-panel .oc-nav-item--sub.active::before{background:#fff!important;box-shadow:0 0 0 3px rgba(255,255,255,.22)!important}
     @media(max-width:760px){.site-header-inner{grid-template-columns:auto minmax(0,1fr) auto;gap:6px 8px;padding:4px 10px}.site-header-left,.site-header-actions{gap:6px}.site-header-left{grid-column:1}.site-header-actions{grid-column:3}.header-menu-label{display:none}.gnb-shortcuts{grid-column:1/-1;grid-row:2;justify-content:center;padding-bottom:2px}.gnb-shortcuts a{padding:5px 8px;font-size:14px!important}.site-header-actions button{padding-inline:7px!important}.site-header-actions span{display:none}}
     @media(max-width:900px){.gnb-shell{gap:10px;padding:0 12px;flex-wrap:wrap;padding-bottom:3px}.gnb-nav{order:3;flex-basis:100%;height:42px}.gnb-link,.gnb-group summary{height:40px;padding:0 8px;font-size:13.2px!important}.gnb-user span{display:none}.gnb-dropdown{position:fixed;left:12px;right:12px;min-width:0}}
@@ -94,6 +94,94 @@ async function logout() {
   location.href = '/index.html';
 }
 
+/* ── Offcanvas navigation state ─────────────────────────────────────────── */
+const OFFCANVAS_NAV_STORAGE_KEY = 'edumgt.offcanvas.active.v1';
+
+function normalizeNavigationPath(pathname) {
+  const trimmed = String(pathname || '/').replace(/\/+$/, '');
+  return !trimmed || trimmed === '/' ? '/index.html' : trimmed;
+}
+
+function navigationKey(href = location.href) {
+  const url = new URL(href, location.origin);
+  const query = new URLSearchParams([...url.searchParams.entries()].sort(([a], [b]) => a.localeCompare(b))).toString();
+  return normalizeNavigationPath(url.pathname) + (query ? `?${query}` : '');
+}
+
+function navigationMatchesCurrentLocation(href) {
+  const target = new URL(href, location.origin);
+  if (normalizeNavigationPath(target.pathname) !== normalizeNavigationPath(location.pathname)) return false;
+  if (!target.search) return true;
+  const current = new URL(location.href);
+  return [...target.searchParams.entries()].every(([name, value]) => current.searchParams.getAll(name).includes(value));
+}
+
+function readOffcanvasNavigation() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(OFFCANVAS_NAV_STORAGE_KEY) || 'null');
+    return stored && typeof stored === 'object' ? stored : null;
+  } catch (_) { return null; }
+}
+
+function saveOffcanvasNavigation(link) {
+  if (!link) return;
+  const group = link.closest('.oc-group')?.querySelector(':scope > .oc-group-toggle > span')?.textContent?.trim() || '';
+  const state = {
+    href: link.getAttribute('href') || '',
+    key: link.dataset.navKey || navigationKey(link.href),
+    label: link.dataset.navLabel || link.textContent.trim(),
+    group,
+    panel: link.closest('#oc-panel') ? 'left' : 'right',
+    updatedAt: Date.now(),
+  };
+  try { localStorage.setItem(OFFCANVAS_NAV_STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+}
+
+function setOffcanvasGroupOpen(group, open) {
+  if (!group) return;
+  group.classList.toggle('open', open);
+  group.querySelector(':scope > .oc-group-toggle')?.setAttribute('aria-expanded', String(open));
+  const body = group.querySelector(':scope > .oc-group-body');
+  if (body) {
+    body.style.maxHeight = open ? `${body.scrollHeight}px` : '0px';
+    body.style.overflow = open ? 'visible' : 'hidden';
+  }
+}
+
+function syncOffcanvasNavigation() {
+  const links = [...document.querySelectorAll('#oc-panel .oc-nav-item, #ai-panel .oc-nav-item')];
+  if (!links.length) return;
+  const stored = readOffcanvasNavigation();
+  const current = links.find(link => navigationMatchesCurrentLocation(link.getAttribute('href') || ''));
+  const storedForCurrentPage = stored?.key === navigationKey(location.href)
+    ? links.find(link => link.dataset.navKey === stored.key)
+    : null;
+  const active = current || storedForCurrentPage;
+
+  links.forEach(link => {
+    const selected = link === active;
+    link.classList.toggle('active', selected);
+    if (selected) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+    if (!link.dataset.navStateBound) {
+      link.dataset.navStateBound = 'true';
+      link.addEventListener('click', () => saveOffcanvasNavigation(link));
+    }
+  });
+
+  ['#oc-panel', '#ai-panel'].forEach(selector => {
+    const panel = document.querySelector(selector);
+    const activeGroup = panel?.querySelector('.oc-nav-item.active')?.closest('.oc-group');
+    panel?.querySelectorAll('.oc-group').forEach(group => setOffcanvasGroupOpen(group, group === activeGroup));
+  });
+  if (active) saveOffcanvasNavigation(active);
+}
+
+function scrollToActiveOffcanvasItem(panel) {
+  const active = panel?.querySelector('.oc-nav-item.active');
+  if (active) requestAnimationFrame(() => active.scrollIntoView({ block: 'center', inline: 'nearest' }));
+}
+
 /* ── Header render ───────────────────────────────────────────────────────── */
 function renderHeader(user) {
   const navGroups = [
@@ -118,6 +206,19 @@ function renderHeader(user) {
       { href: '/kis-api-explorer.html', label: 'KIS API 탐색기', icon: 'fa-solid fa-compass' },
       { href: '/kis-chart.html', label: 'KIS 종목 차트', icon: 'fa-solid fa-chart-column' },
       { href: '/kis-api-history.html', label: 'KIS API 호출 이력', icon: 'fa-solid fa-table-list' },
+    ]},
+    { type: 'group', label: 'TR 실전연습', items: [
+      { href: '/learning/tr-pine/step-01.html', label: '01 · TradingView 가입', icon: 'fa-solid fa-user-plus' },
+      { href: '/learning/tr-pine/step-02.html', label: '02 · Pine Editor 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-03.html', label: '03 · indicator() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-04.html', label: '04 · plot() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-05.html', label: '05 · 색상·굵기 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-06.html', label: '06 · 변수·계산 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-07.html', label: '07 · input() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-08.html', label: '08 · ta.sma() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-09.html', label: '09 · crossover 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-10.html', label: '10 · plotshape() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-11.html', label: '11 · strategy() 테스트', icon: 'fa-solid fa-flask' },
     ]},
     { type: 'group', label: 'KB증권 Open API 실습', items: [
       { href: '/learning/kb-securities.html', label: '전체 · 2일차 과정', icon: 'fa-solid fa-book-open' },
@@ -146,19 +247,6 @@ function renderHeader(user) {
     { type: 'group', label: 'Korbit 실전연습', items: [
       { href: '/learning/korbit-api.html', label: 'Korbit Open API 학습', icon: 'fa-solid fa-coins' },
       { href: '/korbit-api-test.html', label: 'Korbit 공개 시세 테스트', icon: 'fa-solid fa-chart-line' },
-    ]},
-    { type: 'group', label: 'TR 실전연습', items: [
-      { href: '/learning/tr-pine/step-01.html', label: '01 · TradingView 가입', icon: 'fa-solid fa-user-plus' },
-      { href: '/learning/tr-pine/step-02.html', label: '02 · Pine Editor 테스트', icon: 'fa-solid fa-code' },
-      { href: '/learning/tr-pine/step-03.html', label: '03 · indicator() 테스트', icon: 'fa-solid fa-code' },
-      { href: '/learning/tr-pine/step-04.html', label: '04 · plot() 테스트', icon: 'fa-solid fa-code' },
-      { href: '/learning/tr-pine/step-05.html', label: '05 · 색상·굵기 테스트', icon: 'fa-solid fa-code' },
-      { href: '/learning/tr-pine/step-06.html', label: '06 · 변수·계산 테스트', icon: 'fa-solid fa-code' },
-      { href: '/learning/tr-pine/step-07.html', label: '07 · input() 테스트', icon: 'fa-solid fa-code' },
-      { href: '/learning/tr-pine/step-08.html', label: '08 · ta.sma() 테스트', icon: 'fa-solid fa-code' },
-      { href: '/learning/tr-pine/step-09.html', label: '09 · crossover 테스트', icon: 'fa-solid fa-code' },
-      { href: '/learning/tr-pine/step-10.html', label: '10 · plotshape() 테스트', icon: 'fa-solid fa-code' },
-      { href: '/learning/tr-pine/step-11.html', label: '11 · strategy() 테스트', icon: 'fa-solid fa-flask' },
     ]},
     { type: 'group', label: 'POSTGRESQL QUANT', items: [
       { href: '/quant.html?tab=schema', label: 'DB 스키마', icon: 'fa-solid fa-sitemap' },
@@ -194,11 +282,9 @@ function renderHeader(user) {
 
   const isLoggedIn = !!user?.loggedIn;
 
-  const currentPath = location.pathname.replace(/\/$/, '') || '/index.html';
   const ocNavItem = (n, sub) => {
-    const targetPath = n.href.split('?')[0].replace(/\/$/, '');
-    const active = currentPath === targetPath || (currentPath === '/' && targetPath === '/index.html');
-    return `<a href="${n.href}" class="oc-nav-item${sub ? ' oc-nav-item--sub' : ''}${active ? ' active' : ''}"${active ? ' aria-current="page"' : ''}><i class="${n.icon}" aria-hidden="true" style="width:16px;text-align:center;"></i> ${n.label}</a>`;
+    const active = navigationMatchesCurrentLocation(n.href);
+    return `<a href="${n.href}" data-nav-key="${navigationKey(n.href)}" data-nav-label="${n.label}" class="oc-nav-item${sub ? ' oc-nav-item--sub' : ''}${active ? ' active' : ''}"${active ? ' aria-current="page"' : ''}><i class="${n.icon}" aria-hidden="true" style="width:16px;text-align:center;"></i> ${n.label}</a>`;
   };
 
   // 좌측은 TR·브로커 실전연습, 우측은 대시보드·거래·자산·분석·관리 메뉴로 나눈다.
@@ -314,14 +400,19 @@ function renderHeader(user) {
     </aside>`;
 
   const mount = document.getElementById('header-mount');
-  if (mount) mount.innerHTML = html;
+  if (mount) {
+    mount.innerHTML = html;
+    syncOffcanvasNavigation();
+  }
 }
 
 /* ── Offcanvas ───────────────────────────────────────────────────────────── */
 function openOffcanvas() {
+  const panel = document.getElementById('oc-panel');
   document.getElementById('oc-overlay')?.classList.add('open');
-  document.getElementById('oc-panel')?.classList.add('open');
+  panel?.classList.add('open');
   document.body.style.overflow = 'hidden';
+  scrollToActiveOffcanvasItem(panel);
 }
 function closeOffcanvas() {
   document.getElementById('oc-overlay')?.classList.remove('open');
@@ -333,13 +424,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeOffca
 function toggleOcGroup(idx) {
   document.querySelectorAll('#oc-panel .oc-group').forEach((el, i) => {
     const open = i === idx ? !el.classList.contains('open') : false;
-    el.classList.toggle('open', open);
-    el.querySelector('.oc-group-toggle')?.setAttribute('aria-expanded', String(open));
-    const body = el.querySelector('.oc-group-body');
-    if (body) {
-      body.style.maxHeight = open ? `${body.scrollHeight}px` : '0px';
-      body.style.overflow = open ? 'visible' : 'hidden';
-    }
+    setOffcanvasGroupOpen(el, open);
   });
 }
 
@@ -347,13 +432,7 @@ function toggleRightGroup(idx) {
   const groups = document.querySelectorAll('#ai-panel .oc-nav .oc-group');
   groups.forEach((el, i) => {
     const open = i === idx ? !el.classList.contains('open') : false;
-    el.classList.toggle('open', open);
-    el.querySelector('.oc-group-toggle')?.setAttribute('aria-expanded', String(open));
-    const body = el.querySelector('.oc-group-body');
-    if (body) {
-      body.style.maxHeight = open ? `${body.scrollHeight}px` : '0px';
-      body.style.overflow = open ? 'visible' : 'hidden';
-    }
+    setOffcanvasGroupOpen(el, open);
   });
 }
 
@@ -363,6 +442,7 @@ function openAiPanel() {
   const overlay = document.getElementById('ai-overlay');
   if (panel)   { panel.style.transform   = 'translateX(0)'; }
   if (overlay) { overlay.style.display   = 'block'; }
+  scrollToActiveOffcanvasItem(panel);
 }
 function closeAiPanel() {
   const panel   = document.getElementById('ai-panel');
