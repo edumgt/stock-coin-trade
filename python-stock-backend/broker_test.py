@@ -48,7 +48,29 @@ class BrokerApiError(RuntimeError):
         self.status_code = status_code
 
 
+def _credential_source() -> str:
+    """자격증명 출처. 서버(EC2)는 .env의 ``CREDENTIAL_SOURCE=aws``로 AWS Secrets
+    Manager를 쓰고, 로컬은 값을 비워 .env 환경변수를 쓴다."""
+    raw = os.environ.get("CREDENTIAL_SOURCE", "").strip().lower()
+    if raw in ("aws", "sm", "secrets-manager", "secretsmanager", "secrets_manager"):
+        return "aws"
+    return "env"
+
+
+def _aws_credentials(service: str) -> tuple[str, str]:
+    try:
+        from aws_secret_store import AwsSecretError, get_credentials
+    except Exception as exc:  # boto3 미설치 등
+        raise BrokerApiError("AWS Secrets Manager 연동 모듈을 불러오지 못했습니다.", 503) from exc
+    try:
+        return get_credentials(service)
+    except AwsSecretError as exc:
+        raise BrokerApiError(str(exc), 503) from exc
+
+
 def _credentials(prefix: str) -> tuple[str, str]:
+    if _credential_source() == "aws":
+        return _aws_credentials(prefix.lower())
     app_key = os.environ.get(f"{prefix}_APP_KEY", "").strip()
     app_secret = os.environ.get(f"{prefix}_APP_SECRET", "").strip()
     if not app_key or not app_secret:
@@ -273,6 +295,8 @@ def get_kb_stock_chart(symbol: str, market: str = "0", period: str = "D", count:
 def _kis_credentials() -> tuple[str, str]:
     if os.environ.get("KIS_ENVIRONMENT", "paper").strip().lower() != "paper":
         raise BrokerApiError("이 서비스는 KIS 모의투자(paper) 환경만 허용합니다.", 503)
+    if _credential_source() == "aws":
+        return _aws_credentials("kis")
     paper_key = os.environ.get("KIS_PAPER_APP_KEY")
     paper_secret = os.environ.get("KIS_PAPER_APP_SECRET")
     if paper_key or paper_secret:
@@ -284,6 +308,12 @@ def _kis_credentials() -> tuple[str, str]:
 
 def _kis_account() -> tuple[str, str]:
     account_no = os.environ.get("KIS_PAPER_ACCOUNT_NO")
+    if not account_no and _credential_source() == "aws":
+        try:
+            from aws_secret_store import AwsSecretError, get_parameter
+            account_no = get_parameter("kis/account")
+        except AwsSecretError as exc:
+            raise BrokerApiError(str(exc), 503) from exc
     if not account_no or "-" not in account_no:
         raise BrokerApiError(
             "모의투자 계좌번호가 설정되지 않았습니다. .env의 KIS_PAPER_ACCOUNT_NO에 "

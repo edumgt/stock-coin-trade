@@ -20,8 +20,55 @@ _ALPACA_ORDER_TEST_SYMBOL = "AAPL"
 _ALPACA_ORDER_TEST_LIMIT_PRICE = "1.00"
 
 
+def _credential_source() -> str:
+    """자격증명을 어디서 읽을지 결정한다.
+
+    서버(EC2) 배포에서는 .env에 ``CREDENTIAL_SOURCE=aws``를 두어 AWS Secrets
+    Manager(보안 암호 ``stock-coin-trade/alpaca``)에서 읽고, 로컬 개발에서는
+    값을 비워 두어 ``.env``의 ALPACA_API_KEY/ALPACA_SECRET_KEY에서 읽는다.
+    """
+    raw = os.environ.get("CREDENTIAL_SOURCE", "").strip().lower()
+    if raw in ("aws", "sm", "secrets-manager", "secretsmanager", "secrets_manager"):
+        return "aws"
+    return "env"
+
+
+def _aws_alpaca_credentials() -> tuple[str, str]:
+    try:
+        from aws_secret_store import AwsSecretError, get_credentials
+    except Exception as exc:  # boto3 미설치 등
+        raise BrokerApiError("AWS Secrets Manager 연동 모듈을 불러오지 못했습니다.", 503) from exc
+    try:
+        return get_credentials("alpaca", key_name="api_key", secret_name="secret_key")
+    except AwsSecretError as exc:
+        raise BrokerApiError(str(exc), 503) from exc
+
+
 def get_alpaca_configuration_status() -> dict[str, Any]:
     """Return Paper credential readiness without exposing credential values."""
+    common = {
+        "tradingEndpoint": ALPACA_PAPER_BASE,
+        "dataEndpoint": ALPACA_DATA_BASE,
+        "mode": "paper",
+        "liveEnabled": False,
+    }
+    if _credential_source() == "aws":
+        secret_name = "stock-coin-trade/alpaca"
+        try:
+            from aws_secret_store import full_secret_name
+            secret_name = full_secret_name("alpaca")
+        except Exception:
+            pass
+        configured, message = False, None
+        try:
+            _aws_alpaca_credentials()
+            configured = True
+        except BrokerApiError as exc:
+            message = str(exc)
+        result = {"configured": configured, "source": "aws-secrets-manager", "secret": secret_name, **common}
+        if message:
+            result["message"] = message
+        return result
     env_key = bool(os.environ.get("ALPACA_API_KEY", "").strip())
     env_secret = bool(os.environ.get("ALPACA_SECRET_KEY", "").strip())
     env_complete = env_key and env_secret
@@ -29,10 +76,7 @@ def get_alpaca_configuration_status() -> dict[str, Any]:
         "configured": env_complete,
         "source": "environment" if env_complete else "missing",
         "environment": {"apiKey": env_key, "secretKey": env_secret, "complete": env_complete},
-        "tradingEndpoint": ALPACA_PAPER_BASE,
-        "dataEndpoint": ALPACA_DATA_BASE,
-        "mode": "paper",
-        "liveEnabled": False,
+        **common,
     }
 
 
@@ -62,6 +106,8 @@ def _audit_response_summary(body: Any) -> dict[str, Any]:
 
 
 def _credentials() -> tuple[str, str]:
+    if _credential_source() == "aws":
+        return _aws_alpaca_credentials()
     api_key = os.environ.get("ALPACA_API_KEY", "").strip()
     secret_key = os.environ.get("ALPACA_SECRET_KEY", "").strip()
     if api_key and secret_key:

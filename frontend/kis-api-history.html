@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/css/style.css?v=20260920-chart">
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.0.2/dist/ag-grid-community.min.js"></script>
   <style>
-    .kis-history{max-width:1600px;margin:0 auto;padding:24px 18px 48px}.history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:22px 24px;border-bottom:1px solid var(--border)}.history-head h1{margin:4px 0;font-size:24px;font-weight:900;color:var(--fg)}.history-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.kicker{color:var(--accent-dark);font-size:11px;font-weight:900;letter-spacing:.09em}.history-refresh{padding:9px 13px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--fg);font-size:12px;font-weight:800;white-space:nowrap}.summary-grid{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:10px;padding:16px 20px}.summary-card{padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}.summary-card small{display:block;color:var(--muted);font-size:11px}.summary-card b{display:block;margin-top:4px;color:var(--fg);font-size:21px}.summary-card.fail b{color:#E11D48}.summary-card.ok b{color:#15803D}.history-tools{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:0 20px 14px}.history-tools input,.history-tools select{height:38px;padding:0 11px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--fg);font-size:13px}.history-tools input{min-width:300px}.history-tools span{color:var(--muted);font-size:12px}.kis-grid{--ag-font-family:Pretendard,sans-serif;--ag-font-size:12px;--ag-background-color:#fff;--ag-foreground-color:#172033;--ag-header-background-color:#F7F9FC;--ag-header-foreground-color:#64748B;--ag-border-color:#E2E8F0;--ag-row-border-color:#E8EDF4;--ag-odd-row-background-color:#FBFCFE;--ag-selected-row-background-color:#EFF6FF;--ag-accent-color:#2563EB}.kis-grid .ag-header-cell-label{font-weight:800}.kis-grid .ag-cell{display:flex;align-items:center}.grid-wrap{padding:0 20px 18px}.detail-wrap{padding:0 20px 20px}.detail-wrap h2{margin:0 0 8px;color:var(--fg);font-size:14px;font-weight:900}.detail{min-height:180px;margin:0;padding:15px;border-radius:9px;background:#111827;color:#E5E7EB;font:12px/1.65 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;max-height:430px;overflow:auto}@media(max-width:800px){.summary-grid{grid-template-columns:repeat(2,1fr)}.history-tools input{min-width:100%;width:100%}.history-head{padding:18px}.grid-wrap,.detail-wrap{padding-left:10px;padding-right:10px}}
+    .kis-history{max-width:1600px;margin:0 auto;padding:24px 18px 48px}.history-head{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:14px 18px;padding:16px 24px;border-bottom:1px solid var(--border)}.history-head-titles{flex:1 1 300px;min-width:260px}.history-head h1{margin:4px 0;font-size:24px;font-weight:900;color:var(--fg)}.history-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.kicker{color:var(--accent-dark);font-size:11px;font-weight:900;letter-spacing:.09em}.history-refresh{padding:9px 13px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--fg);font-size:12px;font-weight:800;white-space:nowrap}.summary-grid{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:10px;padding:16px 20px}.summary-card{padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}.summary-card small{display:block;color:var(--muted);font-size:11px}.summary-card b{display:block;margin-top:4px;color:var(--fg);font-size:21px}.summary-card.fail b{color:#E11D48}.summary-card.ok b{color:#15803D}.history-tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;flex:2 1 520px;gap:9px;padding:0}.history-tools input,.history-tools select{height:38px;padding:0 11px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--fg);font-size:13px}.history-tools input{min-width:190px;max-width:260px;flex:1 1 190px}.history-tools span{color:var(--muted);font-size:12px}.kis-grid{--ag-font-family:Pretendard,sans-serif;--ag-font-size:12px;--ag-background-color:#fff;--ag-foreground-color:#172033;--ag-header-background-color:#F7F9FC;--ag-header-foreground-color:#64748B;--ag-border-color:#E2E8F0;--ag-row-border-color:#E8EDF4;--ag-odd-row-background-color:#FBFCFE;--ag-selected-row-background-color:#EFF6FF;--ag-accent-color:#2563EB}.kis-grid .ag-header-cell-label{font-weight:800}.kis-grid .ag-cell{display:flex;align-items:center}.grid-wrap{padding:0 20px 18px}.detail-wrap{padding:0 20px 20px}.detail-wrap h2{margin:0 0 8px;color:var(--fg);font-size:14px;font-weight:900}.detail{min-height:180px;margin:0;padding:15px;border-radius:9px;background:#111827;color:#E5E7EB;font:12px/1.65 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;max-height:430px;overflow:auto}@media(max-width:800px){.summary-grid{grid-template-columns:repeat(2,1fr)}.history-tools input{min-width:100%;width:100%}.history-head{padding:18px}.grid-wrap,.detail-wrap{padding-left:10px;padding-right:10px}}
   </style>
 </head>
 <body>
@@ -17,8 +17,14 @@
   <main class="kis-history">
     <section class="glass-card overflow-hidden">
       <header class="history-head">
-        <div><div class="kicker">KIS 모의투자 실습 · 자체 API GATEWAY</div><h1>KIS API 호출·오류 이력</h1><p>브라우저가 호출한 자체 API와, 공통 게이트웨이가 KIS Testbed에 보낸 실제 TR 요청을 함께 표시합니다. 키·토큰·전체 계좌번호는 저장 전에 마스킹됩니다.</p></div>
-        <button id="refresh" class="history-refresh" type="button">↻ 새로고침</button>
+        <div class="history-head-titles"><div class="kicker">KIS 모의투자 실습 · 자체 API GATEWAY</div><h1>KIS API 호출·오류 이력</h1><p>브라우저가 호출한 자체 API와, 공통 게이트웨이가 KIS Testbed에 보낸 실제 TR 요청을 함께 표시합니다. 키·토큰·전체 계좌번호는 저장 전에 마스킹됩니다.</p></div>
+        <div class="history-tools">
+          <input id="filter" type="search" placeholder="TR ID · 경로 · 작업 · 오류 메시지 검색">
+          <select id="layer"><option value="">전체 계층</option><option value="내 API">내 API</option><option value="KIS 외부 호출">KIS 외부 호출</option></select>
+          <select id="result"><option value="">전체 결과</option><option value="success">성공</option><option value="failure">실패</option></select>
+          <button id="refresh" class="history-refresh" type="button">↻ 새로고침</button>
+          <span id="status">불러오는 중…</span>
+        </div>
       </header>
       <div class="summary-grid">
         <div class="summary-card"><small>전체 기록</small><b id="total">0</b></div>
@@ -26,12 +32,6 @@
         <div class="summary-card ok"><small>외부 호출 성공</small><b id="success">0</b></div>
         <div class="summary-card fail"><small>외부 호출 실패</small><b id="failure">0</b></div>
         <div class="summary-card"><small>평균 응답시간</small><b id="average">-</b></div>
-      </div>
-      <div class="history-tools">
-        <input id="filter" type="search" placeholder="TR ID · 경로 · 작업 · 오류 메시지 검색">
-        <select id="layer"><option value="">전체 계층</option><option value="내 API">내 API</option><option value="KIS 외부 호출">KIS 외부 호출</option></select>
-        <select id="result"><option value="">전체 결과</option><option value="success">성공</option><option value="failure">실패</option></select>
-        <span id="status">불러오는 중…</span>
       </div>
       <div class="grid-wrap"><div id="grid" class="kis-grid" style="height:560px;width:100%"></div></div>
       <div class="detail-wrap"><h2>선택한 호출 상세</h2><pre id="detail" class="detail">행을 선택하면 마스킹된 요청·응답을 표시합니다.</pre></div>

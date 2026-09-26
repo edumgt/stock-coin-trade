@@ -1,0 +1,71 @@
+name: Deploy to EC2
+
+# main 푸시 시 소스를 EC2로 직접 업로드(rsync)하고, SSL 오버레이로 재빌드·기동한 뒤
+# HTTPS 헬스체크까지 수행하는 자체 완결형 배포. ECR/외부 저장소에 의존하지 않는다.
+#
+# 필요한 GitHub Secrets:
+#   EC2_SSH_KEY : EC2 접속용 개인 키(pr-test.pem 내용). 필수.
+#   EC2_HOST    : EC2 퍼블릭 주소(Elastic IP). 없으면 기본값 사용.
+#   EC2_USER    : 접속 사용자. 없으면 ubuntu.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ec2
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HOST: ${{ secrets.EC2_HOST || '43.202.161.134' }}
+      REMOTE_USER: ${{ secrets.EC2_USER || 'ubuntu' }}
+      APP_DIR: /opt/stock-coin-trade
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: SSH 키 준비
+        run: |
+          if [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then
+            echo "::error::EC2_SSH_KEY 시크릿이 설정되지 않았습니다. 저장소 Settings → Secrets에 추가하세요."
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: 소스 업로드 (rsync)
+        run: |
+          rsync -az \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
+            --exclude='.git' --exclude='.github' \
+            --exclude='.env' --exclude='*.pem' --exclude='*.key' \
+            --exclude='certbot' --exclude='captures' \
+            --exclude='node_modules' --exclude='__pycache__' \
+            ./ "$REMOTE_USER@$HOST:$APP_DIR/"
+
+      - name: 빌드 및 재기동 (SSL 오버레이)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$REMOTE_USER@$HOST" \
+            "cd $APP_DIR && docker compose -p stock-coin-trade -f docker-compose.yml -f docker-compose.ssl.yml up -d --build --remove-orphans && docker compose -p stock-coin-trade ps"
+
+      - name: HTTPS 헬스체크
+        run: |
+          ok=0
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://st.edumgt.co.kr/api/stocks/list || echo 000)
+            echo "시도 $i: HTTP $code"
+            if [ "$code" = "200" ]; then ok=1; break; fi
+            sleep 6
+          done
+          if [ "$ok" != "1" ]; then echo "::error::헬스체크 실패"; exit 1; fi
+          echo "배포 및 헬스체크 성공"
+
+      - name: SSH 키 정리
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
