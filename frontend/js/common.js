@@ -222,6 +222,8 @@ function renderHeader(user) {
       { href: '/learning/tr-pine/step-12.html', label: '12 · strategy() 테스트', icon: 'fa-solid fa-flask' },
       { href: '/learning/tr-pine/step-13.html', label: '13 · volume 거래량', icon: 'fa-solid fa-chart-column' },
       { href: '/learning/tr-pine/step-14.html', label: '14 · ta.bb() 볼린저 밴드', icon: 'fa-solid fa-chart-area' },
+      { href: '/learning/tr-pine/step-15.html', label: '15 · 손절·익절 (strategy.exit)', icon: 'fa-solid fa-shield-halved' },
+      { href: '/learning/tr-pine/step-16.html', label: '16 · table 대시보드', icon: 'fa-solid fa-table-cells' },
     ]},
     { type: 'group', label: 'KB증권 · 외부 API 조회', items: [
       { href: '/learning/kb-securities.html', label: 'KB 전체 과정', icon: 'fa-solid fa-book-open' },

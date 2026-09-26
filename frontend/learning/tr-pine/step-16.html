@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>16단계 · table 대시보드 — TR 실전연습</title>
+  <link rel="icon" href="/img/favicon.png">
+  <link rel="stylesheet" href="/css/style.css?v=20260920-chart">
+  <style>
+    .tpx-wrap{max-width:1080px;margin:0 auto;padding:28px 18px 48px}
+    .tpx-hero{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:12px 20px;padding:22px 24px;border:1px solid #C9DAFF;border-radius:15px;background:linear-gradient(135deg,#E4F0FF,#F9FBFF)}
+    .tpx-hero .kicker{font-size:12px;font-weight:900;letter-spacing:.09em;color:var(--accent-dark)}
+    .tpx-hero h1{margin:6px 0 6px;font-size:26px;line-height:1.25;font-weight:900;color:var(--fg)}
+    .tpx-hero p{margin:0;max-width:760px;color:var(--fg-2);font-size:14px;line-height:1.7}
+    .tpx-hero .tpx-open{white-space:nowrap;padding:10px 14px;border-radius:9px;background:var(--accent);color:#fff;text-decoration:none;font-size:13px;font-weight:800}
+    .card{margin-top:18px;padding:22px;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:var(--shadow-sm)}
+    .card h2{margin:0 0 4px;font-size:18px;font-weight:900;color:var(--fg)}
+    .card p{margin:0;color:var(--fg-2);font-size:13px;line-height:1.7}
+    .codebox{position:relative;margin-top:12px}
+    .codebox pre{margin:0;padding:16px;border-radius:10px;overflow:auto;background:#131722;color:#D1D4DC;font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre}
+    .codebox .copy{position:absolute;top:9px;right:9px;padding:5px 9px;border:1px solid #3a4152;border-radius:6px;background:rgba(255,255,255,.08);color:#dbe6f2;font:700 11px inherit;cursor:pointer}
+    .codebox .copy:hover{background:rgba(255,255,255,.16)}
+    .preview{position:relative;margin-top:14px;height:220px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:linear-gradient(#0f172a,#111c28)}
+    .preview .chart-mock{position:absolute;inset:0;opacity:.5}
+    .dash{position:absolute;top:14px;left:14px;border:1px solid #33507a;border-radius:6px;overflow:hidden;font:700 12px/1 Pretendard,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+    .dash div{display:grid;grid-template-columns:auto auto}
+    .dash span{padding:8px 12px;color:#fff}
+    .dash .h{background:#64748b}
+    .dash .up{background:#0f9d83}
+    .dash .flat{background:#475569}
+    .glossary{display:grid;gap:8px;margin-top:12px}
+    .glossary div{display:grid;grid-template-columns:150px 1fr;gap:10px;padding:11px 13px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);font-size:13px;line-height:1.6}
+    .glossary b{color:var(--fg)}
+    .notice{margin-top:14px;padding:12px 14px;border-radius:9px;background:#FFF8E8;color:#854D0E;font-size:13px;line-height:1.7}
+    .stepnav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+    .stepnav a{flex:1;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);text-decoration:none;color:var(--fg-2);font-size:13px}
+    .stepnav a b{display:block;color:var(--fg);font-weight:900}
+    .stepnav a.next{text-align:right}
+    @media(max-width:640px){.tpx-hero h1{font-size:22px}.glossary div{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div id="header-mount"></div>
+  <main class="tpx-wrap">
+    <section class="tpx-hero">
+      <div>
+        <div class="kicker">TR 실전연습 · 16단계</div>
+        <h1>table로 지표 대시보드 만들기</h1>
+        <p>여러 지표값을 차트에서 따로 읽는 대신, <code>table</code>로 화면 한쪽에 요약 패널을 띄웁니다. 현재가·RSI·추세를 한눈에 보는 대시보드를 만들며 코스를 마무리합니다.</p>
+      </div>
+      <a class="tpx-open" href="https://www.tradingview.com/chart/" target="_blank" rel="noopener">TradingView Pine 편집기 열기 ↗</a>
+    </section>
+
+    <section class="card">
+      <h2>지표 대시보드 코드</h2>
+      <p><code>table.new()</code>로 표 위치와 크기를 정하고, <code>table.cell()</code>로 칸마다 값을 채웁니다. 숫자는 <code>str.tostring()</code>으로 문자열로 바꿔 넣고, 조건에 따라 배경색을 다르게 줍니다.</p>
+      <div class="codebox">
+        <button class="copy" type="button">복사</button>
+        <pre>//@version=6
+indicator("지표 대시보드", overlay=true)
+r = ta.rsi(close, 14)
+// 표는 var로 한 번만 만들고, 마지막 봉에서만 값을 채운다.
+var table t = table.new(position.top_left, 2, 2, border_width=1)
+if barstate.islast
+    table.cell(t, 0, 0, "RSI", text_color=color.white, bgcolor=color.gray)
+    table.cell(t, 1, 0, str.tostring(r, "#.0"),
+         bgcolor = r &gt; 70 ? color.red : r &lt; 30 ? color.green : color.gray,
+         text_color=color.white)
+    table.cell(t, 0, 1, "추세")
+    table.cell(t, 1, 1, close &gt; ta.sma(close, 20) ? "상승" : "하락")</pre>
+      </div>
+      <div class="notice"><b>표가 안 보이나요?</b> 두 가지를 확인하세요. ① 표는 <code>var</code>로 한 번만 만들고 <code>if barstate.islast</code> 안에서 채워야 합니다. 매 봉마다 <code>table.new</code>를 부르면 표가 제대로 그려지지 않습니다. ② <code>overlay=true</code>여야 가격 차트 위에 표가 뜹니다. <code>overlay=false</code>면 빈 보조창이 생기고 표가 잘 안 보입니다. Pine 편집기는 화면 우측에 있으므로 표를 <code>position.top_left</code>(좌측 상단)에 두어 가려지지 않게 했습니다.</div>
+      <figure class="preview">
+        <svg class="chart-mock" viewBox="0 0 520 220" preserveAspectRatio="none" aria-hidden="true">
+          <polyline fill="none" stroke="#3b6ea5" stroke-width="2" points="0,160 60,150 120,170 180,120 240,90 300,120 360,80 420,60 480,90 520,70"/>
+        </svg>
+        <div class="dash" role="img" aria-label="지표 대시보드 예시">
+          <div><span class="h">RSI</span><span class="up">63.4</span></div>
+          <div><span class="flat">추세</span><span class="up">상승</span></div>
+        </div>
+      </figure>
+      <figcaption style="margin-top:8px;color:var(--fg-2);font-size:12px">좌측 상단에 RSI 값과 추세가 표로 고정 표시됩니다. RSI가 70을 넘으면 붉게, 30 아래면 초록으로 바뀝니다.</figcaption>
+    </section>
+
+    <section class="card">
+      <h2>이번 단계의 새 명령어</h2>
+      <div class="glossary">
+        <div><b>table.new(pos, cols, rows)</b><span>표를 만들고 화면 위치(예: <code>position.top_right</code>)와 칸 수를 정합니다.</span></div>
+        <div><b>table.cell(t, col, row, text)</b><span>지정한 칸에 텍스트를 넣습니다. <code>text_color</code>, <code>bgcolor</code>로 색을 줍니다.</span></div>
+        <div><b>str.tostring(num, fmt)</b><span>숫자를 문자열로 바꿉니다. <code>"#.0"</code>은 소수 첫째 자리까지 표시합니다.</span></div>
+        <div><b>position.*</b><span>표 위치 상수. <code>top_right</code>, <code>bottom_left</code> 등 화면 구석을 지정합니다.</span></div>
+      </div>
+      <div class="notice">이 단계의 라이브 미리보기는 TradingView Pine 편집기에서 확인합니다. 위 코드를 복사해 붙여넣고 <b>차트에 추가</b>를 누르면 좌측 상단에 대시보드가 나타납니다.</div>
+    </section>
+
+    <nav class="stepnav">
+      <a href="/learning/tr-pine/step-15.html"><b>← 15단계</b>손절·익절 (strategy.exit)</a>
+      <a class="next" href="/learning/tradingview-pine.html"><b>코스 처음으로 →</b>TR 실전연습 개요</a>
+    </nav>
+  </main>
+  <script src="/js/config.js"></script>
+  <script src="/js/common.js?v=20260926-navstate6"></script>
+  <script>
+    document.querySelectorAll('.codebox .copy').forEach(btn => btn.addEventListener('click', async () => {
+      const code = btn.parentElement.querySelector('pre').innerText;
+      try { await navigator.clipboard.writeText(code); btn.textContent = '복사됨'; setTimeout(() => btn.textContent = '복사', 1500); }
+      catch { btn.textContent = '복사 실패'; setTimeout(() => btn.textContent = '복사', 1500); }
+    }));
+  </script>
+</body>
+</html>
