@@ -29,13 +29,25 @@
     .ohlcv-table-toolbar input { width:min(100%,230px); padding:8px 10px; border:1px solid #b9cae2; border-radius:7px; font:inherit; font-size:12px; }
     .ohlcv-table-toolbar button { padding:8px 10px; border:1px solid #b9cae2; border-radius:7px; color:#315579; background:#fff; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
     .ohlcv-table-toolbar button:disabled { opacity:.45; cursor:default; }
+    .ohlcv-search-panel { display:grid; grid-template-columns:2fr repeat(2,minmax(130px,1fr)) repeat(4,minmax(110px,1fr)); gap:9px; padding:14px; border:1px solid var(--quant-line); border-radius:10px; background:#f7faff; }
+    .ohlcv-search-panel label { display:grid; gap:5px; color:#526a86; font-size:11px; font-weight:700; }
+    .ohlcv-search-panel input,.ohlcv-search-panel select { min-width:0; padding:8px 9px; border:1px solid #b9cae2; border-radius:7px; background:#fff; font:inherit; font-size:12px; }
+    .ohlcv-search-actions { display:flex; gap:7px; align-items:end; grid-column:1/-1; }
+    .ohlcv-search-actions button { padding:8px 13px; border:1px solid #9db5d4; border-radius:7px; color:#244f7d; background:#fff; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+    .ohlcv-search-actions button.primary { border-color:#2563eb; color:#fff; background:#2563eb; }
+    #ohlcv-grid { width:100%; height:640px; border:1px solid var(--quant-line); border-radius:10px; overflow:hidden; }
+    .ohlcv-grid-status { color:#687b92; font-size:12px; }
+    .ohlcv-positive { color:#dc2626; font-weight:700; }
+    .ohlcv-negative { color:#2563eb; font-weight:700; }
     @media (max-width:1050px) { .ohlcv-pipeline { grid-template-columns:repeat(2,minmax(0,1fr)) !important; } .ohlcv-pipeline > i { display:none; } }
-    @media (max-width:760px) { .ohlcv-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ohlcv-table-toolbar { align-items:stretch; flex-direction:column; } .ohlcv-table-toolbar input { width:100%; box-sizing:border-box; } }
+    @media (max-width:1100px) { .ohlcv-search-panel { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+    @media (max-width:760px) { .ohlcv-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ohlcv-table-toolbar { align-items:stretch; flex-direction:column; } .ohlcv-table-toolbar input { width:100%; box-sizing:border-box; } .ohlcv-search-panel { grid-template-columns:repeat(2,minmax(0,1fr)); } #ohlcv-grid { height:560px; } }
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','sans-serif']}}}}</script>
   <link rel="stylesheet" href="/css/style.css?v=20260920-chart">
   <link rel="stylesheet" href="/css/quant-lab.css?v=20260911-system-erd">
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
 </head>
 <body>
   <div id="header-mount"></div>
@@ -49,11 +61,11 @@
       </section>
 
       <section class="quant-stats">
-        <b>수동 확인 스냅샷 · 2026-09-11 기준</b>
-        <span>적재된 전체 종목 48개</span>
-        <span>ohlcv 11,435행</span>
-        <span>기간 2025-01-02 ~ 2025-12-30</span>
-        <span>2025년 수집 진행률 450 / 2,765 종목</span>
+        <b>PostgreSQL 실시간 조회</b>
+        <span>AG Grid Community 36</span>
+        <span>종목·시장·기간·가격·거래량 검색</span>
+        <span>2020년 이후 주요 종목 우선 수집</span>
+        <span>서버 페이징·정렬</span>
       </section>
 
       <section class="quant-card quant-guide-card">
@@ -77,13 +89,19 @@
           </div>
 
           <div>
-            <div class="ohlcv-table-toolbar"><div><h3 style="margin:0 0 4px;color:var(--quant-ink);font-size:15px">종목별 전체 · 연도별 건수</h3><p id="ohlcv-ticker-count">집계 조회 중…</p></div><input id="ohlcv-ticker-filter" type="search" placeholder="종목 코드 검색" aria-label="종목 코드 검색"><div><button id="ohlcv-page-prev" type="button" disabled>이전</button> <button id="ohlcv-page-next" type="button" disabled>다음</button></div></div>
-            <div class="ohlcv-table-wrap">
-              <table class="ohlcv-aggregate-table">
-                <thead><tr><th>종목 코드</th><th>시장</th><th>전체 건수</th><th>연도별 건수</th><th>최초 일자</th><th>최종 일자</th></tr></thead>
-                <tbody id="ohlcv-ticker-summary"></tbody>
-              </table>
-            </div>
+            <div class="ohlcv-table-toolbar"><div><h3 style="margin:0 0 4px;color:var(--quant-ink);font-size:15px">일별 OHLCV 상세 검색</h3><p>검색 조건과 컬럼 정렬은 PostgreSQL에 전달되며 AG Grid는 필요한 행만 가져옵니다.</p></div><span id="ohlcv-grid-status" class="ohlcv-grid-status">그리드 준비 중…</span></div>
+            <form id="ohlcv-search-form" class="ohlcv-search-panel" style="margin:12px 0">
+              <label>종목 코드·이름<input id="ohlcv-query" type="search" placeholder="005930 또는 삼성전자"></label>
+              <label>시장<select id="ohlcv-market"><option value="">전체 시장</option><option>KOSPI</option><option>KOSDAQ</option><option>KOSDAQ GLOBAL</option></select></label>
+              <label>시작일<input id="ohlcv-date-from" type="date" value="2020-01-01"></label>
+              <label>종료일<input id="ohlcv-date-to" type="date"></label>
+              <label>최소 종가<input id="ohlcv-min-close" type="number" min="0" step="any" placeholder="0"></label>
+              <label>최대 종가<input id="ohlcv-max-close" type="number" min="0" step="any" placeholder="제한 없음"></label>
+              <label>최소 거래량<input id="ohlcv-min-volume" type="number" min="0" step="1" placeholder="0"></label>
+              <label>최대 거래량<input id="ohlcv-max-volume" type="number" min="0" step="1" placeholder="제한 없음"></label>
+              <div class="ohlcv-search-actions"><button class="primary" type="submit">조건 검색</button><button id="ohlcv-search-reset" type="button">초기화</button><button id="ohlcv-export-csv" type="button">현재 로드 데이터 CSV</button></div>
+            </form>
+            <div id="ohlcv-grid" aria-label="OHLCV 상세 데이터 그리드"></div>
           </div>
           <p class="guide-note" id="ohlcv-quality-note">OHLC 가격 범위·결측·중복 검증 결과를 함께 조회합니다.</p>
         </div>
@@ -96,8 +114,8 @@
             <article>
               <b>1</b>
               <h3>수집 (매 1분)</h3>
-              <p>FinanceDataReader로 KOSPI·KOSDAQ 전 종목(약 2,765개) 목록을 구하고, yfinance로 종목·연도별 OHLCV를 <code>data-1/</code>에 CSV로 저장합니다.</p>
-              <code>fetch_ohlcv_batch.sh → fetch_ohlcv.py</code>
+              <p>기존 전 종목 배치와 함께 이 앱의 주요 종목 수집기가 yfinance에서 2020년 이후 일봉을 받아 PostgreSQL에 직접 upsert합니다.</p>
+              <code>crawl_major_ohlcv.py --start 2020-01-01</code>
             </article>
             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
             <article>
@@ -166,7 +184,7 @@
           <div class="schema-details">
             <article>
               <h3>실행 위치</h3>
-              <p><code>docker-class/postgresql/docker-compose.yml</code> → 컨테이너명 <code>pg-stock</code>, 이미지 <code>postgres:latest</code>. 호스트 <code>127.0.0.1:5433</code>으로만 노출되며 이 앱의 웹 서버·API와는 네트워크로 연결되어 있지 않습니다.</p>
+              <p><code>docker-class/postgresql/docker-compose.yml</code> → 컨테이너명 <code>pg-stock</code>, 이미지 <code>postgres:latest</code>. DB 포트는 호스트에 공개하지 않고 <code>postgresql_default</code> Docker 네트워크로 백엔드와 직접 연결합니다.</p>
             </article>
             <article>
               <h3>접속 계정</h3>
@@ -174,7 +192,7 @@
             </article>
             <article>
               <h3>데이터 범위</h3>
-              <p>2026-09-11 기준 2025년 데이터를 우선 수집 중이며(2,765종목 중 450종목 진행), 이후 2020~2024년 순으로 이어서 수집합니다. 최초 상장폐지·거래정지 종목 처리는 별도 검증이 필요합니다.</p>
+              <p>주요 KOSPI·KOSDAQ 종목은 2020-01-01부터 현재까지 우선 수집하고, 기존 전 종목 배치는 연도별 CSV 파이프라인으로 보완합니다. 상장 전 기간은 공급자가 빈 결과로 반환하며 거래정지·상장폐지 종목은 별도 검증이 필요합니다.</p>
             </article>
           </div>
         </div>
@@ -184,46 +202,6 @@
   </main>
   <script src="/js/config.js"></script>
   <script src="/js/common.js?v=20260920-chart"></script>
-  <script>
-    const OHLCV_PAGE_SIZE = 100;
-    let ohlcvPageOffset = 0;
-    const number = value => Number(value || 0).toLocaleString();
-    const date = value => value ? String(value).slice(0, 10) : '–';
-    async function loadOhlcvSummary() {
-      const response = await apiFetch('/api/ohlcv-db/summary');
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-      const { totals, yearly, quality, markets } = data;
-      document.getElementById('ohlcv-total-tickers').textContent = `${number(totals.ticker_count)}개`;
-      document.getElementById('ohlcv-total-rows').textContent = `${number(totals.ohlcv_rows)}건`;
-      document.getElementById('ohlcv-average-rows').textContent = totals.ticker_count ? (Number(totals.ohlcv_rows) / Number(totals.ticker_count)).toFixed(1) + '건' : '–';
-      document.getElementById('ohlcv-data-year').textContent = totals.last_date ? date(totals.last_date).slice(0, 4) + '년' : '–';
-      document.getElementById('ohlcv-data-range').textContent = `${date(totals.first_date)} ~ ${date(totals.last_date)}`;
-      document.getElementById('ohlcv-year-summary').innerHTML = yearly.map(row => `<tr><td>${row.year}</td><td>${number(row.row_count)}</td><td>${number(row.ticker_count)}</td><td>${Number(row.average_rows).toFixed(1)}</td><td>${date(totals.first_date)} ~ ${date(totals.last_date)}</td></tr>`).join('');
-      const marketText = markets.map(row => `${row.market} ${number(row.ticker_count)}종목`).join(' · ');
-      document.getElementById('ohlcv-quality-note').textContent = `검증 격리 ${number(quality.quarantined_rows)}건 (${number(quality.affected_tickers)}종목) · 시장별 ${marketText}`;
-    }
-    async function loadOhlcvTickerSummary() {
-      const query = document.getElementById('ohlcv-ticker-filter').value.trim();
-      const response = await apiFetch(`/api/ohlcv-db/tickers?q=${encodeURIComponent(query)}&limit=${OHLCV_PAGE_SIZE}&offset=${ohlcvPageOffset}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-      const start = data.total ? data.offset + 1 : 0;
-      const end = Math.min(data.offset + data.rows.length, data.total);
-      document.getElementById('ohlcv-ticker-count').textContent = `${number(data.total)}개 중 ${number(start)}–${number(end)}개 표시`;
-      document.getElementById('ohlcv-ticker-summary').innerHTML = data.rows.map(row => `<tr><td><code>${row.ticker_code}</code>${row.name ? ` · ${row.name}` : ''}</td><td>${row.market || '–'}</td><td>${number(row.total_rows)}</td><td>${Object.entries(row.yearly_rows || {}).sort(([a], [b]) => a.localeCompare(b)).map(([year, count]) => `${year}: ${number(count)}`).join('<br>')}</td><td>${date(row.first_date)}</td><td>${date(row.last_date)}</td></tr>`).join('') || '<tr><td colspan="6">일치하는 종목 코드가 없습니다.</td></tr>';
-      document.getElementById('ohlcv-page-prev').disabled = data.offset === 0;
-      document.getElementById('ohlcv-page-next').disabled = data.offset + data.rows.length >= data.total;
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      initPage();
-      Promise.all([loadOhlcvSummary(), loadOhlcvTickerSummary()]).catch(error => {
-        document.getElementById('ohlcv-quality-note').textContent = error.message || 'OHLCV DB 집계를 불러오지 못했습니다.';
-      });
-      document.getElementById('ohlcv-ticker-filter').addEventListener('input', () => { ohlcvPageOffset = 0; loadOhlcvTickerSummary().catch(() => {}); });
-      document.getElementById('ohlcv-page-prev').addEventListener('click', () => { ohlcvPageOffset = Math.max(0, ohlcvPageOffset - OHLCV_PAGE_SIZE); loadOhlcvTickerSummary().catch(() => {}); });
-      document.getElementById('ohlcv-page-next').addEventListener('click', () => { ohlcvPageOffset += OHLCV_PAGE_SIZE; loadOhlcvTickerSummary().catch(() => {}); });
-    });
-  </script>
+  <script src="/js/ohlcv-db.js?v=20260926-ag-grid"></script>
 </body>
 </html>

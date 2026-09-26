@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>ARIA 암복호화 예제 — Secrets Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css?v=20260920-chart">
+  <style>
+    .guide{max-width:1180px;margin:0 auto;padding:32px 20px 56px}
+    .hero,.card{border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:var(--shadow-sm)}
+    .hero{padding:30px;border-color:#c9daff;background:linear-gradient(135deg,#e6f0ff,#fafcff)}
+    .hero small{color:var(--accent-dark);font-size:12px;font-weight:900;letter-spacing:.08em}
+    .hero h1{margin:7px 0;font-size:30px;font-weight:900}
+    .hero p,.card p,.card li{color:var(--fg-2);line-height:1.75}
+    .card{margin-top:16px;padding:24px}
+    .card h2{margin:0 0 8px;font-size:21px;font-weight:900;color:var(--fg)}
+    .card h3{margin:20px 0 5px;font-size:15px;font-weight:900;color:var(--fg)}
+    .card ul,.card ol{margin:6px 0 0 20px}
+    .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+    .step{padding:15px;border:1px solid #c9daff;border-radius:10px;background:#f8fbff}
+    .step b{display:block;color:var(--accent);font-size:12px}.step strong{display:block;margin:5px 0;color:var(--fg)}
+    .code{margin:12px 0 0;padding:15px;overflow:auto;border-radius:9px;background:#131722;color:#dbeafe;font:12.5px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre}
+    .code .c{color:#7dd3a0}.code .k{color:#93c5fd}.code .s{color:#fcd34d}
+    .table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;font-size:13px}.table th,.table td{padding:11px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}.table th{color:var(--muted);background:var(--surface-2);font-size:12px}.table code{white-space:nowrap}
+    .flow{margin:14px 0;padding:15px;border-radius:9px;background:var(--surface-2);color:var(--fg);font:600 13px/2 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre;overflow:auto}
+    .notice{margin-top:13px;padding:13px;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;background:#fff8e8;color:#854d0e;font-size:13px;line-height:1.7}
+    .notice.ok{border-left-color:#10b981;background:#ecfdf5;color:#065f46}
+    .badge{display:inline-block;padding:3px 9px;border-radius:999px;background:#e6f0ff;color:var(--accent-dark);font-size:11px;font-weight:800;vertical-align:middle}
+    /* live demo */
+    .demo{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;align-items:stretch}.panel{display:flex;flex-direction:column}.panel .result{margin-top:auto}
+    .panel{padding:18px;border:1px solid #c9daff;border-radius:12px;background:#f8fbff}
+    .panel h3{margin:0 0 10px}
+    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .field label{font-size:12.5px;font-weight:800;color:var(--fg)}
+    .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--fg);font:inherit;font-size:14px}
+    .field textarea{min-height:110px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;line-height:1.55}
+    .field textarea.plain{font-family:inherit;font-size:14px}
+    .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .run{padding:10px 16px;border:0;border-radius:9px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:800;cursor:pointer}
+    .run:disabled{opacity:.6;cursor:wait}
+    .ghost{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--fg-2);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+    .result{margin-top:10px;padding:12px;border-radius:9px;background:#131722;color:#dbeafe;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;word-break:break-all;min-height:44px}
+    .result--error{color:#fca5a5}
+    .keybox{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+    .howto{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+    .howto div{padding:14px;border:1px solid #c9daff;border-radius:10px;background:#fff}
+    .howto b{display:block;color:var(--accent);font-size:12px;font-weight:900}
+    .howto strong{display:block;margin:4px 0 4px;color:var(--fg);font-size:14px}
+    .howto span{color:var(--fg-2);font-size:13px;line-height:1.65}
+    .kbd{display:inline-block;padding:1px 7px;border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;background:#fff;font-size:12px;font-weight:800;color:var(--fg)}
+    @media(max-width:860px){.howto{grid-template-columns:1fr}}
+    @media(max-width:860px){.guide{padding:20px 12px 36px}.card{padding:17px}.steps{grid-template-columns:1fr 1fr}.demo,.keybox{grid-template-columns:1fr}.table{min-width:680px}}
+    @media(max-width:520px){.steps{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div id="header-mount"></div>
+  <main class="guide">
+    <section class="hero">
+      <small>SECRETS MANAGER · 1단계 · 국산 표준 블록 암호</small>
+      <h1>ARIA 알고리즘으로 문자열 암복호화하기</h1>
+      <p><strong>ARIA</strong>는 국가보안기술연구소(NSRI)와 학계가 함께 설계해 2004년 한국 산업표준 <strong>KS X 1213</strong>으로 제정된 국산 블록 암호입니다. AES와 같은 128비트 블록·128/192/256비트 키 구조이며, 국제 표준(RFC 5794, ISO/IEC 18033-3)에도 등재되어 있어 공공기관 시스템의 개인정보 암호화에 널리 쓰입니다. 이 페이지는 <strong>순수 파이썬 구현 + Flask API + 웹앱 폼</strong>으로 실제 문자열이 암호문으로 바뀌고 다시 돌아오는 과정을 보여줍니다.</p>
+      <div class="steps">
+        <div class="step"><b>1</b><strong>키 준비</strong><span>비밀번호에서 키 유도 또는 Secrets Manager에서 로드</span></div>
+        <div class="step"><b>2</b><strong>암호화</strong><span>ARIA-CBC + PKCS#7, 랜덤 IV 16바이트</span></div>
+        <div class="step"><b>3</b><strong>저장·전송</strong><span>base64(IV‖암호문) 문자열 한 개로 DB·JSON에 저장</span></div>
+        <div class="step"><b>4</b><strong>복호화</strong><span>같은 키로 IV 분리 후 원문 복원</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>1. ARIA는 어떤 알고리즘인가</h2>
+      <p>ARIA는 <strong>SPN(Substitution-Permutation Network)</strong> 구조입니다. 매 라운드마다 ① 라운드 키 XOR → ② 4종의 S-box 치환(SB1·SB2·SB3·SB4) → ③ 16×16 이진 행렬 확산(A)을 반복하고, 마지막 라운드만 확산 대신 라운드 키를 한 번 더 XOR합니다. S-box 2종은 AES처럼 GF(2<sup>8</sup>) 역원·<code>x<sup>247</sup></code>의 아핀 변환으로 정의되고, 확산 행렬 A는 자기 자신이 역행렬인 <em>involution</em>이라 복호화가 같은 코드로 동작합니다.</p>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>구분</th><th>ARIA (KS X 1213)</th><th>AES (FIPS 197)</th><th>SEED (KS X 1004)</th></tr></thead>
+        <tbody>
+          <tr><td>설계</td><td>NSRI·학계, 2004년 국가표준</td><td>NIST, 2001년</td><td>KISA, 1998년</td></tr>
+          <tr><td>블록 크기</td><td>128비트</td><td>128비트</td><td>128비트</td></tr>
+          <tr><td>키 길이</td><td>128 / 192 / 256비트</td><td>128 / 192 / 256비트</td><td>128비트</td></tr>
+          <tr><td>라운드 수</td><td>12 / 14 / 16</td><td>10 / 12 / 14</td><td>16 (Feistel)</td></tr>
+          <tr><td>구조</td><td>SPN, involution 확산층</td><td>SPN</td><td>Feistel</td></tr>
+          <tr><td>국제 표준</td><td>RFC 5794, ISO/IEC 18033-3, TLS(RFC 6209)</td><td>ISO/IEC 18033-3, TLS</td><td>RFC 4269, ISO/IEC 18033-3</td></tr>
+          <tr><td>OpenSSL</td><td><code>openssl enc -aria-256-cbc</code></td><td><code>-aes-256-cbc</code></td><td><code>-seed-cbc</code></td></tr>
+        </tbody>
+      </table></div>
+      <h3>RFC 5794 표준 테스트 벡터 (ARIA-128)</h3>
+      <div class="code">Key        : 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f
+Plaintext  : 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff
+Ciphertext : d7 18 fb d6 ab 64 4c 73 9d a9 5f 3b e6 45 17 78</div>
+      <div class="row" style="margin-top:12px"><button id="aria-info-btn" class="ghost" type="button">서버 자체 검증 다시 실행</button><span class="badge">GET /api/aria/info</span></div>
+      <div id="aria-info-result" class="result" role="status">서버 검증 정보를 불러오는 중…</div>
+    </section>
+
+    <section class="card">
+      <h2>2. 파이썬 코드 — 순수 파이썬 ARIA 모듈 사용</h2>
+      <p>백엔드의 <code>python-stock-backend/aria_cipher.py</code>는 외부 패키지 없이 ARIA 블록 암호와 CBC/PKCS#7, 문자열 헬퍼를 제공합니다. 테스트(<code>test_aria_cipher.py</code>)에서 RFC 5794 벡터 3종과 OpenSSL <code>aria-*-cbc</code> 출력과 일치함을 검증합니다.</p>
+      <h3>① 블록 단위 암복호화 — 표준 벡터 확인</h3>
+      <div class="code"><span class="k">from</span> aria_cipher <span class="k">import</span> ARIA
+
+key = bytes.fromhex(<span class="s">"000102030405060708090a0b0c0d0e0f"</span>)   <span class="c"># 16바이트 = ARIA-128</span>
+pt  = bytes.fromhex(<span class="s">"00112233445566778899aabbccddeeff"</span>)
+
+aria = ARIA(key)
+ct = aria.encrypt_block(pt)
+<span class="k">print</span>(ct.hex())                          <span class="c"># d718fbd6ab644c739da95f3be6451778</span>
+<span class="k">print</span>(aria.decrypt_block(ct) == pt)      <span class="c"># True</span></div>
+
+      <h3>② 문자열 암복호화 — CBC + PKCS#7 + base64</h3>
+      <div class="code"><span class="k">from</span> aria_cipher <span class="k">import</span> derive_key, encrypt_text, decrypt_text
+
+<span class="c"># 데모: 비밀번호를 SHA-256으로 32바이트(=256비트) 키로 유도</span>
+key = derive_key(<span class="s">"my-secret-passphrase"</span>, key_bits=256)
+
+token = encrypt_text(<span class="s">"홍길동 010-1234-5678"</span>, key)
+<span class="k">print</span>(token)     <span class="c"># 'Qm9…' base64(IV 16B ‖ 암호문). IV가 랜덤이라 매번 다름</span>
+
+plain = decrypt_text(token, key)
+<span class="k">print</span>(plain)     <span class="c"># 홍길동 010-1234-5678</span>
+
+<span class="c"># 잘못된 키로 복호화하면 패딩 검증에서 ValueError 발생</span>
+decrypt_text(token, derive_key(<span class="s">"wrong"</span>))   <span class="c"># ValueError: 잘못된 패딩입니다…</span></div>
+
+      <h3>③ 운영 환경 — 키를 AWS Secrets Manager에서 읽기</h3>
+      <p>비밀번호 유도는 학습용입니다. 운영에서는 32바이트 난수 키를 <strong>Secrets Manager의 JSON 보안 암호</strong>에 두고, 이 저장소의 <code>aws_secret_store.get_secret()</code>로 읽어 <code>ARIA()</code>에 직접 넘깁니다. 다음 단계(<a href="/learning/aws-ssm-key-management.html">2. 키 적재·연결 가이드</a>)와 같은 IAM Role 구성을 그대로 재사용합니다.</p>
+      <div class="code"><span class="k">import</span> base64, os
+<span class="k">from</span> aws_secret_store <span class="k">import</span> get_secret        <span class="c"># boto3 SecretsManager.get_secret_value 래퍼</span>
+<span class="k">from</span> aria_cipher <span class="k">import</span> encrypt_text, decrypt_text
+
+<span class="c"># Secrets Manager: stock-coin-trade/aria = {"key_b64": "&lt;base64 32바이트&gt;"}</span>
+<span class="c"># 최초 1회 생성: python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())"</span>
+secret = get_secret(<span class="s">"aria"</span>)
+key = base64.b64decode(secret[<span class="s">"key_b64"</span>])          <span class="c"># 32바이트 → ARIA-256</span>
+
+phone_enc = encrypt_text(<span class="s">"010-1234-5678"</span>, key)   <span class="c"># DB의 phone_enc 컬럼에 저장</span>
+phone     = decrypt_text(phone_enc, key)         <span class="c"># 화면 표시 직전에만 복호화</span></div>
+
+      <h3>④ OpenSSL로 교차 검증 (같은 키·IV면 바이트 단위로 동일)</h3>
+      <div class="code"><span class="c"># 파이썬 결과와 OpenSSL 결과가 같은지 확인</span>
+printf <span class="s">'hello aria'</span> | openssl enc -aria-256-cbc -K &lt;64자리 hex 키&gt; -iv &lt;32자리 hex IV&gt; | xxd -p
+
+<span class="c"># 파이썬 쪽</span>
+ARIA(key).encrypt_cbc(b<span class="s">"hello aria"</span>, iv).hex()</div>
+    </section>
+
+    <section class="card">
+      <h2>3. Flask API 명세 — <code>/api/aria</code></h2>
+      <p>블루프린트 <code>python-stock-backend/aria_api.py</code>가 제공합니다. 키는 요청의 <code>passphrase</code>에서 유도하거나, 생략 시 서버 환경변수 <code>ARIA_DEMO_KEY</code>(미설정이면 데모 고정 키)를 사용합니다. 세션·로그인은 필요 없습니다.</p>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>엔드포인트</th><th>요청 본문 (JSON)</th><th>응답</th></tr></thead>
+        <tbody>
+          <tr><td><code>POST /api/aria/encrypt</code></td><td><code>text</code>(필수, ≤10,000자), <code>passphrase</code>(선택), <code>key_bits</code>(128·192·256, 기본 256)</td><td><code>ok, algorithm, padding, encoding, key_bits, key_source, cipher, cipher_length</code></td></tr>
+          <tr><td><code>POST /api/aria/decrypt</code></td><td><code>cipher</code>(필수, base64), <code>passphrase</code>, <code>key_bits</code></td><td><code>ok, algorithm, key_bits, key_source, text</code></td></tr>
+          <tr><td><code>GET /api/aria/info</code></td><td>—</td><td>표준·라운드 정보와 RFC 5794 자체 검증 결과(<code>self_test.passed</code>)</td></tr>
+        </tbody>
+      </table></div>
+      <p style="margin-top:10px">실패 시 HTTP 400과 <code>{"ok": false, "message": "…"}</code>를 돌려줍니다. 키가 다르면 PKCS#7 패딩 검증에 실패해 <em>잘못된 패딩</em> 메시지가 납니다.</p>
+      <h3>curl 예시</h3>
+      <div class="code"><span class="c"># 암호화</span>
+curl -s -X POST http://localhost:3333/api/aria/encrypt \
+  -H <span class="s">'Content-Type: application/json'</span> \
+  -d <span class="s">'{"text":"홍길동 010-1234-5678","passphrase":"demo-pass","key_bits":256}'</span>
+<span class="c"># → {"ok":true,"algorithm":"ARIA-256-CBC","cipher":"…base64…", ...}</span>
+
+<span class="c"># 복호화</span>
+curl -s -X POST http://localhost:3333/api/aria/decrypt \
+  -H <span class="s">'Content-Type: application/json'</span> \
+  -d <span class="s">'{"cipher":"…base64…","passphrase":"demo-pass","key_bits":256}'</span>
+<span class="c"># → {"ok":true,"text":"홍길동 010-1234-5678", ...}</span></div>
+      <h3>웹앱(JavaScript) 호출 예시 — 저장 전에 암호화, 표시 직전에 복호화</h3>
+      <div class="code"><span class="k">async function</span> encryptField(text, passphrase) {
+  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'/api/aria/encrypt'</span>, {
+    method: <span class="s">'POST'</span>, headers: { <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span> },
+    body: JSON.stringify({ text, passphrase, key_bits: 256 }),
+  });
+  <span class="k">const</span> data = <span class="k">await</span> res.json();
+  <span class="k">if</span> (!data.ok) <span class="k">throw new</span> Error(data.message);
+  <span class="k">return</span> data.cipher;                 <span class="c">// 이 문자열을 폼의 hidden 필드/DB 컬럼에 저장</span>
+}
+
+<span class="k">async function</span> decryptField(cipher, passphrase) {
+  <span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'/api/aria/decrypt'</span>, {
+    method: <span class="s">'POST'</span>, headers: { <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span> },
+    body: JSON.stringify({ cipher, passphrase, key_bits: 256 }),
+  });
+  <span class="k">const</span> data = <span class="k">await</span> res.json();
+  <span class="k">return</span> data.ok ? data.text : <span class="s">'(복호화 실패)'</span>;
+}
+
+<span class="c">// 사용: 회원 전화번호 입력 → 암호문으로 바꿔 저장 → 조회 화면에서 복호화 표시</span>
+<span class="k">const</span> phoneEnc = <span class="k">await</span> encryptField(form.phone.value, passphrase);
+document.querySelector(<span class="s">'#phone-display'</span>).textContent = <span class="k">await</span> decryptField(phoneEnc, passphrase);</div>
+    </section>
+
+    <section class="card">
+      <h2>4. 라이브 데모 — 웹앱에서 문자열이 바뀌는 과정</h2>
+      <p>아래 폼은 위 API를 그대로 호출합니다. 왼쪽에서 평문을 암호화하면 base64 암호문이 오른쪽 복호화 칸에 자동으로 채워지고, 복호화 버튼으로 원문이 돌아오는지 확인할 수 있습니다.</p>
+      <h3>사용 방법 (순서대로)</h3>
+      <div class="howto">
+        <div><b>STEP 1</b><strong>비밀번호·키 길이 정하기</strong><span>상단 <em>비밀번호</em> 칸의 값이 SHA-256을 거쳐 ARIA 키가 됩니다. 비우면 서버 환경변수 <code>ARIA_DEMO_KEY</code>의 기본 키를 씁니다. <em>키 길이</em>는 128/192/256비트 중 선택하며, 암호화와 복호화에서 <u>같은 비밀번호·같은 키 길이</u>를 써야 합니다.</span></div>
+        <div><b>STEP 2</b><strong>평문 입력 후 암호화</strong><span>왼쪽 <em>평문</em> 칸에 보호할 문자열(전화번호, 계좌번호, 메모 등 최대 10,000자)을 적고 <span class="kbd">암호화</span>를 누릅니다. 서버가 랜덤 IV 16바이트를 만들어 ARIA-CBC로 암호화하고, <code>base64(IV‖암호문)</code> 한 줄을 돌려줍니다.</span></div>
+        <div><b>STEP 3</b><strong>암호문 확인</strong><span>결과가 왼쪽 <em>암호문</em> 칸에 표시되고 오른쪽 복호화 입력칸에도 자동으로 복사됩니다. <span class="kbd">복사</span> 버튼으로 클립보드에 담아 DB 컬럼이나 다른 시스템에 붙여넣는 상황을 가정해 보세요. 아래 <em>문자열 변경 흐름</em> 표가 방금 입력한 값으로 채워집니다.</span></div>
+        <div><b>STEP 4</b><strong>복호화로 원문 복원</strong><span>오른쪽 <span class="kbd">복호화</span>를 누르면 같은 비밀번호·키 길이로 IV를 분리해 원문을 복원하고 <em>복원된 평문</em> 칸에 표시합니다. STEP 2에서 입력한 문자열과 글자 하나까지 같은지 확인하세요.</span></div>
+        <div><b>STEP 5</b><strong>실패 사례 실험</strong><span>비밀번호를 한 글자만 바꾸거나 키 길이를 다르게 고른 뒤 <span class="kbd">복호화</span>를 누르면 <em>잘못된 패딩</em> 오류(HTTP 400)가 납니다. 암호문 중간 글자를 하나 고쳐도 마찬가지입니다. 키·암호문 무결성이 깨지면 복호화가 거부되는 것을 확인하는 단계입니다.</span></div>
+        <div><b>STEP 6</b><strong>같은 평문 다시 암호화</strong><span>같은 평문으로 <span class="kbd">암호화</span>를 한 번 더 누르면 암호문이 전혀 다른 값으로 바뀝니다. IV가 매번 랜덤이기 때문이며, 그래도 복호화하면 같은 원문이 나옵니다. 따라서 암호문끼리 같은지 비교하는 검색은 불가능하고, 필요하면 별도 해시 컬럼을 둡니다.</span></div>
+      </div>
+      <h3>입력·출력 항목 설명</h3>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>항목</th><th>위치</th><th>의미</th><th>API 필드</th></tr></thead>
+        <tbody>
+          <tr><td>비밀번호</td><td>상단 왼쪽</td><td>키 유도용 문자열. 서버가 SHA-256으로 32바이트를 만든 뒤 키 길이만큼 잘라 씁니다. 빈 값이면 서버 기본 키.</td><td><code>passphrase</code></td></tr>
+          <tr><td>키 길이</td><td>상단 오른쪽</td><td>ARIA-128(12라운드) / 192(14라운드) / 256(16라운드). 길수록 라운드가 늘어나며 보통 256을 권장.</td><td><code>key_bits</code></td></tr>
+          <tr><td>평문</td><td>① 암호화 패널</td><td>보호할 원문 UTF-8 문자열. 한글·이모지 포함 가능, 최대 10,000자.</td><td><code>text</code></td></tr>
+          <tr><td>암호문</td><td>① 결과 / ② 입력</td><td>base64 문자열. 앞 16바이트가 IV, 뒤가 PKCS#7 패딩된 암호문. 길이는 16바이트 단위로 증가.</td><td><code>cipher</code></td></tr>
+          <tr><td>복원된 평문</td><td>② 결과</td><td>복호화된 원문. 키가 틀리면 값 대신 아래 상태창에 오류 메시지가 표시.</td><td><code>text</code></td></tr>
+          <tr><td>상태창 (검은 박스)</td><td>각 패널 하단</td><td>알고리즘, 키 출처(비밀번호/서버), 인코딩, 암호문 길이 등 API 응답 요약. 붉은 글씨는 실패.</td><td><code>algorithm, key_source, cipher_length, message</code></td></tr>
+        </tbody>
+      </table></div>
+      <h3>결과 읽는 법</h3>
+      <ul>
+        <li><strong>암호문 길이가 64자인 이유</strong> · IV 16바이트 + 암호문. 평문이 16바이트 이하면 패딩 후 1블록(16바이트)이라 총 32바이트, base64로 44자. 17~32바이트면 2블록이라 48바이트 → 64자. 예시 평문 "홍길동 010-1234-5678"은 UTF-8로 23바이트라 64자가 됩니다.</li>
+        <li><strong>키 출처(key_source)</strong> · <code>passphrase</code>는 입력한 비밀번호로 유도한 키, <code>server</code>는 비밀번호를 비워 서버 기본 키를 쓴 경우입니다.</li>
+        <li><strong>오류 메시지</strong> · "잘못된 패딩" = 키 불일치 또는 암호문 손상, "base64 문자열이어야" = 암호문 형식 오류, "너무 짧습니다" = IV+1블록(32바이트) 미만.</li>
+      </ul>
+      <div class="keybox">
+        <div class="field"><label for="aria-passphrase">비밀번호 (키 유도용 · 비우면 서버 기본 키 사용)</label><input id="aria-passphrase" value="demo-pass" autocomplete="off"></div>
+        <div class="field"><label for="aria-key-bits">키 길이</label><select id="aria-key-bits"><option value="128">ARIA-128 (12라운드)</option><option value="192">ARIA-192 (14라운드)</option><option value="256" selected>ARIA-256 (16라운드)</option></select></div>
+      </div>
+      <div class="demo">
+        <div class="panel">
+          <h3>① 암호화 <span class="badge">POST /api/aria/encrypt</span></h3>
+          <div class="field"><label for="aria-plain">평문 (예: 회원 전화번호, 계좌번호)</label><textarea id="aria-plain" class="plain">홍길동 010-1234-5678</textarea></div>
+          <div class="row"><button id="aria-encrypt-btn" class="run" type="button">암호화</button></div>
+          <div class="field" style="margin-top:12px"><label for="aria-cipher">암호문 · base64(IV‖ciphertext)</label><textarea id="aria-cipher" readonly placeholder="암호화 결과가 여기에 표시됩니다"></textarea><div class="row"><button class="ghost" type="button" data-copy="aria-cipher">복사</button></div></div>
+          <div id="aria-encrypt-result" class="result" role="status">암호화 대기 중</div>
+        </div>
+        <div class="panel">
+          <h3>② 복호화 <span class="badge">POST /api/aria/decrypt</span></h3>
+          <div class="field"><label for="aria-cipher-in">암호문 (base64) · 암호화 결과가 자동 입력됩니다</label><textarea id="aria-cipher-in" placeholder="base64 암호문을 붙여넣으세요"></textarea></div>
+          <div class="row"><button id="aria-decrypt-btn" class="run" type="button">복호화</button></div>
+          <div class="field" style="margin-top:12px"><label for="aria-decrypted">복원된 평문</label><textarea id="aria-decrypted" class="plain" readonly placeholder="복호화 결과가 여기에 표시됩니다"></textarea><div class="row"><button class="ghost" type="button" data-copy="aria-decrypted">복사</button></div></div>
+          <div id="aria-decrypt-result" class="result" role="status">복호화 대기 중</div>
+        </div>
+      </div>
+      <div id="aria-scenario" hidden>
+        <h3>문자열 변경 흐름 (방금 입력한 값 기준)</h3>
+        <div class="table-wrap"><table class="table"><thead><tr><th>단계</th><th>값</th><th>설명</th></tr></thead><tbody id="aria-scenario-body"></tbody></table></div>
+      </div>
+      <div class="flow">브라우저 폼 ──JSON──▶ POST /api/aria/encrypt ──▶ base64(IV‖CT) ──▶ DB 컬럼 저장
+DB 컬럼 ──JSON──▶ POST /api/aria/decrypt ──▶ 평문 ──▶ 화면 표시</div>
+      <div class="notice"><strong>주의</strong> · 이 데모의 비밀번호 유도 키와 서버 기본 키는 학습용입니다. 실제 서비스에서는 키를 요청 본문에 실어 보내지 말고, 서버가 Secrets Manager에서 읽은 키로만 암복호화하세요. 같은 평문이라도 IV가 랜덤이라 암호문이 매번 달라지므로, 암호문끼리 비교·검색하려면 별도의 해시 컬럼이 필요합니다.</div>
+      <div class="notice ok"><strong>검증</strong> · 서버 모듈은 RFC 5794 표준 벡터(128/192/256)와 OpenSSL <code>aria-*-cbc</code> 출력과 바이트 단위로 일치하는지 단위 테스트로 확인합니다: <code>python -m unittest test_aria_cipher</code></div>
+    </section>
+  </main>
+  <footer class="footer"><div>EDUMGT · Secrets Manager · 1. ARIA 암복호화 예제</div></footer>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20260920-chart"></script><script src="/js/aria-crypto.js?v=20260926-aria"></script>
+</body>
+</html>

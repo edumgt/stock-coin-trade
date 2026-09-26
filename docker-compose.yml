@@ -1,6 +1,10 @@
 networks:
   internal:
     driver: bridge
+  # docker-class의 pg-stock과 호스트 포트 공개 없이 직접 통신한다.
+  ohlcv-db:
+    external: true
+    name: postgresql_default
 
 services:
 
@@ -70,6 +74,7 @@ services:
     container_name: crypto-mock-python
     networks:
       - internal
+      - ohlcv-db
     expose:
       - "8200"
     environment:
@@ -80,10 +85,12 @@ services:
       DB_PASSWORD: ${MARIADB_PASSWORD:-12345678!!}
       QUANT_DATABASE_URL: ${QUANT_DATABASE_URL:-postgresql+psycopg://${QUANT_DB_USER:-quant}:${QUANT_DB_PASSWORD:-quant}@postgres:5432/${QUANT_DB_NAME:-quant_research}}
       # docker-class의 pg-stock은 백테스트 데이터 집계 API에서 읽기 전용으로만 사용한다.
-      OHLCV_DATABASE_URL: ${OHLCV_DATABASE_URL:-postgresql+psycopg://admin:admin1234@host.docker.internal:5433/admin}
+      OHLCV_DATABASE_URL: ${OHLCV_DATABASE_URL:-postgresql+psycopg://admin:admin1234@pg-stock:5432/admin}
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
       CMC_API_KEY: ${CMC_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # ARIA 암복호화 예제(/api/aria)의 서버 기본 키. 비우면 데모용 고정 키를 쓴다.
+      ARIA_DEMO_KEY: ${ARIA_DEMO_KEY:-}
       # 증권사 키는 kis.key/kb.key/al.key 파일(/run/secrets)이 기본이며, 아래
       # 환경변수를 .env에 채우면 파일보다 우선 적용된다. KIS_ACCOUNT_NO는
       # 'CANO-계좌상품코드'(예: 12345678-01) 형식이고 하이픈 뒤는 임의로 바꾸지 않는다.
@@ -107,11 +114,13 @@ services:
       ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY:-}
       # 비우면 qdrant_service.py가 인메모리 Qdrant를 사용한다.
       QDRANT_URL: ${QDRANT_URL:-:memory:}
-      # AWS SSM Parameter Store 연동 트랙(aws_secret_store.py, *_aws.py)에서만
+      # Secrets Manager 트랙(aws_secret_store.py, *_aws.py)에서만
       # 사용한다. kis.key/kb.key/al.key 기반 기존 모듈에는 영향이 없다. EC2에
       # IAM 인스턴스 프로파일이 붙어 있으면 액세스 키 3종은 비워 둬도 된다.
       AWS_REGION: ${AWS_REGION:-}
-      AWS_SSM_PARAMETER_PREFIX: ${AWS_SSM_PARAMETER_PREFIX:-/stock-coin-trade}
+      AWS_SECRETS_MANAGER_PREFIX: ${AWS_SECRETS_MANAGER_PREFIX:-stock-coin-trade}
+      AWS_SECRETS_MANAGER_KMS_KEY_ID: ${AWS_SECRETS_MANAGER_KMS_KEY_ID:-}
+      AWS_PROFILE: ${AWS_PROFILE:-}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}

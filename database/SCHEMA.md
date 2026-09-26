@@ -63,9 +63,9 @@ factor_returns ──[분석 입력]──> factor_exposures
 
 ## 운영 규칙
 
-1. 실제 증권사 인증정보는 프로젝트 루트의 `kis.key`, `kb*.key` 또는 AWS SSM에만 보관한다. DB와 오류 로그에는 원문을 넣지 않는다.
+1. 실제 증권사 인증정보는 프로젝트 루트의 `kis.key`, `kb*.key` 또는 AWS Secrets Manager의 JSON 보안 암호에만 보관한다. DB와 오류 로그에는 원문을 넣지 않는다.
 2. `api_key.key_hash`에는 웹앱 자체 API 키의 SHA-256 해시만 저장한다. 원문 키는 생성 시 한 번만 사용자에게 표시한다.
 3. `system_error_log`의 요청 메타데이터·메시지는 저장 전에 토큰, 비밀번호, App Key/Secret을 마스킹한다.
-4. `api_usage_log`는 KIS·KB증권·Alpaca·Binance·Korbit·AWS SSM 테스트 경로만 기록한다. 요청 쿼리, 응답 본문, 실패 메시지는 민감값을 마스킹하고 각각 길이 제한을 둔다. 조회 화면은 로그인한 회원 자신의 이력만 반환한다.
+4. `api_usage_log`는 KIS·KB증권·Alpaca·Binance·Korbit·AWS Secrets Manager 테스트 경로만 기록한다. 요청 쿼리, 응답 본문, 실패 메시지는 민감값을 마스킹하고 각각 길이 제한을 둔다. 조회 화면은 로그인한 회원 자신의 이력만 반환한다.
 5. MariaDB와 PostgreSQL은 서로 FK를 만들지 않는다. 서비스 API가 데이터 경계와 권한 검사를 담당한다.
 6. Qdrant는 관계형 DB가 아니므로 FK가 없다. 문서 식별자와 카테고리는 검색 결과의 메타데이터로 관리한다.

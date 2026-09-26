@@ -1,8 +1,8 @@
-"""Read-only KIS/KB quote checks sourced from AWS SSM Parameter Store.
+"""Read-only KIS/KB quote checks sourced from AWS Secrets Manager.
 
 Parallel track to ``broker_test.py``: the same read-only calls against the
-KIS Testbed and KB증권 Open API, but credentials come from AWS Systems
-Manager Parameter Store instead of ``kis.key``/``kb.key`` or
+KIS Testbed and KB증권 Open API, but credentials come from AWS Secrets
+Manager JSON secrets instead of ``kis.key``/``kb.key`` or
 ``KIS_*``/``KB_*`` environment variables. ``broker_test.py`` itself is not
 modified or used by this module.
 """
@@ -75,7 +75,7 @@ def check_kb_token_aws() -> dict[str, Any]:
     body = _kb_token_response()
     token_type = body.get("token_type") or body.get("dataBody", {}).get("token_type") or "Bearer"
     expires_in = body.get("expires_in") or body.get("dataBody", {}).get("expires_in") or 0
-    return {"broker": "KB증권 Open API (AWS SSM)", "tokenType": token_type, "expiresIn": int(expires_in)}
+    return {"broker": "KB증권 Open API (AWS Secrets Manager)", "tokenType": token_type, "expiresIn": int(expires_in)}
 
 
 def get_kb_domestic_quote_aws(symbol: str) -> dict[str, Any]:
@@ -95,7 +95,7 @@ def get_kb_domestic_quote_aws(symbol: str) -> dict[str, Any]:
             f"KB증권 조회 실패 (HTTP {response.status_code}, {header.get('processCode') or 'unknown'}): "
             f"{header.get('processMessage') or '요청이 거부되었습니다.'}"
         )
-    return {"broker": "KB증권 Open API (AWS SSM)", "symbol": symbol, "raw": body.get("dataBody", {})}
+    return {"broker": "KB증권 Open API (AWS Secrets Manager)", "symbol": symbol, "raw": body.get("dataBody", {})}
 
 
 # ── 한국투자증권(KIS) ─────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ def get_kis_quote_aws(symbol: str) -> dict[str, Any]:
         )
     output = body.get("output", {})
     return {
-        "broker": "한국투자증권 Testbed (AWS SSM)", "symbol": symbol,
+        "broker": "한국투자증권 Testbed (AWS Secrets Manager)", "symbol": symbol,
         "price": output.get("stck_prpr"), "change": output.get("prdy_vrss"),
         "changeRate": output.get("prdy_ctrt"), "volume": output.get("acml_vol"),
         "tradeTime": output.get("stck_cntg_hour"),
@@ -160,7 +160,7 @@ def get_kis_balance_aws() -> dict[str, Any]:
     account_no = get_parameter("kis/account")
     if not account_no or "-" not in account_no:
         raise AwsSecretError(
-            f"모의투자 계좌번호가 설정되지 않았습니다. SSM Parameter Store의 {full_parameter_name('kis/account')}에 "
+            f"모의투자 계좌번호가 설정되지 않았습니다. AWS Secrets Manager의 {full_parameter_name('kis/account')}에 "
             "'CANO-계좌상품코드'(예: 12345678-01) 형식으로 값을 생성하세요."
         )
     cano, _, acnt_prdt_cd = account_no.partition("-")
@@ -191,7 +191,7 @@ def get_kis_balance_aws() -> dict[str, Any]:
         for item in (body.get("output1") or []) if item.get("pdno")
     ]
     return {
-        "broker": "한국투자증권 Testbed (AWS SSM)",
+        "broker": "한국투자증권 Testbed (AWS Secrets Manager)",
         "cashBalance": summary.get("dnca_tot_amt"),
         "totalEvalAmount": summary.get("tot_evlu_amt"),
         "totalProfitLoss": summary.get("evlu_pfls_smtl_amt"),

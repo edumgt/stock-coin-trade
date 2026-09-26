@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alpaca Test(AWS SSM) — 모의투자</title>
+  <title>Alpaca Secrets 테스트 — 모의투자</title>
   <link rel="icon" href="/img/favicon.png"><script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css?v=20260920-chart">
   
@@ -20,11 +20,11 @@
 <body>
   <div id="header-mount"></div>
   <main class="test-wrap"><section class="card">
-    <div class="kicker">READ-ONLY · ALPACA PAPER API · AWS SSM PARAMETER STORE TRACK</div>
-    <h1 style="margin:7px 0;font-size:28px;font-weight:900;color:var(--fg)">Alpaca Test (AWS SSM)</h1>
-    <p style="margin:0;color:var(--fg-2);line-height:1.7"><code>/alpaca-test.html</code>과 같은 Paper 조회를 수행하지만, API Key·Secret을 <code>al.key</code> 파일이 아니라 <strong>AWS Systems Manager Parameter Store</strong>(SecureString)에서 읽습니다. 이 페이지·백엔드 모듈은 기존 키 파일 트랙과 완전히 분리된 별도 구현이며, 기존 트랙은 이 모듈과 무관하게 그대로 동작합니다.</p>
+    <div class="kicker">READ-ONLY · ALPACA PAPER API · SECRETS MANAGER</div>
+    <h1 style="margin:7px 0;font-size:28px;font-weight:900;color:var(--fg)">Alpaca Secrets 테스트</h1>
+    <p style="margin:0;color:var(--fg-2);line-height:1.7"><code>/alpaca-test.html</code>과 같은 Paper 조회를 수행하지만, API Key·Secret을 <code>al.key</code> 파일이 아니라 <strong>AWS Secrets Manager의 JSON 보안 암호</strong>에서 읽습니다. 이 페이지·백엔드 모듈은 기존 키 파일 트랙과 완전히 분리된 별도 구현이며, 기존 트랙은 이 모듈과 무관하게 그대로 동작합니다.</p>
     <div class="notice"><strong>테스트 범위:</strong> 계정·포지션만 조회 전용으로 확인합니다. 주문, 취소, 포지션 변경 등 거래 API는 호출하지 않습니다.</div>
-    <div class="notice"><strong>AWS 사전 준비:</strong> <code>/stock-coin-trade/alpaca/api_key</code>, <code>/stock-coin-trade/alpaca/secret_key</code> 파라미터가 필요합니다. 자세한 절차는 README의 "AWS SSM Parameter Store 연동 트랙" 참고.</div>
+    <div class="notice"><strong>먼저 준비:</strong> <a href="/learning/aws-ssm-key-management.html">키 적재·연결 가이드</a>를 따라 <code>stock-coin-trade/alpaca</code> 보안 암호에 <code>api_key</code>, <code>secret_key</code> JSON 필드를 저장하세요.</div>
     <button id="run-test" class="run">Paper API 연결 테스트</button>
     <div id="result" class="result" role="status">테스트 대기 중</div>
 
@@ -37,7 +37,7 @@
       <div id="asset-result" class="result result--sm" role="status">조회 대기 중</div>
     </div>
   </section></main>
-  <footer class="footer"><div>EDUMGT · Alpaca Paper API 읽기 전용 연결 점검 · AWS SSM 트랙</div></footer>
+  <footer class="footer"><div>EDUMGT · Alpaca Paper API 읽기 전용 연결 점검 · Secrets Manager</div></footer>
   <script src="/js/config.js"></script><script src="/js/common.js?v=20260920-chart"></script><script src="/js/aws-alpaca-test.js"></script><script>document.addEventListener('DOMContentLoaded',()=>initPage())</script>
 </body>
 </html>

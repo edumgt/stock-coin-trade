@@ -23,6 +23,7 @@ from ai_sheet import ai_sheet_bp
 from alpaca_test_api import alpaca_test_bp
 from alpaca_test_aws_api import aws_alpaca_test_bp
 from api_keys import api_key_bp
+from aria_api import aria_bp
 from broker_test_api import broker_test_bp
 from kis_api_explorer import kis_explorer_bp
 from kis_chart_api import kis_chart_bp
@@ -72,6 +73,7 @@ app.register_blueprint(alpaca_test_bp)
 app.register_blueprint(aws_alpaca_test_bp)
 app.register_blueprint(stock_bp)
 app.register_blueprint(api_key_bp)
+app.register_blueprint(aria_bp)
 app.register_blueprint(broker_test_bp)
 app.register_blueprint(kis_explorer_bp)
 app.register_blueprint(kis_chart_bp)

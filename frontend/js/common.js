@@ -148,8 +148,17 @@ function renderHeader(user) {
       { href: '/korbit-api-test.html', label: 'Korbit 공개 시세 테스트', icon: 'fa-solid fa-chart-line' },
     ]},
     { type: 'group', label: 'TR 실전연습', items: [
-      { href: '/learning/tradingview-pine.html', label: 'TradingView(Pine)', icon: 'fa-solid fa-chart-column' },
-      { href: '/pine-script-lab.html', label: 'Pine 간단 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-01.html', label: '01 · TradingView 가입', icon: 'fa-solid fa-user-plus' },
+      { href: '/learning/tr-pine/step-02.html', label: '02 · Pine Editor 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-03.html', label: '03 · indicator() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-04.html', label: '04 · plot() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-05.html', label: '05 · 색상·굵기 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-06.html', label: '06 · 변수·계산 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-07.html', label: '07 · input() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-08.html', label: '08 · ta.sma() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-09.html', label: '09 · crossover 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-10.html', label: '10 · plotshape() 테스트', icon: 'fa-solid fa-code' },
+      { href: '/learning/tr-pine/step-11.html', label: '11 · strategy() 테스트', icon: 'fa-solid fa-flask' },
     ]},
     { type: 'group', label: 'POSTGRESQL QUANT', items: [
       { href: '/quant.html?tab=schema', label: 'DB 스키마', icon: 'fa-solid fa-sitemap' },
@@ -165,10 +174,11 @@ function renderHeader(user) {
       { href: '/api-usage-history.html', label: 'API 사용이력', icon: 'fa-solid fa-list-check' },
       { href: '/error-analysis.html', label: '에러분석', icon: 'fa-solid fa-bug' },
     ]},
-    { type: 'group', label: 'AWS SSM 연동 트랙', items: [
-      { href: '/learning/aws-ssm-key-management.html', label: 'AWS 키 관리 가이드', icon: 'fa-solid fa-shield-halved' },
-      { href: '/aws-broker-api-test.html', label: '증권사 시세 테스트(AWS SSM)', icon: 'fa-brands fa-aws' },
-      { href: '/aws-alpaca-test.html', label: 'Alpaca Test(AWS SSM)', icon: 'fa-brands fa-aws' },
+    { type: 'group', label: 'Secrets Manager', items: [
+      { href: '/learning/aria-crypto.html', label: '1. ARIA 암복호화 예제', icon: 'fa-solid fa-lock' },
+      { href: '/learning/aws-ssm-key-management.html', label: '2. 키 적재·연결 가이드', icon: 'fa-solid fa-shield-halved' },
+      { href: '/aws-broker-api-test.html', label: '3. 증권사 Secrets 테스트', icon: 'fa-brands fa-aws' },
+      { href: '/aws-alpaca-test.html', label: '4. Alpaca Secrets 테스트', icon: 'fa-brands fa-aws' },
     ]},
   ];
 
@@ -192,7 +202,7 @@ function renderHeader(user) {
   };
 
   // 좌측은 TR·브로커 실전연습, 우측은 대시보드·거래·자산·분석·관리 메뉴로 나눈다.
-  const rightMenuLabels = new Set(['대시보드', '거래', '자산관리', 'POSTGRESQL QUANT', '분석 · 도구', 'AWS SSM 연동 트랙']);
+  const rightMenuLabels = new Set(['대시보드', '거래', '자산관리', 'POSTGRESQL QUANT', '분석 · 도구', 'Secrets Manager']);
   const leftNavGroups = navGroups.filter(group => !rightMenuLabels.has(group.label));
   const rightPanelGroups = navGroups.filter(group => rightMenuLabels.has(group.label));
   const practiceItems = navGroups.find(group => group.label === 'TR 실전연습')?.items || [];
@@ -368,33 +378,86 @@ function mountDatasetComposerModal() {
 
   const card = title.closest('article');
   if (!card) return;
+  const input    = document.getElementById('new-doc-title');
+  const select   = document.getElementById('new-doc-category');
+  const textarea = document.getElementById('new-doc-text');
+  const submit   = document.getElementById('add-doc-btn');
+  const msg      = document.getElementById('add-doc-msg');
+  if (!input || !select || !textarea || !submit) return;
+
   const trigger = document.createElement('button');
   trigger.type = 'button';
   trigger.className = 'dataset-composer-open';
   trigger.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i> 새 지식 추가';
+
   const modal = document.createElement('div');
   modal.id = 'dataset-composer-modal';
   modal.className = 'dataset-composer-modal';
-  modal.innerHTML = '<section class="dataset-composer-dialog" role="dialog" aria-modal="true" aria-labelledby="dataset-composer-title"><header><h2 id="dataset-composer-title">새 지식 추가</h2><button type="button" class="dataset-composer-close" aria-label="팝업 닫기">×</button></header><div class="dataset-composer-body"></div></section>';
-  const body = modal.querySelector('.dataset-composer-body');
+  modal.innerHTML =
+    '<section class="dataset-composer-dialog" role="dialog" aria-modal="true" aria-labelledby="dataset-composer-title">' +
+      '<header>' +
+        '<div class="dataset-composer-heading">' +
+          '<div class="dataset-composer-eyebrow">KNOWLEDGE DATASET</div>' +
+          '<h2 id="dataset-composer-title">새 지식 추가</h2>' +
+          '<p>입력한 내용은 임베딩 모델을 거쳐 벡터로 변환되어 Qdrant 컬렉션에 저장되고, AI 분석 시 검색 근거로 활용됩니다.</p>' +
+        '</div>' +
+        '<button type="button" class="dataset-composer-close" aria-label="팝업 닫기">×</button>' +
+      '</header>' +
+      '<div class="dataset-composer-body">' +
+        '<div class="dataset-composer-row">' +
+          '<label class="dataset-composer-field" data-slot="title"><span class="dataset-composer-label">제목</span></label>' +
+          '<label class="dataset-composer-field" data-slot="category"><span class="dataset-composer-label">카테고리</span></label>' +
+        '</div>' +
+        '<label class="dataset-composer-field" data-slot="text">' +
+          '<span class="dataset-composer-label">지식 내용 <em>(최대 2,000자)</em></span>' +
+        '</label>' +
+        '<div class="dataset-composer-meta"><div class="dataset-composer-count">0 / 2,000자</div><div data-slot="msg"></div></div>' +
+      '</div>' +
+      '<footer class="dataset-composer-footer">' +
+        '<button type="button" class="dataset-composer-cancel">취소</button>' +
+      '</footer>' +
+    '</section>';
 
+  const slot = name => modal.querySelector(`[data-slot="${name}"]`);
   const divider = title.previousElementSibling;
   if (divider?.tagName === 'HR') divider.remove();
-  let node = title.nextElementSibling;
   title.remove();
-  while (node) {
-    const next = node.nextElementSibling;
-    body.appendChild(node);
-    if (node.id === 'add-doc-msg') break;
-    node = next;
-  }
+
+  input.placeholder = '예: RSI 과매도 구간에서의 대응 전략';
+  slot('title').appendChild(input);
+  slot('category').appendChild(select);
+  textarea.placeholder = '분석에 활용할 지식을 입력하세요. 근거, 조건, 예외 사항을 함께 적으면 검색 품질이 좋아집니다.';
+  textarea.maxLength = 2000;
+  textarea.rows = 12;
+  slot('text').appendChild(textarea);
+  if (msg) { msg.style.display = 'none'; slot('msg').replaceWith(msg); msg.className = 'dataset-composer-msg'; }
+  else slot('msg').remove();
+  submit.classList.remove('btn');
+  submit.classList.add('dataset-composer-submit');
+  modal.querySelector('.dataset-composer-footer').appendChild(submit);
+
+  const counter = modal.querySelector('.dataset-composer-count');
+  const updateCount = () => {
+    const n = textarea.value.length;
+    counter.textContent = `${n.toLocaleString()} / 2,000자`;
+    counter.classList.toggle('near-limit', n >= 1800);
+  };
+  textarea.addEventListener('input', updateCount);
+  updateCount();
+
   card.appendChild(trigger);
   document.body.appendChild(modal);
-  const close = () => modal.classList.remove('open');
-  trigger.addEventListener('click', () => modal.classList.add('open'));
+  const open = () => {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => input.focus(), 30);
+  };
+  const close = () => { modal.classList.remove('open'); document.body.style.overflow = ''; };
+  trigger.addEventListener('click', open);
   modal.querySelector('.dataset-composer-close').addEventListener('click', close);
+  modal.querySelector('.dataset-composer-cancel').addEventListener('click', close);
   modal.addEventListener('click', event => { if (event.target === modal) close(); });
-  document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && modal.classList.contains('open')) close(); });
 }
 
 function collectMarketContext(type) {
@@ -797,27 +860,27 @@ function mountApiTestGuide() {
       note: '서버가 Korbit 공개 API를 중계합니다. 키 없이 동작하며 주문·잔고·입출금 API는 호출하지 않습니다.',
     },
     '/aws-broker-api-test.html': {
-      title: 'AWS SSM 트랙: API 호출과 기대 결과',
-      rate: '<strong>KIS Testbed: 분당 60건</strong> — SSM에서 키를 읽은 뒤에도 KIS 모의 REST 한도는 초당 1건입니다. <strong>KB: 고정 분당 한도 미공개</strong>으로 API별 최신 명세와 제한 응답을 따릅니다. SSM 상태 점검 자체는 AWS 계정의 SSM API 한도를 사용합니다.',
+      title: 'Secrets Manager: 증권사 API 호출과 기대 결과',
+      rate: '<strong>KIS Testbed: 분당 60건</strong> — Secrets Manager에서 키를 읽은 뒤에도 KIS 모의 REST 한도는 초당 1건입니다. <strong>KB: 고정 분당 한도 미공개</strong>으로 API별 최신 명세와 제한 응답을 따릅니다. 준비 상태 점검은 AWS Secrets Manager API를 사용합니다.',
       rows: [
-        ['SSM 준비 상태', 'GET /api/aws-broker-test/ssm/status', 'AWS_REGION, IAM GetParameters 권한, 7개 파라미터', 'ok: true, status 내 파라미터 존재 여부·타입. SecureString 값은 복호화·반환하지 않음'],
-        ['KIS 현재가', 'GET /api/aws-broker-test/kis/quote?symbol=005930', 'SSM kis/app_key·secret + 6자리 symbol', 'ok: true, quote.price·changeRate·volume·tradeTime'],
-        ['KIS 잔고', 'GET /api/aws-broker-test/kis/balance', 'SSM kis/account 포함 3개 파라미터', 'ok: true, balance 현금·평가·보유종목 정보'],
-        ['KB 토큰', 'GET /api/aws-broker-test/kb/token', 'SSM kb/app_key·secret', 'ok: true, check.tokenType·expiresIn. 토큰 원문 미표시'],
-        ['KB 현재가', 'GET /api/aws-broker-test/kb/quote?symbol=005930', 'SSM KB 키 + 6자리 symbol', 'ok: true, quote.price·changeRate·volume'],
+        ['Secrets 준비 상태', 'GET /api/aws-broker-test/secrets/status', 'AWS_REGION, IAM DescribeSecret 권한, JSON 보안 암호 3개', 'ok: true, status 내 보안 암호 존재 여부. 값은 반환하지 않음'],
+        ['KIS 현재가', 'GET /api/aws-broker-test/kis/quote?symbol=005930', 'Secrets kis/app_key·secret + 6자리 symbol', 'ok: true, quote.price·changeRate·volume·tradeTime'],
+        ['KIS 잔고', 'GET /api/aws-broker-test/kis/balance', 'kis JSON 보안 암호의 account 포함 3개 필드', 'ok: true, balance 현금·평가·보유종목 정보'],
+        ['KB 토큰', 'GET /api/aws-broker-test/kb/token', 'Secrets kb/app_key·secret', 'ok: true, check.tokenType·expiresIn. 토큰 원문 미표시'],
+        ['KB 현재가', 'GET /api/aws-broker-test/kb/quote?symbol=005930', 'Secrets Manager KB 키 + 6자리 symbol', 'ok: true, quote.price·changeRate·volume'],
       ],
-      note: '모든 브로커 요청 전에 서버가 SSM SecureString을 읽습니다. 주문·정정·취소는 호출하지 않습니다.',
+      note: '모든 브로커 요청 전에 서버가 Secrets Manager JSON을 읽습니다. 주문·정정·취소는 호출하지 않습니다.',
     },
     '/aws-alpaca-test.html': {
-      title: 'AWS SSM 트랙: API 호출과 기대 결과',
+      title: 'Secrets Manager: Alpaca API 호출과 기대 결과',
       rate: '<strong>Alpaca 시세 데이터: Basic 플랜 분당 200건</strong> (Algo Trader Plus 분당 10,000건)입니다. 계정·포지션·종목 정보 API의 고정 분당 수치는 공개되지 않으므로 <code>X-RateLimit-*</code> 응답 헤더를 기준으로 관리하세요.',
       rows: [
-        ['Paper 계정', 'GET /api/aws-alpaca-test/paper/account', 'SSM alpaca/api_key·secret_key', 'ok: true, result.environment=paper·accountStatus·tradingBlocked'],
-        ['포지션', 'GET /api/aws-alpaca-test/paper/positions', '동일 SSM 인증값', 'ok: true, result.positions 배열'],
-        ['시장 시계', 'GET /api/aws-alpaca-test/paper/clock', '동일 SSM 인증값', 'ok: true, result.isOpen·nextOpen·nextClose'],
+        ['Paper 계정', 'GET /api/aws-alpaca-test/paper/account', 'alpaca JSON의 api_key·secret_key', 'ok: true, result.environment=paper·accountStatus·tradingBlocked'],
+        ['포지션', 'GET /api/aws-alpaca-test/paper/positions', '동일 Secrets Manager 인증값', 'ok: true, result.positions 배열'],
+        ['시장 시계', 'GET /api/aws-alpaca-test/paper/clock', '동일 Secrets Manager 인증값', 'ok: true, result.isOpen·nextOpen·nextClose'],
         ['종목 정보', 'GET /api/aws-alpaca-test/paper/asset?symbol=AAPL', 'symbol: 영문 1~10자리', 'ok: true, result 내 tradable·fractionable·status 등'],
       ],
-      note: '브라우저는 AWS 자격증명과 SecureString 원문을 받지 않습니다. Paper 주문·취소·포지션 변경은 호출하지 않습니다.',
+      note: '브라우저는 AWS 자격증명과 보안 암호 원문을 받지 않습니다. Paper 주문·취소·포지션 변경은 호출하지 않습니다.',
     },
   };
   const guide = guides[path];

@@ -6,7 +6,7 @@
     button.addEventListener('click', async () => {
       button.disabled = true;
       result.classList.remove('result--error');
-      result.textContent = 'AWS SSM Parameter Store에서 키를 읽어 Alpaca Paper API에 읽기 전용 요청을 보내는 중…';
+      result.textContent = 'AWS Secrets Manager에서 보안 암호를 읽어 Alpaca Paper API에 읽기 전용 요청을 보내는 중…';
       try {
         const response = await fetch(`${apiBase}/api/aws-alpaca-test/paper/account`);
         const data = await response.json();
@@ -52,7 +52,7 @@
       }
       btn.disabled = true;
       box.classList.remove('result--error');
-      box.textContent = 'AWS SSM Parameter Store에서 키를 읽어 서버가 읽기 전용 API를 호출하는 중…';
+      box.textContent = 'AWS Secrets Manager에서 보안 암호를 읽어 서버가 읽기 전용 API를 호출하는 중…';
       try {
         const response = await fetch(`${apiBase}${path}`);
         const data = await response.json();

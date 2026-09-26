@@ -1,7 +1,7 @@
-"""Read-only Alpaca Paper Trading checks sourced from AWS SSM Parameter Store.
+"""Read-only Alpaca Paper Trading checks sourced from AWS Secrets Manager.
 
 Parallel track to ``alpaca_test.py``: the same read-only Paper endpoints, but
-the API Key/Secret come from AWS Systems Manager Parameter Store instead of
+the API Key/Secret come from an AWS Secrets Manager JSON secret instead of
 ``al.key`` or ``ALPACA_API_KEY``/``ALPACA_SECRET_KEY``. ``alpaca_test.py``
 itself is not modified or used by this module.
 """
@@ -39,7 +39,7 @@ def test_paper_account_aws() -> dict[str, Any]:
     """Call the read-only Paper account endpoint and return no account identifier."""
     body = _get(f"{ALPACA_PAPER_BASE}/account")
     return {
-        "environment": "Paper Trading (AWS SSM)",
+        "environment": "Paper Trading (AWS Secrets Manager)",
         "connection": "connected",
         "accountStatus": body.get("status"),
         "tradingBlocked": bool(body.get("trading_blocked")),
@@ -60,14 +60,14 @@ def test_paper_positions_aws() -> dict[str, Any]:
         }
         for p in body
     ]
-    return {"environment": "Paper Trading (AWS SSM)", "positionCount": len(positions), "positions": positions}
+    return {"environment": "Paper Trading (AWS Secrets Manager)", "positionCount": len(positions), "positions": positions}
 
 
 def test_paper_clock_aws() -> dict[str, Any]:
     """Read-only market clock check (GET /v2/clock)."""
     body = _get(f"{ALPACA_PAPER_BASE}/clock")
     return {
-        "environment": "Paper Trading (AWS SSM)", "isOpen": bool(body.get("is_open")),
+        "environment": "Paper Trading (AWS Secrets Manager)", "isOpen": bool(body.get("is_open")),
         "timestamp": body.get("timestamp"), "nextOpen": body.get("next_open"), "nextClose": body.get("next_close"),
     }
 
@@ -76,7 +76,7 @@ def test_paper_asset_aws(symbol: str) -> dict[str, Any]:
     """Read-only asset metadata check (GET /v2/assets/{symbol})."""
     body = _get(f"{ALPACA_PAPER_BASE}/assets/{symbol}")
     return {
-        "environment": "Paper Trading (AWS SSM)", "symbol": body.get("symbol"),
+        "environment": "Paper Trading (AWS Secrets Manager)", "symbol": body.get("symbol"),
         "name": body.get("name"), "status": body.get("status"), "tradable": bool(body.get("tradable")),
         "fractionable": bool(body.get("fractionable")), "shortable": bool(body.get("shortable")),
     }

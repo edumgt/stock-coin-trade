@@ -31,7 +31,7 @@
     }
     button.disabled = true;
     result.classList.remove('result--error');
-    result.textContent = 'AWS SSM Parameter Store에서 키를 읽어 서버가 읽기 전용 API를 호출하는 중…';
+    result.textContent = 'AWS Secrets Manager에서 보안 암호를 읽어 서버가 읽기 전용 API를 호출하는 중…';
     try {
       const response = await fetch(url);
       const data = await response.json();
@@ -44,7 +44,7 @@
   };
 
   const testBuilders = {
-    'ssm-status': () => '/api/aws-broker-test/ssm/status',
+    'ssm-status': () => '/api/aws-broker-test/secrets/status',
     'kis-balance': () => '/api/aws-broker-test/kis/balance',
     'kb-quote': () => {
       const symbol = document.getElementById('kb-symbol').value.trim();
@@ -65,7 +65,7 @@
     }
     button.disabled = true;
     result.classList.remove('result--error');
-    result.textContent = 'AWS SSM Parameter Store에서 키를 읽어 서버가 읽기 전용 API를 호출하는 중…';
+    result.textContent = 'AWS Secrets Manager에서 보안 암호를 읽어 서버가 읽기 전용 API를 호출하는 중…';
     try {
       const response = await fetch(`${apiBase}${path}`);
       const data = await response.json();

@@ -1,0 +1,7 @@
+services:
+  python-backend:
+    # 로컬 개발에서만 사용합니다. EC2에서는 이 파일 대신 인스턴스 Role을 사용하세요.
+    environment:
+      AWS_PROFILE: ${AWS_PROFILE:-sagemaker-admin}
+    volumes:
+      - ${HOME}/.aws:/root/.aws:ro

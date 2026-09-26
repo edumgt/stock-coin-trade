@@ -184,6 +184,23 @@ docker compose down -v
 
 웹 화면은 임의 SQL을 실행하지 않고, 파라미터 바인딩된 읽기 전용 SQL 템플릿만 보여주고 실행합니다. 이는 데이터 조회 편의성과 운영 DB 보호를 함께 고려한 방식입니다.
 
+### OHLCV 검색·주요 종목 수집
+
+`/ohlcv-db.html`은 별도 `pg-stock` DB를 AG Grid Community로 조회합니다. `/api/ohlcv-db/rows`가 종목 코드·이름, 시장, 기간, 종가, 거래량 필터와 서버 페이징·정렬을 처리합니다.
+
+주요 KOSPI·KOSDAQ 24종목의 2020년 이후 일봉은 다음 명령으로 반복 적재할 수 있습니다. 복합 PK와 upsert를 사용하므로 같은 기간을 다시 실행해도 중복되지 않습니다. 기본 공급자는 네이버 금융이며 `--provider yahoo` 또는 `--provider auto`도 지원합니다.
+
+```bash
+docker compose exec python-backend python crawl_major_ohlcv.py
+docker compose exec python-backend python crawl_major_ohlcv.py --ticker 005930 --start 2020-01-01
+```
+
+| Method | Path | 설명 |
+|---|---|---|
+| `GET` | `/api/ohlcv-db/summary` | 전체·연도·시장별 적재 현황 |
+| `GET` | `/api/ohlcv-db/tickers` | 종목별 적재 건수 요약 |
+| `GET` | `/api/ohlcv-db/rows` | AG Grid용 일별 OHLCV 조건 검색·정렬·페이징 |
+
 ### PostgreSQL Quant on AWS VM
 
 퀀트 기능은 기존 회원·모의 주문 MariaDB와 분리된 PostgreSQL 16을 사용합니다. 웹 브라우저는 PostgreSQL에 직접 접근하지 않으며, Nginx → Flask API → PostgreSQL 순서로 내부 Docker 네트워크에서만 통신합니다.
@@ -374,84 +391,77 @@ KIS Testbed에는 호출 제한이 있으므로 토큰과 짧은 시세 결과�
 
 위 외부 서비스와 달리, 이 웹앱이 자체 발급하는 `/openapi/v1/*` 키는 이 사이트에 회원가입 후 **회원 메뉴에서 직접 발급**합니다. 발급·인증·호출 제한 절차는 위 "외부 연동 Open API" 절을 참고하세요.
 
-## AWS SSM Parameter Store 연동 트랙 (선택)
+## Secrets Manager 트랙 (AWS Secrets Manager 실제 사용)
 
-`kis.key`/`kb.key`/`al.key`처럼 브로커 키를 파일로 저장소 루트나 EC2 디스크에 두는 대신, **AWS Systems Manager Parameter Store**(SecureString)에서 키를 읽어오는 **완전히 별도의 백엔드 모듈·테스트 웹앱**입니다. 기존 `broker_test.py`, `broker_test_api.py`, `alpaca_test.py`, `alpaca_test_api.py`, `kb_token_test.py`와 `/broker-api-test.html`, `/alpaca-test.html`은 이 트랙과 무관하게 **지금까지의 키 파일 방식 그대로** 동작합니다 — 두 트랙은 서로 다른 URL·다른 Python 모듈을 사용하므로 한쪽을 설정하지 않아도 다른 쪽에 영향이 없습니다.
+`kis.key`·`kb.key`·`al.key`의 브로커 값을 **AWS Secrets Manager에 실제 생성**하고, 서버가 IAM Role로 읽어 KIS·KB·Alpaca의 읽기 전용 API를 호출합니다. 각 브로커는 JSON 보안 암호 하나로 저장합니다.
 
-### 구성
+가장 자세하고 쉬운 순서는 [`/learning/aws-ssm-key-management.html`](frontend/learning/aws-ssm-key-management.html)에 있습니다. 핵심 순서는 다음과 같습니다.
 
-| 구분 | 기존 키 파일 트랙 | 신규 AWS SSM 트랙 |
-|---|---|---|
-| 자격 증명 소스 | `kis.key`/`kb.key`/`al.key` 또는 `KIS_*`/`KB_*`/`ALPACA_*` 환경변수 | AWS SSM Parameter Store(SecureString) |
-| 공용 헬퍼 | `broker_test.py`의 `_read_key_file`/`_credentials` | `aws_secret_store.py`의 `get_parameter`/`get_credentials` |
-| KIS·KB 로직 | `broker_test.py` → `broker_test_api.py` (`/api/broker-test/*`) | `broker_test_aws.py` → `broker_test_aws_api.py` (`/api/aws-broker-test/*`) |
-| Alpaca 로직 | `alpaca_test.py` → `alpaca_test_api.py` (`/api/alpaca-test/*`) | `alpaca_test_aws.py` → `alpaca_test_aws_api.py` (`/api/aws-alpaca-test/*`) |
-| 테스트 웹앱 | `/broker-api-test.html`, `/alpaca-test.html` | `/aws-broker-api-test.html`, `/aws-alpaca-test.html` |
+### 1. 리전과 Secret 접두사 설정
 
-AWS SSM 트랙은 조회 범위를 의도적으로 좁혀 운영합니다. 먼저 SecureString 원문을 복호화하지 않는 준비 상태 점검(리전·IAM·파라미터 존재/타입)을 실행하고, KIS는 현재가·잔고, KB는 토큰 발급 점검·현재가, Alpaca는 계정·포지션·미국 시장 시계·종목 거래 가능 여부를 읽기 전용으로 확인합니다. 주문·정정·취소 API는 이 트랙에서 호출하지 않습니다.
+```text
+AWS_REGION=ap-northeast-2
+AWS_SECRETS_MANAGER_PREFIX=stock-coin-trade
+# 고객 관리형 KMS 키를 쓸 때만 설정
+# AWS_SECRETS_MANAGER_KMS_KEY_ID=<KMS key ARN 또는 ID>
+```
 
-### 1. IAM 정책 준비
+EC2에서는 `AWS_ACCESS_KEY_ID`·`AWS_SECRET_ACCESS_KEY`·`AWS_SESSION_TOKEN`을 비우고 인스턴스 프로파일을 사용합니다. 로컬에서는 AWS SSO 또는 임시 자격 증명을 사용합니다.
 
-EC2에 인스턴스 프로파일(권장) 또는 최소 권한 IAM 사용자를 만들고, 아래 파라미터 경로에만 `ssm:GetParameter`를 허용합니다. SecureString은 KMS 복호화 권한(`kms:Decrypt`)도 함께 필요합니다(기본 AWS 관리형 키 `alias/aws/ssm`를 쓰면 별도 키 생성 없이도 충분합니다).
+### 2. 값 노출 없이 3개 JSON Secret 미리보기
+
+업로드 도구는 기존 키 파일 또는 대응 환경변수를 읽지만 값은 출력하지 않습니다.
+
+```bash
+python python-stock-backend/upload_keys_to_secrets_manager.py \
+  --profile sagemaker-admin --region ap-northeast-2
+```
+
+`stock-coin-trade/kis`, `stock-coin-trade/kb`, `stock-coin-trade/alpaca`가 모두 `READY`인지 확인합니다. 각 Secret 안에는 브로커별 필드가 JSON으로 저장됩니다.
+
+### 3. 실제 Secrets Manager 적재
+
+업로드 담당 IAM에는 [`aws/iam/secrets-manager-provisioner-policy.json`](aws/iam/secrets-manager-provisioner-policy.json)을 연결합니다. 고객 관리형 KMS 키를 쓰면 해당 키의 암호화 권한도 필요합니다.
+
+```bash
+python python-stock-backend/upload_keys_to_secrets_manager.py \
+  --profile sagemaker-admin --region ap-northeast-2 --apply
+```
+
+기존 값을 회전할 때만 다음처럼 덮어씁니다.
+
+```bash
+python python-stock-backend/upload_keys_to_secrets_manager.py \
+  --profile sagemaker-admin --region ap-northeast-2 --apply --overwrite --only kis
+```
+
+### 4. 앱 Role은 읽기만 허용
 
 ```json
 {
   "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["ssm:GetParameter"],
-      "Resource": "arn:aws:ssm:<region>:<account-id>:parameter/stock-coin-trade/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["kms:Decrypt"],
-      "Resource": "arn:aws:kms:<region>:<account-id>:key/*",
-      "Condition": { "StringEquals": { "kms:ViaService": "ssm.<region>.amazonaws.com" } }
-    }
-  ]
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"],
+    "Resource": "arn:aws:secretsmanager:ap-northeast-2:086015456585:secret:stock-coin-trade/*"
+  }]
 }
 ```
 
-### 2. 파라미터 생성
+저장소의 [`aws/iam/secrets-manager-runtime-policy.json`](aws/iam/secrets-manager-runtime-policy.json)을 그대로 사용할 수 있습니다. 고객 관리형 KMS 키를 쓸 때만 해당 키의 `kms:Decrypt`를 추가합니다. 앱 Role에는 생성·갱신·삭제 권한을 주지 않습니다.
 
-이름 규칙은 `/stock-coin-trade/<서비스>/<항목>`입니다(접두사는 `.env`의 `AWS_SSM_PARAMETER_PREFIX`로 바꿀 수 있습니다). AWS CLI로 한 번만 생성하면 되고, 값은 이 저장소·터미널 기록에 남기지 않습니다.
-
-| 파라미터 | 값 |
-|---|---|
-| `/stock-coin-trade/kis/app_key` | KIS 모의투자 App Key |
-| `/stock-coin-trade/kis/secret` | KIS 모의투자 App Secret |
-| `/stock-coin-trade/kis/account` | 모의투자 계좌 `CANO-상품코드` (잔고 조회 시에만 필요) |
-| `/stock-coin-trade/kb/app_key` | KB증권 App Key |
-| `/stock-coin-trade/kb/secret` | KB증권 App Secret |
-| `/stock-coin-trade/alpaca/api_key` | Alpaca Paper API Key |
-| `/stock-coin-trade/alpaca/secret_key` | Alpaca Paper API Secret |
+### 5. 앱 재시작 후 검증
 
 ```bash
-aws ssm put-parameter --name "/stock-coin-trade/kis/app_key" --type SecureString --value "<모의투자 App Key>"
-aws ssm put-parameter --name "/stock-coin-trade/kis/secret"   --type SecureString --value "<모의투자 App Secret>"
-aws ssm put-parameter --name "/stock-coin-trade/kis/account"  --type SecureString --value "12345678-01"
-aws ssm put-parameter --name "/stock-coin-trade/kb/app_key"   --type SecureString --value "<KB App Key>"
-aws ssm put-parameter --name "/stock-coin-trade/kb/secret"    --type SecureString --value "<KB App Secret>"
-aws ssm put-parameter --name "/stock-coin-trade/alpaca/api_key"    --type SecureString --value "<Alpaca Paper Key>"
-aws ssm put-parameter --name "/stock-coin-trade/alpaca/secret_key" --type SecureString --value "<Alpaca Paper Secret>"
+docker compose up -d --build python-backend frontend
 ```
 
-### 3. 앱에서 접근하는 방법
+1. `/aws-broker-api-test.html`에서 준비 상태가 `3/3`인지 확인합니다.
+2. KIS 현재가, KB 토큰을 순서대로 실행합니다.
+3. `/aws-alpaca-test.html`에서 Paper 계정을 확인합니다.
+4. 모두 성공한 뒤 로컬 키 파일을 별도 안전 저장소로 옮깁니다. 검증 전에 삭제하지 않습니다.
 
-- **EC2 배포**: 위 IAM 정책이 붙은 인스턴스 프로파일만 있으면 됩니다. `docker-compose.yml`의 `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_SESSION_TOKEN`은 비워 두세요 — `boto3`가 EC2 메타데이터에서 자동으로 자격 증명을 가져옵니다.
-- **로컬 개발**: EC2가 아니므로 `.env`에 `AWS_REGION`과 함께 임시 자격 증명(`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_SESSION_TOKEN`, 예: `aws sso login` 또는 `aws configure`로 발급)을 채운 뒤 `docker compose up -d --build`로 재기동합니다.
-- 두 경우 모두 `boto3`의 표준 자격 증명 탐색 순서를 그대로 사용하므로, 이 프로젝트 코드에는 AWS 액세스 키를 하드코딩하지 않습니다.
-
-### 4. 접속·동작 확인
-
-| 주소 | 설명 |
-|---|---|
-| `/aws-broker-api-test.html` | KIS 현재가·잔고, KB 토큰 발급·현재가 (AWS SSM) |
-| `/aws-alpaca-test.html` | Alpaca Paper 계정·포지션·시장 시계·종목 정보 (AWS SSM) |
-| `/learning/aws-ssm-key-management.html` | Parameter Store·KMS·IAM 최소권한·테스트 흐름 가이드 |
-
-파라미터가 없거나 IAM 권한이 부족하면 화면에 "SSM Parameter Store에 …이(가) 없습니다" 같은 안전한 오류 메시지만 표시되고, AWS 자격 증명이나 파라미터 값은 응답·로그에 노출되지 않습니다.
+브라우저와 API 응답에는 Secret 원문, AWS 자격 증명, 브로커 토큰이 반환되지 않습니다. 기존 키 파일 방식 화면과 URL도 그대로 유지되므로 단계적으로 전환할 수 있습니다.
 
 ## KIS MCP — VS Code·Codex에서 자연어로 KIS API 사용하기
 

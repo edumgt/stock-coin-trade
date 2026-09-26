@@ -63,7 +63,7 @@ def provider_for_path(path):
     if "alpaca" in path: return "Alpaca"
     if "/binance/" in path: return "Binance"
     if "/korbit/" in path: return "Korbit"
-    if "/ssm/" in path: return "AWS SSM"
+    if "/secrets/" in path or "/ssm/" in path: return "AWS Secrets Manager"
     return "외부 API"
 
 

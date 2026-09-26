@@ -663,20 +663,42 @@ body[data-exchange] .row button:disabled { opacity: .6; }
 
 /* 우측 오프캔버스는 메뉴 전용이다. AI의 3개 기능은 상단 GNB 전용 화면에서 사용한다. */
 #ai-panel .right-tool-nav { flex: 1; }
-.dataset-composer-open { width:100%; margin-top:20px; padding:11px 13px; border:0; border-radius:8px; color:#fff; background:var(--accent); font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
-.dataset-composer-modal { position:fixed; z-index:500; inset:0; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.46); backdrop-filter:blur(3px); }
+.dataset-composer-open { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:20px; padding:12px 14px; border:0; border-radius:10px; color:#fff; background:var(--accent); font:inherit; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 8px 20px rgba(37,99,235,.22); transition:transform .12s ease, box-shadow .12s ease; }
+.dataset-composer-open:hover { transform:translateY(-1px); box-shadow:0 12px 26px rgba(37,99,235,.28); }
+.dataset-composer-modal { position:fixed; z-index:500; inset:0; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.5); backdrop-filter:blur(4px); }
 .dataset-composer-modal.open { display:flex; }
-.dataset-composer-dialog { width:min(620px,100%); max-height:calc(100dvh - 40px); overflow:auto; border:1px solid var(--border); border-radius:14px; background:var(--surface); box-shadow:0 24px 70px rgba(15,23,42,.3); }
-.dataset-composer-dialog header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:17px 20px; border-bottom:1px solid var(--border); }
-.dataset-composer-dialog h2 { margin:0; color:var(--fg); font-size:18px; font-weight:900; }
-.dataset-composer-close { width:32px; height:32px; border:1px solid var(--border); border-radius:7px; color:var(--muted); background:var(--surface-2); font-size:22px; line-height:1; cursor:pointer; }
-.dataset-composer-body { padding:20px; }
+.dataset-composer-dialog { display:flex; flex-direction:column; width:min(1040px,100%); max-height:calc(100dvh - 40px); overflow:hidden; border:1px solid #c9daff; border-radius:18px; background:var(--surface); box-shadow:0 30px 80px rgba(15,23,42,.35); animation:composer-in .18s ease-out; }
+@keyframes composer-in { from { opacity:0; transform:translateY(12px) scale(.985); } to { opacity:1; transform:none; } }
+.dataset-composer-dialog header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:26px 32px 22px; border-bottom:1px solid #d9e6ff; background:linear-gradient(135deg,#e6f0ff,#fafcff); }
+.dataset-composer-heading { min-width:0; }
+.dataset-composer-eyebrow { color:var(--accent-dark); font-size:11px; font-weight:900; letter-spacing:.1em; }
+.dataset-composer-dialog h2 { margin:6px 0 6px; color:var(--fg); font-size:24px; font-weight:900; line-height:1.25; }
+.dataset-composer-dialog header p { margin:0; color:var(--fg-2); font-size:13.5px; line-height:1.6; }
+.dataset-composer-close { flex:0 0 auto; width:36px; height:36px; border:1px solid #c9daff; border-radius:9px; color:var(--muted); background:#fff; font-size:24px; line-height:1; cursor:pointer; transition:background .12s ease, color .12s ease; }
+.dataset-composer-close:hover { color:var(--fg); background:var(--surface-2); }
+.dataset-composer-body { flex:1 1 auto; overflow:auto; padding:26px 32px 18px; }
+.dataset-composer-row { display:grid; grid-template-columns:1.6fr .8fr; gap:16px; }
+.dataset-composer-field { display:flex; flex-direction:column; gap:7px; margin-bottom:18px; }
+.dataset-composer-label { color:var(--fg); font-size:13px; font-weight:800; }
+.dataset-composer-label em { color:var(--muted); font-style:normal; font-weight:600; }
 .dataset-composer-body input,
 .dataset-composer-body select,
-.dataset-composer-body textarea { font-size:14px !important; }
-.dataset-composer-body textarea { min-height:230px; }
-.dataset-composer-body .btn { font-size:14px !important; }
-@media(max-width:600px) { .dataset-composer-modal { padding:12px; }.dataset-composer-dialog header,.dataset-composer-body { padding:15px; } }
+.dataset-composer-body textarea { width:100%; margin:0 !important; padding:12px 14px !important; border:1px solid var(--border) !important; border-radius:10px !important; background:#fff; color:var(--fg); font:inherit; font-size:15px !important; line-height:1.5; transition:border-color .12s ease, box-shadow .12s ease; }
+.dataset-composer-body input:focus,
+.dataset-composer-body select:focus,
+.dataset-composer-body textarea:focus { outline:none; border-color:var(--accent) !important; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+.dataset-composer-body textarea { min-height:340px; resize:vertical; }
+.dataset-composer-meta { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:-8px; }
+.dataset-composer-count { color:var(--muted); font-size:12.5px; font-variant-numeric:tabular-nums; }
+.dataset-composer-count.near-limit { color:#dc2626; font-weight:800; }
+.dataset-composer-msg { flex:1 1 auto; margin:0 !important; text-align:right; font-size:13.5px; font-weight:700; }
+.dataset-composer-footer { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:16px 32px 20px; border-top:1px solid var(--border); background:var(--surface-2); }
+.dataset-composer-cancel { padding:11px 18px; border:1px solid var(--border); border-radius:10px; color:var(--fg-2); background:#fff; font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+.dataset-composer-cancel:hover { color:var(--fg); background:var(--surface); }
+.dataset-composer-submit { width:auto !important; min-width:180px; margin:0 !important; padding:11px 22px !important; border:0; border-radius:10px; color:#fff; background:var(--accent); font:inherit; font-size:14px !important; font-weight:800; cursor:pointer; box-shadow:0 8px 20px rgba(37,99,235,.22); }
+.dataset-composer-submit:hover { filter:brightness(1.05); }
+.dataset-composer-submit:disabled { opacity:.65; cursor:wait; box-shadow:none; }
+@media(max-width:760px) { .dataset-composer-modal { padding:10px; } .dataset-composer-dialog { max-height:calc(100dvh - 20px); border-radius:14px; } .dataset-composer-dialog header { padding:18px 18px 16px; } .dataset-composer-dialog h2 { font-size:20px; } .dataset-composer-body { padding:18px; } .dataset-composer-row { grid-template-columns:1fr; gap:0; } .dataset-composer-body textarea { min-height:240px; } .dataset-composer-footer { padding:14px 18px 16px; } .dataset-composer-submit { flex:1 1 auto; } }
 
 /* ── Content control bar (hamburger ← | AI 분석 →) ─────────────────────── */
 #content-ctrl-bar {

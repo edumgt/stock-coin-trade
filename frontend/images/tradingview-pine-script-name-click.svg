@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1450" height="314" viewBox="0 0 1450 314" role="img" aria-labelledby="title desc">
+  <title id="title">TradingView Pine 에디터에서 스크립트 이름 클릭</title>
+  <desc id="desc">Pine 에디터 위쪽의 연습용 스크립트 이름과 아래 화살표를 분홍색 원과 안내 화살표로 표시한 화면</desc>
+  <rect width="1450" height="314" fill="#fff"/>
+  <path d="M0 25h683M683 0v314M683 94h767" stroke="#e5e7eb"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <g fill="#111" font-size="14">
+      <text x="17" y="17">▥ 지표⌄　⌘　　◴ 얼러트　 ◀ 리플레이　 ↶　↷</text>
+      <text x="727" y="22">▣　Pine 에디터</text>
+      <text x="727" y="69" font-size="19" font-weight="700">⌁　연습용⌄</text>
+      <text x="1370" y="69" font-size="17">⚠ 스크립트</text>
+    </g>
+    <g fill="#008c7a" font-size="12"><text x="0" y="49">시 284,000  고 285,500  저 283,500  종 285,500  +1,500 (+0.44%)</text></g>
+    <g stroke="#d5d8dc" stroke-dasharray="1 3"><path d="M0 77h683M0 132h683M0 187h683M0 242h683M0 297h683M75 25v289M139 25v289M203 25v289M267 25v289M331 25v289M395 25v289M459 25v289M523 25v289M587 25v289M651 25v289"/></g>
+    <g stroke-width="1"><path d="M75 151v42M72 161h6v27h-6zM91 181v34M88 187h6v20h-6zM109 166v55M106 180h6v25h-6zM127 177v62M124 191h6v29h-6zM145 189v45M142 197h6v25h-6zM163 172v59M160 185h6v32h-6zM181 188v48M178 197h6v27h-6zM199 204v61M196 218h6v29h-6zM217 195v72M214 211h6v39h-6zM235 218v54M232 230h6v31h-6zM253 230v53M250 239h6v33h-6zM271 246v45M268 256h6v28h-6z" stroke="#00a67d" fill="#fff"/></g>
+    <path d="M0 206c31-3 38 13 56 20s33-14 46-19 28 13 43 20 27-16 40-7 28 23 42 28 30-3 44 14 29 22 44 31" fill="none" stroke="#1264ed" stroke-width="3"/>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">
+      <g fill="#8a8d93"><text x="747" y="116">1</text><text x="747" y="136">2</text><text x="747" y="176">4</text><text x="747" y="196">5</text><text x="747" y="216">6</text><text x="747" y="236">7</text></g>
+      <text x="784" y="116" fill="#8b5cf6">//@version=6</text>
+      <text x="784" y="136" fill="#1457d9">indicator(<tspan fill="#268b35">"카카오/네이버 상대강도"</tspan><tspan fill="#111">, overlay=</tspan><tspan fill="#e11d48">false</tspan><tspan fill="#111">)</tspan></text>
+      <text x="784" y="176" fill="#111">naverClose = <tspan fill="#1457d9">request.security</tspan>(<tspan fill="#268b35">"KRX:035420"</tspan>, <tspan fill="#e11d48">timeframe.period</tspan>, close)</text>
+      <text x="784" y="196" fill="#111">ratio = <tspan fill="#e11d48">close</tspan> / naverClose</text>
+      <text x="784" y="216" fill="#1457d9">plot<tspan fill="#111">(ratio, color=</tspan><tspan fill="#e11d48">color.blue</tspan><tspan fill="#111">, linewidth=2)</tspan></text>
+      <rect x="776" y="218" width="674" height="19" fill="#dbeafe" opacity=".85"/>
+      <text x="784" y="234" fill="#1457d9">plot<tspan fill="#111">(ta.sma(ratio, 20), color=</tspan><tspan fill="#e11d48">color.orange</tspan><tspan fill="#111">)</tspan></text>
+    </g>
+  </g>
+  <path d="M711 53c19-25 90-33 119-10 19 15 8 44-15 53-28 11-96 7-126-11-13-8 7-27 22-32z" fill="none" stroke="#e9008c" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M862 43h121" stroke="#e9008c" stroke-width="3" stroke-linecap="round"/>
+  <path d="M858 43l12-7v14z" fill="#e9008c"/>
+  <rect x="982" y="25" width="153" height="36" rx="18" fill="#e9008c"/>
+  <text x="1058" y="49" text-anchor="middle" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">① 여기를 클릭</text>
+</svg>

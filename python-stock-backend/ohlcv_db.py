@@ -1,4 +1,5 @@
 """Read-only aggregate API for the separate docker-class OHLCV database."""
+import logging
 import os
 from datetime import date, datetime
 from decimal import Decimal
@@ -10,12 +11,28 @@ from sqlalchemy.exc import SQLAlchemyError
 
 ohlcv_db_bp = Blueprint("ohlcv_db", __name__, url_prefix="/api/ohlcv-db")
 _engine = None
+logger = logging.getLogger(__name__)
+
+_ROW_SORT_COLUMNS = {
+    "ticker_code": "o.ticker_code",
+    "name": "t.name",
+    "market": "t.market",
+    "trade_date": "o.trade_date",
+    "open": "o.open",
+    "high": "o.high",
+    "low": "o.low",
+    "close": "o.close",
+    "adj_close": "o.adj_close",
+    "volume": "o.volume",
+    "change_rate": "change_rate",
+    "traded_value": "traded_value",
+}
 
 
 def _url():
     return os.environ.get(
         "OHLCV_DATABASE_URL",
-        "postgresql+psycopg://admin:admin1234@host.docker.internal:5433/admin",
+        "postgresql+psycopg://admin:admin1234@pg-stock:5432/admin",
     )
 
 
@@ -38,6 +55,21 @@ def _rows(result):
     return [{key: _value(value) for key, value in row.items()} for row in result.mappings()]
 
 
+def _bounded_int(name, default, minimum, maximum):
+    value = int(request.args.get(name, default))
+    return max(minimum, min(value, maximum))
+
+
+def _optional_number(name):
+    raw = request.args.get(name, "").strip()
+    return Decimal(raw) if raw else None
+
+
+def _optional_date(name):
+    raw = request.args.get(name, "").strip()
+    return date.fromisoformat(raw) if raw else None
+
+
 @ohlcv_db_bp.get("/summary")
 def summary():
     try:
@@ -50,7 +82,8 @@ def summary():
             yearly = _rows(conn.execute(text("""
                 SELECT extract(year FROM trade_date)::int AS year, count(*) AS row_count,
                        count(DISTINCT ticker_code) AS ticker_count,
-                       round(count(*)::numeric / nullif(count(DISTINCT ticker_code), 0), 1) AS average_rows
+                       round(count(*)::numeric / nullif(count(DISTINCT ticker_code), 0), 1) AS average_rows,
+                       min(trade_date) AS first_date, max(trade_date) AS last_date
                 FROM ohlcv GROUP BY 1 ORDER BY 1
             """)))
             quality = _rows(conn.execute(text("""
@@ -62,6 +95,7 @@ def summary():
             """)))
         return jsonify({"totals": totals, "yearly": yearly, "quality": quality, "markets": markets})
     except SQLAlchemyError:
+        logger.exception("Failed to query OHLCV summary")
         return jsonify({"message": "OHLCV DB 집계를 조회할 수 없습니다."}), 503
 
 
@@ -96,4 +130,77 @@ def tickers():
             """), {"query": f"%{query}%", "limit": limit, "offset": offset}))
         return jsonify({"rows": rows, "total": total, "limit": limit, "offset": offset})
     except (ValueError, SQLAlchemyError):
+        logger.exception("Failed to query OHLCV ticker summary")
         return jsonify({"message": "종목별 OHLCV 집계를 조회할 수 없습니다."}), 503
+
+
+@ohlcv_db_bp.get("/rows")
+def rows():
+    """Return filtered daily OHLCV rows for the AG Grid infinite row model."""
+    try:
+        query = request.args.get("q", "").strip()
+        market = request.args.get("market", "").strip()
+        date_from = _optional_date("date_from")
+        date_to = _optional_date("date_to")
+        min_close = _optional_number("min_close")
+        max_close = _optional_number("max_close")
+        min_volume = _optional_number("min_volume")
+        max_volume = _optional_number("max_volume")
+        limit = _bounded_int("limit", 100, 1, 500)
+        offset = _bounded_int("offset", 0, 0, 10_000_000)
+        sort = request.args.get("sort", "trade_date").strip()
+        direction = request.args.get("order", "desc").strip().lower()
+    except (ValueError, ArithmeticError):
+        return jsonify({"message": "검색 조건의 숫자 또는 날짜 형식이 올바르지 않습니다."}), 400
+
+    if date_from and date_to and date_from > date_to:
+        return jsonify({"message": "시작일은 종료일보다 늦을 수 없습니다."}), 400
+
+    sort_column = _ROW_SORT_COLUMNS.get(sort, "o.trade_date")
+    sort_direction = "ASC" if direction == "asc" else "DESC"
+    clauses = []
+    params = {"limit": limit, "offset": offset}
+
+    if query:
+        clauses.append("(o.ticker_code ILIKE :query OR COALESCE(t.name, '') ILIKE :query)")
+        params["query"] = f"%{query}%"
+    if market:
+        clauses.append("t.market = :market")
+        params["market"] = market
+    for key, column, value, operator in (
+        ("date_from", "o.trade_date", date_from, ">="),
+        ("date_to", "o.trade_date", date_to, "<="),
+        ("min_close", "o.close", min_close, ">="),
+        ("max_close", "o.close", max_close, "<="),
+        ("min_volume", "o.volume", min_volume, ">="),
+        ("max_volume", "o.volume", max_volume, "<="),
+    ):
+        if value is not None:
+            clauses.append(f"{column} {operator} :{key}")
+            params[key] = value
+
+    where = " WHERE " + " AND ".join(clauses) if clauses else ""
+    try:
+        with _db().connect() as conn:
+            total = conn.execute(text(f"""
+                SELECT count(*) FROM ohlcv o
+                JOIN tickers t USING (ticker_code)
+                {where}
+            """), params).scalar_one()
+            result = _rows(conn.execute(text(f"""
+                SELECT o.ticker_code, t.name, t.market, o.trade_date,
+                       o.open, o.high, o.low, o.close, o.adj_close, o.volume,
+                       CASE WHEN o.open > 0
+                            THEN round(((o.close - o.open) / o.open * 100)::numeric, 4)
+                       END AS change_rate,
+                       round((o.close * o.volume)::numeric, 0) AS traded_value
+                FROM ohlcv o
+                JOIN tickers t USING (ticker_code)
+                {where}
+                ORDER BY {sort_column} {sort_direction}, o.ticker_code ASC, o.trade_date DESC
+                LIMIT :limit OFFSET :offset
+            """), params))
+        return jsonify({"rows": result, "total": total, "limit": limit, "offset": offset})
+    except SQLAlchemyError:
+        logger.exception("Failed to query filtered OHLCV rows")
+        return jsonify({"message": "OHLCV 상세 데이터를 조회할 수 없습니다."}), 503

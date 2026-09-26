@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1167" height="105" viewBox="0 0 1167 105" role="img" aria-labelledby="title desc">
+  <title id="title">TradingView 처음 접속 후 종목 찾기 위치</title>
+  <desc id="desc">TradingView 상단 찾기 Ctrl+K 메뉴를 분홍색 원으로 표시한 안내 이미지</desc>
+  <rect width="1167" height="105" fill="#ffffff"/>
+  <g fill="#050505" font-family="Arial, Helvetica, sans-serif" font-weight="700">
+    <path d="M27 11h18v7H34v11h-7zM48 11h15l-8 18H40z"/>
+    <text x="70" y="27" font-size="23">TradingView</text>
+    <text x="431" y="25" font-size="16" font-weight="500">찾기 (Ctrl+K)</text>
+    <text x="587" y="25" font-size="16">프로덕트</text>
+    <text x="694" y="25" font-size="16">커뮤니티</text>
+    <text x="803" y="25" font-size="16">마켓</text>
+    <text x="881" y="25" font-size="16">브로커</text>
+    <text x="974" y="25" font-size="16">더보기</text>
+  </g>
+  <circle cx="414" cy="18" r="8" fill="none" stroke="#050505" stroke-width="1.5"/>
+  <path d="M420 24l7 7" fill="none" stroke="#050505" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M391 7C424-2 506 0 535 11c18 7 17 24 1 36-29 20-112 23-151 5-15-7-13-28-5-34 12-9 32-13 56-15M380 25c25-12 113-15 155-5M477 57c-2 8-1 10 0 12" fill="none" stroke="#e9008c" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
