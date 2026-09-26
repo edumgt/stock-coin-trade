@@ -522,6 +522,30 @@ python3 scripts/kis_mcp.py trade --check
 
 서버가 노출하는 기능과 최신 요구사항은 [코드 검색 MCP](https://github.com/koreainvestment/open-trading-api/tree/main/MCP/KIS%20Code%20Assistant%20MCP), [거래 MCP](https://github.com/koreainvestment/open-trading-api/tree/main/MCP/Kis%20Trading%20MCP)를 참고하세요.
 
+### 구성 흐름과 문제 해결
+
+```text
+Codex CLI·IDE (.codex/config.toml) ───────┐
+VS Code Copilot Chat (.vscode/mcp.json) ───┼─→ scripts/kis_mcp.py ─→ 공식 KIS MCP 서버
+VS Code 탐색기 KIS MCP 패널 ────────────────┘          │                 ├─ Code Assistant
+                                                    │                 └─ Trading (모의투자)
+                                                    └─ .env의 모의투자 키 읽기
+```
+
+- [`scripts/setup_kis_mcp.sh`](scripts/setup_kis_mcp.sh)는 공식 저장소를 Git 무시 대상인 `mcp/open-trading-api/`에 내려받고 `mcp/.venv/`에 `uv`와 의존성을 설치한다.
+- [`scripts/kis_mcp.py`](scripts/kis_mcp.py)는 `code`/`trade` 서버를 stdio로 실행하며, `KIS_ENVIRONMENT=paper`만 허용하고 모의투자 키만 전달한다. 공식 서버의 `~/KIS/config` 출력은 Git 무시된 `mcp/home/`으로 격리된다.
+
+| 증상 | 확인할 곳 |
+| --- | --- |
+| `KIS MCP source is missing` | 저장소 루트에서 `bash scripts/setup_kis_mcp.sh` 실행 |
+| `uv is missing` | `mcp/.venv/bin/uv` 설치 확인 |
+| 거래 서버의 키·계좌 오류 | `.env`의 `KIS_PAPER_*` 세 값, 계좌번호 형식, `KIS_ENVIRONMENT=paper` |
+| MCP 도구가 보이지 않음 | VS Code·Codex 재시작 후 두 서버 연결 상태 확인 |
+| 탐색기 패널이 보이지 않음 | VSIX 설치, 창 다시 로드, **KIS MCP: 탐색기 패널 열기** 실행 |
+| 패널에 연결 실패 표시 | **서버 새로고침** 후 오류와 `--check` 결과 확인 |
+
+공식 기능·API 목록은 [KIS MCP 안내](https://apiportal.koreainvestment.com/tools-mcp)와 [공식 MCP 소스](https://github.com/koreainvestment/open-trading-api/tree/main/MCP)를 참고하세요.
+
 ## Alpaca Paper Trading
 
 `실전연습 → Alpaca API`에는 계정 생성, Paper API Key 발급 위치, `alpaca-py`, Trading CLI, WebSocket 및 주의사항을 정리했습니다.
@@ -594,6 +618,53 @@ curl http://localhost:3333/api/alpaca-test/paper/account
 ```
 
 `scripts/ec2/deploy.sh`는 Python 문법 검사 후 `docker compose up -d --build --remove-orphans`를 실행합니다.
+
+## 배포 (EC2 · CI/CD)
+
+- 서비스 주소: `https://st.edumgt.co.kr`
+- 운영: 단일 EC2 인스턴스(Elastic IP), 서비스 경로 `/opt/stock-coin-trade`
+- 컨테이너: `crypto-mock-frontend`(nginx), `crypto-mock-python`(gunicorn), `crypto-mock-mariadb`, `crypto-mock-postgres`
+
+### 로컬 vs AWS 실행 (SSL)
+
+같은 소스를 SSL 사용 여부로 나눠 실행합니다.
+
+| 구분 | 실행 명령 | nginx 설정 | 포트 | TLS |
+|------|-----------|-----------|------|-----|
+| 로컬 개발 | `docker compose up -d` | 이미지 내장 `docker/nginx.conf` | `FRONTEND_PORT`(기본 3333) → 80 | 없음(HTTP) |
+| AWS 운영 | `docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d` | `docker/nginx.ssl.conf`(마운트) | 80(ACME·리다이렉트), 443(서비스) | Let's Encrypt |
+
+- 로컬은 `docker-compose.ssl.yml`을 붙이지 않으면 내장 HTTP 설정으로만 뜹니다.
+- AWS `.env`는 `FRONTEND_PORT=80`, `SESSION_COOKIE_SECURE=true`로 둡니다.
+- 최초 인증서 발급·자동 갱신 등록은 EC2에서 한 번만: `sudo scripts/ec2/init-letsencrypt.sh`. 갱신은 매일 cron이 `certbot renew`(webroot 무중단) 후 `nginx -s reload`를 수행합니다.
+
+### GitHub Actions 자동 배포
+
+`main`에 푸시하면 [.github/workflows/deploy-ec2.yml](.github/workflows/deploy-ec2.yml)가 ECR·외부 저장소 없이 EC2 docker로 **직접** 배포합니다.
+
+1. 소스를 EC2로 `rsync`(비밀 파일·`certbot`·`.git` 제외).
+2. `docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d --build --remove-orphans`.
+3. `https://st.edumgt.co.kr/api/stocks/list` HTTPS 헬스체크.
+
+필요한 GitHub Secrets: `EC2_SSH_KEY`(접속 개인 키), `EC2_HOST`(Elastic IP), `EC2_USER`(기본 `ubuntu`).
+
+### 수동 배포·검증
+
+```bash
+# 로컬 검증
+docker compose config --quiet
+python3 -m py_compile python-stock-backend/*.py
+git diff --check
+
+# 커밋·푸시 → Actions가 자동 배포
+git add -A && git commit -m "<변경 내용>" && git push origin main
+
+# 반영 확인
+curl -fsSL https://st.edumgt.co.kr/api/stocks/list
+curl -fsSL https://st.edumgt.co.kr/index.html
+```
+
+정적 자산 변경 후에는 브라우저 캐시를 고려해 버전 쿼리 또는 강력 새로고침으로 확인합니다. 비밀 파일(`.env`, `*.pem`, `*.key`)과 `certbot/`은 배포 rsync·빌드 컨텍스트에서 제외됩니다.
 
 ## 운영 시 유의사항
 
