@@ -8,3 +8,8 @@
 
 ![alt text](frontend/images/tr-pine/tradingview-capture-07.png)
 ![alt text](frontend/images/tr-pine/tradingview-capture-08.png)
+
+
+![alt text](image.png)
+
+![alt text](image-1.png)
