@@ -37,10 +37,9 @@ Flask REST API와 Vanilla JavaScript로 만든 주식·암호화폐 모의투자
 
 | 과정 | 준비 | 실습 | 문서 |
 |---|---|---|---|
-| KIS Testbed | KIS 모의투자·API 신청 | Testbed 조회와 모의 주문→정정→취소 | [01.md](curriculum/01.md) |
-| KB Open API | KB Open API 신청·키 발급 | 운영 시세·호가·차트 읽기 전용 조회 | [02.md](curriculum/02.md) |
-| Alpaca Paper | Alpaca Paper 계정·키 발급 | Paper 계정·시세와 주문→취소 흐름 | [03.md](curriculum/03.md) |
-| Binance·Korbit | 공개/개인 API 권한 구분 | 공개 시세·호가와 통합 보안 점검 | [04.md](curriculum/04.md) |
+| KIS Testbed | KIS 모의투자·API 신청 | Testbed 조회와 모의 주문→정정→취소 | [kis-test](frontend/learning/kis-test.html) |
+| KB Open API | KB Open API 신청·키 발급 | 운영 시세·호가·차트 읽기 전용 조회 | [kb-securities](frontend/learning/kb-securities.html) |
+| Alpaca Paper | Alpaca Paper 계정·키 발급 | Paper 계정·시세와 주문→취소 흐름 | [alpaca-api](frontend/learning/alpaca-api.html) |
 
 ## 아키텍처
 
