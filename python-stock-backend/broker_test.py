@@ -43,9 +43,10 @@ _KIS_ORDER_TEST_MAX_PRICE_RATIO = 0.95  # 이 비율 이상이면 체결 위험�
 class BrokerApiError(RuntimeError):
     """A user-safe error that never includes credentials or access tokens."""
 
-    def __init__(self, message: str, status_code: int = 502):
+    def __init__(self, message: str, status_code: int = 502, code: str = ""):
         super().__init__(message)
         self.status_code = status_code
+        self.code = code
 
 
 def _credential_source() -> str:

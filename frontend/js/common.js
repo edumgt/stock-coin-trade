@@ -983,6 +983,37 @@ function mountApiTestGuide() {
   host.appendChild(element);
 }
 
+// 우측 상단 토스트. 기본 2초 후 사라진다. 어느 페이지에서든 window.showToast로 호출한다.
+function showToast(message, { type = 'info', duration = 2000 } = {}) {
+  if (!message) return;
+  let host = document.getElementById('toastHost');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'toastHost';
+    host.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none';
+    document.body.appendChild(host);
+  }
+  const palette = {
+    info: ['#eff6ff', '#bfdbfe', '#1e3a5f'],
+    warn: ['#fffbeb', '#fde68a', '#854d0e'],
+    error: ['#fef2f2', '#fecaca', '#991b1b'],
+    success: ['#f0fdf4', '#bbf7d0', '#166534'],
+  };
+  const [bg, border, fg] = palette[type] || palette.info;
+  const el = document.createElement('div');
+  el.setAttribute('role', 'status');
+  el.style.cssText = `pointer-events:auto;max-width:340px;padding:11px 14px;border-radius:10px;border:1px solid ${border};background:${bg};color:${fg};font-size:13px;line-height:1.5;box-shadow:0 8px 24px rgba(15,23,42,.14);opacity:0;transform:translateY(-6px);transition:opacity .18s ease,transform .18s ease`;
+  el.textContent = message;
+  host.appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-6px)';
+    setTimeout(() => el.remove(), 200);
+  }, duration);
+}
+if (typeof window !== 'undefined') window.showToast = showToast;
+
 // API 테스트 화면 상단에 "인증 정보를 어디서 읽는지"를 호스트 기준으로 안내한다.
 // 페이지 <body>의 data-cred-source 값으로 유형을 지정한다: broker | aws | public
 function mountCredentialSourceNote() {

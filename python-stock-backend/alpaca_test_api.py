@@ -22,7 +22,10 @@ def _run(build):
         return jsonify({"ok": True, "result": build()})
     except BrokerApiError as exc:
         # Credential rejection is an expected test outcome, not a browser error.
-        return jsonify({"ok": False, "message": str(exc)})
+        payload = {"ok": False, "message": str(exc)}
+        if getattr(exc, "code", ""):
+            payload["code"] = exc.code
+        return jsonify(payload)
     except requests.RequestException:
         return jsonify({"ok": False, "message": "Alpaca 서버 연결에 실패했습니다. 잠시 후 다시 시도하세요."}), 503
 

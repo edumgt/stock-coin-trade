@@ -266,10 +266,21 @@ def run_paper_order_flow_test() -> dict[str, Any]:
     if not _alpaca_order_flow_lock.acquire(blocking=False):
         raise BrokerApiError("Alpaca Paper 주문 흐름 테스트가 이미 실행 중입니다. 잠시 후 다시 시도하세요.")
     try:
+        # 외부 주문 API를 호출하기 전에 미국 증시 개장 여부를 먼저 확인한다.
+        clock = test_market_clock()
+        if not clock.get("isOpen"):
+            next_open = clock.get("nextOpen")
+            raise BrokerApiError(
+                "미국 증시가 휴장 중입니다. 개장 시간에 다시 실행하세요." + (f" 다음 개장: {next_open}" if next_open else ""),
+                code="MARKET_CLOSED",
+            )
         quote = test_market_quote(_ALPACA_ORDER_TEST_SYMBOL)
         ask = quote.get("askPrice")
         if not isinstance(ask, (int, float)) or ask <= 2:
-            raise BrokerApiError("안전 가격을 확인할 수 없어 주문을 보내지 않았습니다. AAPL 매도호가가 $2보다 큰 경우에만 테스트합니다.")
+            raise BrokerApiError(
+                "실시간 매도호가를 확인할 수 없어 주문을 보내지 않았습니다. 개장 직후에는 잠시 후 다시 시도하세요.",
+                code="NO_SAFE_PRICE",
+            )
 
         client_order_id = f"edumgt-paper-{int(time.time() * 1000)}"
         order = _request(
