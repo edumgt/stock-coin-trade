@@ -221,6 +221,7 @@ function renderHeader(user) {
       { href: '/learning/tr-pine/step-11.html', label: '11 · plotshape() 테스트', icon: 'fa-solid fa-code' },
       { href: '/learning/tr-pine/step-12.html', label: '12 · strategy() 테스트', icon: 'fa-solid fa-flask' },
       { href: '/learning/tr-pine/step-13.html', label: '13 · volume 거래량', icon: 'fa-solid fa-chart-column' },
+      { href: '/learning/tr-pine/step-14.html', label: '14 · ta.bb() 볼린저 밴드', icon: 'fa-solid fa-chart-area' },
     ]},
     { type: 'group', label: 'KB증권 Open API 실습', items: [
       { href: '/learning/kb-securities.html', label: '전체 · 2일차 과정', icon: 'fa-solid fa-book-open' },
