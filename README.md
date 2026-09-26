@@ -31,16 +31,16 @@ Flask REST API와 Vanilla JavaScript로 만든 주식·암호화폐 모의투자
   - `Alpaca Test`: Alpaca Paper 계정 상태
 - (선택) VS Code·Codex용 한투 공식 KIS MCP 서버 연동 — 자세한 내용은 아래 "KIS MCP" 절 참고
 
-## 4일 Open API 실습 커리큘럼
+## Open API 실습 커리큘럼
 
-외부 플랫폼 가입·키 발급은 오전에, 이 웹앱의 안전한 조회·모의 실습은 오후에 진행하는 4일 과정입니다. Key·Secret·계좌번호는 제출물에 포함하지 않습니다.
+외부 플랫폼 가입·키 발급과 이 웹앱의 안전한 조회·모의 실습을 모듈별 과정으로 제공합니다. Key·Secret·계좌번호는 제출물에 포함하지 않습니다.
 
-| 일차 | 오전 | 오후 | 문서 |
+| 과정 | 준비 | 실습 | 문서 |
 |---|---|---|---|
-| 1일차 | KIS 모의투자·API 신청 | Testbed 조회와 모의 주문→정정→취소 | [01.md](curriculum/01.md) |
-| 2일차 | KB Open API 신청·키 발급 | 운영 시세·호가·차트 읽기 전용 조회 | [02.md](curriculum/02.md) |
-| 3일차 | Alpaca Paper 계정·키 발급 | Paper 계정·시세와 주문→취소 흐름 | [03.md](curriculum/03.md) |
-| 4일차 | Binance·Korbit 공개/개인 API 권한 구분 | 공개 시세·호가와 통합 보안 점검 | [04.md](curriculum/04.md) |
+| KIS Testbed | KIS 모의투자·API 신청 | Testbed 조회와 모의 주문→정정→취소 | [01.md](curriculum/01.md) |
+| KB Open API | KB Open API 신청·키 발급 | 운영 시세·호가·차트 읽기 전용 조회 | [02.md](curriculum/02.md) |
+| Alpaca Paper | Alpaca Paper 계정·키 발급 | Paper 계정·시세와 주문→취소 흐름 | [03.md](curriculum/03.md) |
+| Binance·Korbit | 공개/개인 API 권한 구분 | 공개 시세·호가와 통합 보안 점검 | [04.md](curriculum/04.md) |
 
 ## 아키텍처
 
@@ -79,22 +79,20 @@ Nginx Frontend (:3333)
 cp .env.example .env
 ```
 
-`.env`에는 DB 비밀번호, 세션 키, 선택적 API 키만 설정합니다. 실제 값은 Git에 커밋하지 않습니다. Docker Compose는 `.env`를 자동으로 읽고, `python app.py`로 직접 실행할 때는 `app.py`가 저장소 루트의 `.env`를 `python-dotenv`로 읽습니다(이미 설정된 환경변수가 우선).
+`.env`는 DB 비밀번호, 세션 키, 증권사·클라우드 API 키를 포함한 유일한 로컬 설정 파일입니다. 실제 값은 Git에 커밋하지 않습니다. Docker Compose는 `.env`를 자동으로 읽고, `python app.py`로 직접 실행할 때는 `app.py`가 저장소 루트의 `.env`를 `python-dotenv`로 읽습니다(이미 설정된 환경변수가 우선).
 
-### 2. 선택적 증권사 테스트 키 파일 준비
+### 2. 외부 API 인증정보 설정
 
-Docker Compose는 키 파일을 이미지에 복사하지 않고 `/run/secrets`에 읽기 전용으로 마운트합니다. 해당 테스트를 사용하려면 저장소 루트에 파일을 둡니다. 파일은 `*.key` 규칙으로 Git에서 제외됩니다.
+별도 `*.key` 파일이나 `/run/secrets` fallback은 사용하지 않습니다. [.env.example](.env.example)의 주석 예시를 참고해 필요한 항목만 `.env`에 입력합니다.
 
 ```text
-al.key   # Alpaca: Key=..., Secret=...
-kb.key   # KB증권: AppKey=..., Secret=...
-kis.key  # KIS: App-KEY=..., Secret=...
-```
-
-테스트를 사용하지 않더라도 Compose 실행을 위해 빈 파일을 만들 수 있습니다. 빈 파일에서는 해당 테스트가 설정 오류를 반환하며 주문은 실행되지 않습니다.
-
-```bash
-touch al.key kb.key kis.key
+KIS_PAPER_APP_KEY=...
+KIS_PAPER_APP_SECRET=...
+KIS_PAPER_ACCOUNT_NO=12345678-01
+KB_APP_KEY=...
+KB_APP_SECRET=...
+ALPACA_API_KEY=...
+ALPACA_SECRET_KEY=...
 ```
 
 ### 3. 실행
@@ -113,7 +111,7 @@ docker compose ps
 | <http://localhost:3333> | 웹 애플리케이션 |
 | <http://localhost:3333/broker-api-test.html> | KIS Open API 연결 테스트 |
 | <http://localhost:3333/kis-api-explorer.html> | KIS API 탐색기 (공식 예제 기반 국내주식 API 목록·호출·응답 시각화) |
-| <http://localhost:3333/kis-chart.html> | KIS 종목 차트 (kis.key 로 Testbed 기간별시세·당일분봉을 조회해 캔들 차트 표시) |
+| <http://localhost:3333/kis-chart.html> | KIS 종목 차트 (`.env`의 모의 키로 Testbed 기간별시세·당일분봉 조회) |
 | <http://localhost:3333/kis-api-history.html> | KIS 자체 API·외부 TR 호출·오류 이력 Grid (로그인 필요) |
 | <http://localhost:3333/alpaca-test.html> | Alpaca Paper API 테스트 |
 | <http://localhost:3333/openapi.html> | 외부 연동 Open API 명세 |
@@ -193,6 +191,14 @@ docker compose down -v
 ```bash
 docker compose exec python-backend python crawl_major_ohlcv.py
 docker compose exec python-backend python crawl_major_ohlcv.py --ticker 005930 --start 2020-01-01
+```
+
+백엔드 스케줄러는 기본적으로 매일 18:20(Asia/Seoul)에 현재 연도를 증분 갱신하고, 매주 일요일 03:20에 종목·연도별 전체 구간을 다시 조회해 누락과 공급자 정정값을 upsert합니다. 실행 결과는 `ohlcv_sync_status`에 종목·연도별로 기록됩니다. 수집 범위는 `.env`의 `OHLCV_SYNC_TICKERS`로 설정합니다.
+
+```text
+OHLCV_SYNC_TICKERS=major          # 내장 주요 24종목
+OHLCV_SYNC_TICKERS=005930,000660  # 지정 종목
+OHLCV_SYNC_TICKERS=all            # tickers 테이블 전체(공급자 호출량 주의)
 ```
 
 | Method | Path | 설명 |
@@ -276,12 +282,14 @@ AWS 보안 그룹에는 PostgreSQL `5432` 인바운드 규칙을 추가하지 �
 |---|---|---|
 | `GET` | `/openapi/v1/stocks` | 지원 종목 목록 |
 | `GET` | `/openapi/v1/quote/{symbol}` | 종목 시세 |
+| `GET` | `/openapi/v1/ohlcv/tickers?year=2026` | OHLCV 제공 종목·기간 조회 |
+| `GET` | `/openapi/v1/ohlcv/{ticker}?year=2026` | 종목·연도별 일봉 OHLCV 조회 |
 | `GET` | `/openapi/v1/account` | 가상 계좌 요약 |
 | `GET` | `/openapi/v1/positions` | 보유 포지션 |
 | `GET` | `/openapi/v1/orders` | 주문 이력 |
 | `POST` | `/openapi/v1/orders` | 가상 주식 주문 |
 
-API 키당 분당 60회 제한이 적용됩니다. 키 원문은 발급 시 한 번만 표시되고 서버에는 SHA-256 해시만 저장됩니다.
+API 키당 분당 60회 제한이 적용됩니다. 키 원문은 발급 시 한 번만 표시되고 서버에는 SHA-256 해시만 저장됩니다. `/openapi/v1/*`는 `Access-Control-Allow-Origin: *`와 `Authorization` preflight를 기본 제공하므로 외부 브라우저 앱이 별도 CORS 프록시 없이 호출할 수 있습니다.
 
 ## 브로커·Alpaca 연결 테스트
 
@@ -314,9 +322,9 @@ KIS Testbed에는 호출 제한이 있으므로 토큰과 짧은 시세 결과�
 
 | 플랫폼 | 가입 필요 | API Key 발급 | 이 저장소의 저장 위치 | 이 프로젝트에서의 사용 범위 |
 |---|---|---|---|---|
-| 한국투자증권(KIS) | 계좌 개설 + 모의투자 별도 신청 | 필요 (모의 App Key·Secret) | `kis.key` 또는 `KIS_PAPER_*` 환경변수 | 모의(Testbed) 시세 조회, 로그인 회원용 잔고·모의 주문 흐름 테스트 |
-| KB증권 | 계좌 개설(M-able) + Open API 신청 | 필요 (App Key·Secret) | `kb.key` 또는 `KB_APP_KEY`/`KB_APP_SECRET` | 토큰 인증, 시세·호가·차트 읽기 전용 조회 |
-| Alpaca Markets | 이메일 가입 | 필요 (Paper Key·Secret) | `al.key` 또는 `ALPACA_API_KEY`/`ALPACA_SECRET_KEY` | Paper 계정 조회, 보호된 Paper 주문 흐름 테스트 |
+| 한국투자증권(KIS) | 계좌 개설 + 모의투자 별도 신청 | 필요 (모의 App Key·Secret) | `.env`의 `KIS_PAPER_*` | 모의(Testbed) 시세 조회, 로그인 회원용 잔고·모의 주문 흐름 테스트 |
+| KB증권 | 계좌 개설(M-able) + Open API 신청 | 필요 (App Key·Secret) | `.env`의 `KB_APP_KEY`/`KB_APP_SECRET` | 토큰 인증, 시세·호가·차트 읽기 전용 조회 |
+| Alpaca Markets | 이메일 가입 | 필요 (Paper Key·Secret) | `.env`의 `ALPACA_API_KEY`/`ALPACA_SECRET_KEY` | Paper 계정 조회, 보호된 Paper 주문 흐름 테스트 |
 | Binance | 공개 시세는 불필요 | 공개 시세는 불필요(인증 API·Testnet만 필요) | 해당 없음(미구현) | 공개 24hr 시세·호가만 조회 |
 | Korbit | 공개 시세는 불필요 | 공개 시세는 불필요(개인 자산 API만 필요) | 해당 없음(미구현) | 공개 현재가·호가 조회, 국내가 비교 |
 | 업비트·빗썸·코인원 | 불필요 | 불필요 | 해당 없음 | 코인 현재가·국내 거래소 가격 비교(공개 API) |
@@ -330,10 +338,10 @@ KIS Testbed에는 호출 제한이 있으므로 토큰과 짧은 시세 결과�
 1. 한국투자증권 계좌가 없다면 공식 앱/웹에서 비대면 계좌개설을 먼저 진행합니다. ([한국투자증권 로그인·가입](https://securities.koreainvestment.com/main/member/login/login.jsp))
 2. [모의투자 안내](https://www.truefriend.com/main/research/virtual/_static/TF07da010000.jsp)에서 한국투자증권 고객 ID로 로그인해 **모의투자 참가 신청**을 하고, 완료 후 **나의계좌 → 계좌정보**에서 모의투자 전용 계좌번호(`CANO-상품코드`)를 확인합니다.
 3. [KIS Developers](https://apiportal.koreainvestment.com)에 로그인해 **API 신청**에서 방금 만든 모의투자 계좌를 선택해 서비스를 신청합니다. 신청현황에서 모의투자용 **App Key·App Secret**이 발급됩니다. 실전 계좌 행의 키는 이 프로젝트에서 사용하지 않습니다.
-4. 발급받은 값을 저장소 루트의 `kis.key`(`app_key=`, `secret=`, `account=CANO-상품코드`) 또는 `.env`의 `KIS_PAPER_APP_KEY`/`KIS_PAPER_APP_SECRET`/`KIS_PAPER_ACCOUNT_NO`에 저장합니다. 기존 `KIS_APP_KEY` 계열도 호환되지만 신규 배포는 모의투자 전용 변수 사용을 권장합니다. `KIS_ENVIRONMENT=paper` 외의 값은 서버가 거부합니다. 계좌번호는 `CANO-계좌상품코드`(예: `12345678-01`) 형식입니다.
+4. 발급받은 값을 `.env`의 `KIS_PAPER_APP_KEY`/`KIS_PAPER_APP_SECRET`/`KIS_PAPER_ACCOUNT_NO`에 저장합니다. `KIS_ENVIRONMENT=paper` 외의 값은 서버가 거부합니다. 계좌번호는 `CANO-계좌상품코드`(예: `12345678-01`) 형식입니다.
 5. 모의(Testbed) 도메인은 `https://openapivts.koreainvestment.com:29443`이며, 실전 도메인(`https://openapi.koreainvestment.com:9443`)은 사용하지 않습니다. 모의투자 토큰 발급은 **1분당 1회** 제한이 있으므로 짧은 간격으로 재시도하지 마세요.
 6. 자세한 절차·스크린샷은 3단계 학습 페이지 [`/learning/kis-regist.html`](frontend/learning/kis-regist.html)(가입) → [`/learning/kis-dev.html`](frontend/learning/kis-dev.html)(키 발급) → [`/learning/kis-test.html`](frontend/learning/kis-test.html)(테스트)에, VS Code에서 자연어로 쓰는 공식 MCP 연동은 아래 "KIS MCP" 절에 정리되어 있습니다.
-7. 공용 모의계좌 잔고·계좌 API·주문 테스트는 웹앱에 로그인한 모든 회원이 사용할 수 있습니다. 주문 실행은 CSRF 검증과 60초짜리 1회 승인 토큰을 추가로 요구합니다.
+7. 로그인 후 `/kis-real-trading-practice.html`에서 KIS Testbed 모의계좌 잔고·보유종목·당일 주문내역을 조회하고 시장가/지정가 모의 매수·매도 주문을 접수할 수 있습니다. 주문 실행은 브라우저 확인, CSRF 검증, 주문 내용에 결합된 60초짜리 1회 승인 토큰을 요구하며 기본 1회 한도는 1,000주·1,000만 원입니다.
 8. 모든 웹 기반 KIS 호출은 자체 Flask API와 `broker_test.kis_request()` 공통 게이트웨이를 순서대로 거칩니다. 로그인 회원의 자체 API 기록과 실제 KIS TR 시도는 `/kis-api-history.html`에서 확인할 수 있으며, 실패 시 사용이력과 시스템 오류 이력에 모두 마스킹하여 기록합니다.
 
 ### 2. KB증권 Open API
@@ -341,7 +349,7 @@ KIS Testbed에는 호출 제한이 있으므로 토큰과 짧은 시세 결과�
 1. KB M-able 앱을 설치하고 비대면 계좌개설을 진행합니다(본인 명의 휴대폰·신분증 필요).
 2. 앱에서 KB증권 ID를 등록한 뒤, PC 웹사이트에서 **클라우드 인증서 로그인** 등 본인 인증 수단으로 로그인합니다.
 3. 로그인 후 **Open API → Open API 신청/조회** 메뉴에서 신청할 계좌를 선택하고 비밀번호를 입력해 조회한 뒤, 표시되는 API 그룹·이용기간·약관에 동의해 신청을 제출합니다.
-4. 신청현황에서 **App Key·App Secret**을 확인해 저장소 루트의 `kb.key`(`AppKey=`, `Secret=`) 또는 `.env`의 `KB_APP_KEY`/`KB_APP_SECRET`에 저장합니다.
+4. 신청현황에서 **App Key·App Secret**을 확인해 `.env`의 `KB_APP_KEY`/`KB_APP_SECRET`에 저장합니다.
 5. **클라우드 인증서 발급, ID 등록, 계좌 이용 등록은 심사 상황에 따라 개인별로 수시간이 걸릴 수 있으므로** 테스트 직전이 아니라 미리 신청해 두세요.
 6. 개발 문서·API 명세는 [KB증권 Open API 포털](https://openapi.kbsec.com/intro)에서, 이 프로젝트의 실제 호출 대상은 `https://developer.kbsec.com:32484`(운영 환경)입니다. 주문·잔고 조회는 이 학습 도구에 포함되어 있지 않고 토큰 인증과 시세·호가·차트 읽기 전용 조회만 제공합니다. 절차 전체는 [`/learning/kb-securities.html`](frontend/learning/kb-securities.html) 참고.
 
@@ -350,7 +358,7 @@ KIS Testbed에는 호출 제한이 있으므로 토큰과 짧은 시세 결과�
 1. [Alpaca 가입/대시보드](https://app.alpaca.markets/signup)에서 이메일로 계정을 만들고 요구되는 이메일 확인 절차를 완료합니다.
 2. 대시보드 좌측 상단 계정 선택기에서 **Paper Trading** 계정을 선택하거나 새로 생성합니다.
 3. **Home** 대시보드의 **API Keys** 패널에서 Paper 계정용 Key·Secret을 생성합니다. Secret은 최초 표시 이후 다시 확인되지 않을 수 있으므로 즉시 저장합니다.
-4. 발급받은 값을 저장소 루트의 `al.key`(`Key=`, `Secret=`) 또는 `.env`의 `ALPACA_API_KEY`/`ALPACA_SECRET_KEY`에 저장합니다. Paper 엔드포인트는 `https://paper-api.alpaca.markets`/`https://data.alpaca.markets`이며, Live는 키와 도메인이 모두 다르므로 이 프로젝트에서는 전환하지 않습니다.
+4. 발급받은 값을 `.env`의 `ALPACA_API_KEY`/`ALPACA_SECRET_KEY`에 저장합니다. Paper 엔드포인트는 `https://paper-api.alpaca.markets`/`https://data.alpaca.markets`이며, Live는 키와 도메인이 모두 다르므로 이 프로젝트에서는 전환하지 않습니다.
 5. 거주 국가에 따라 Live 계정 승인 여부·상품·세금 요건이 달라질 수 있지만, Paper 전용 계정은 별도 심사 없이 만들 수 있습니다.
 6. 자세한 SDK(`alpaca-py`)·Trading CLI 사용법은 아래 "Alpaca Paper Trading" 절과 [`/learning/alpaca-api.html`](frontend/learning/alpaca-api.html) 참고.
 
@@ -393,7 +401,7 @@ KIS Testbed에는 호출 제한이 있으므로 토큰과 짧은 시세 결과�
 
 ## Secrets Manager 트랙 (AWS Secrets Manager 실제 사용)
 
-`kis.key`·`kb.key`·`al.key`의 브로커 값을 **AWS Secrets Manager에 실제 생성**하고, 서버가 IAM Role로 읽어 KIS·KB·Alpaca의 읽기 전용 API를 호출합니다. 각 브로커는 JSON 보안 암호 하나로 저장합니다.
+`.env`의 브로커 값을 **AWS Secrets Manager에 실제 생성**하고, 서버가 IAM Role로 읽어 KIS·KB·Alpaca의 읽기 전용 API를 호출합니다. 각 브로커는 JSON 보안 암호 하나로 저장합니다.
 
 가장 자세하고 쉬운 순서는 [`/learning/aws-ssm-key-management.html`](frontend/learning/aws-ssm-key-management.html)에 있습니다. 핵심 순서는 다음과 같습니다.
 
@@ -408,9 +416,14 @@ AWS_SECRETS_MANAGER_PREFIX=stock-coin-trade
 
 EC2에서는 `AWS_ACCESS_KEY_ID`·`AWS_SECRET_ACCESS_KEY`·`AWS_SESSION_TOKEN`을 비우고 인스턴스 프로파일을 사용합니다. 로컬에서는 AWS SSO 또는 임시 자격 증명을 사용합니다.
 
+현재 EC2 운영 구성은 `StockCoinTradeSecretsReadOnly` 정책을
+`StockCoinTradeSecretsReadRole` Role과 `StockCoinTradeSecretsProfile` 인스턴스 프로파일로 연결합니다.
+이 Role은 위 세 Secret의 `DescribeSecret`·`GetSecretValue`만 허용합니다. EC2의 AWS CLI에는
+`ap-northeast-2` 리전만 설정하며, 장기 Access Key는 저장하지 않습니다.
+
 ### 2. 값 노출 없이 3개 JSON Secret 미리보기
 
-업로드 도구는 기존 키 파일 또는 대응 환경변수를 읽지만 값은 출력하지 않습니다.
+업로드 도구는 `.env`의 대응 환경변수를 읽지만 값은 출력하지 않습니다.
 
 ```bash
 python python-stock-backend/upload_keys_to_secrets_manager.py \
@@ -459,9 +472,9 @@ docker compose up -d --build python-backend frontend
 1. `/aws-broker-api-test.html`에서 준비 상태가 `3/3`인지 확인합니다.
 2. KIS 현재가, KB 토큰을 순서대로 실행합니다.
 3. `/aws-alpaca-test.html`에서 Paper 계정을 확인합니다.
-4. 모두 성공한 뒤 로컬 키 파일을 별도 안전 저장소로 옮깁니다. 검증 전에 삭제하지 않습니다.
+4. 모두 성공한 뒤 `.env`를 계속 로컬에 둘 필요가 없다면 별도 안전 저장소로 옮깁니다. 검증 전에 삭제하지 않습니다.
 
-브라우저와 API 응답에는 Secret 원문, AWS 자격 증명, 브로커 토큰이 반환되지 않습니다. 기존 키 파일 방식 화면과 URL도 그대로 유지되므로 단계적으로 전환할 수 있습니다.
+브라우저와 API 응답에는 Secret 원문, AWS 자격 증명, 브로커 토큰이 반환되지 않습니다. 로컬 업로드 도구도 루트 `.env`만 읽습니다.
 
 ## KIS MCP — VS Code·Codex에서 자연어로 KIS API 사용하기
 
@@ -486,7 +499,7 @@ bash scripts/setup_kis_mcp.sh
 
 `.codex/config.toml`은 이 프로젝트를 신뢰한 Codex CLI·IDE용, `.vscode/mcp.json`은 VS Code Copilot Chat용 두 서버 설정입니다. 둘 다 `scripts/kis_mcp.py`를 통해 공식 서버를 stdio로 실행합니다. 설정을 추가한 뒤 IDE나 Codex 세션을 다시 시작하고 MCP 도구 목록에서 `kis-code-assistant`와 `kis-trading-paper`를 확인하세요.
 
-거래 MCP는 저장소 루트 `.env`의 `KIS_PAPER_APP_KEY`, `KIS_PAPER_APP_SECRET`, `KIS_PAPER_ACCOUNT_NO`를 우선 사용합니다. 값이 없으면 기존 모의투자용 `kis.key`의 `App-KEY`, `Secret`, `account`를 사용합니다. 계좌번호는 `12345678-01` 형식이어야 합니다. 기존 호환 변수 `KIS_APP_KEY`, `KIS_APP_SECRET`, `KIS_ACCOUNT_NO`도 `KIS_ENVIRONMENT=paper`일 때 사용할 수 있습니다. 키와 계좌번호는 MCP 설정 파일에 기록되지 않습니다.
+거래 MCP는 저장소 루트 `.env`의 `KIS_PAPER_APP_KEY`, `KIS_PAPER_APP_SECRET`, `KIS_PAPER_ACCOUNT_NO`만 사용합니다. 계좌번호는 `12345678-01` 형식이어야 하며 키와 계좌번호는 MCP 설정 파일에 기록되지 않습니다.
 
 ```bash
 python3 scripts/kis_mcp.py code --check
@@ -514,7 +527,7 @@ python3 scripts/kis_mcp.py trade --check
 `실전연습 → Alpaca API`에는 계정 생성, Paper API Key 발급 위치, `alpaca-py`, Trading CLI, WebSocket 및 주의사항을 정리했습니다.
 
 - Paper와 Live는 키와 도메인이 다릅니다.
-- Paper 키는 `al.key` 또는 `ALPACA_API_KEY`/`ALPACA_SECRET_KEY` 환경변수로만 관리합니다.
+- Paper 키는 `.env`의 `ALPACA_API_KEY`/`ALPACA_SECRET_KEY`로만 관리합니다.
 - Trading CLI는 Alpha Preview 상태이므로 명령과 출력 형식이 바뀔 수 있습니다.
 - 이 프로젝트에서 “Alpaca”는 금융 API 플랫폼인 **Alpaca Markets**를 의미합니다. Stanford Alpaca, Alpacon/AlpacaX와는 별도 프로젝트입니다.
 

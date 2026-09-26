@@ -1,4 +1,4 @@
-"""Create real AWS Secrets Manager secrets from this repository's broker keys.
+"""Create real AWS Secrets Manager secrets from ``.env`` broker credentials.
 
 Preview is the default and never prints values. Use ``--apply`` to create:
 ``stock-coin-trade/kis``, ``stock-coin-trade/kb`` and
@@ -13,50 +13,32 @@ from pathlib import Path
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoRegionError
+from dotenv import load_dotenv
 
 
-KEY_DIRS = (Path("/run/secrets"), Path("/app"), Path.cwd())
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 DEFAULT_PREFIX = os.getenv("AWS_SECRETS_MANAGER_PREFIX", "stock-coin-trade").strip("/")
 DEFAULT_REGION = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
-
-
-def read_key_file(filename: str) -> dict[str, str]:
-    path = next((directory / filename for directory in KEY_DIRS if (directory / filename).is_file()), None)
-    if path is None:
-        return {}
-    values = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        name, value = line.split("=", 1)
-        values[name.strip().lower().replace("-", "_")] = value.strip().strip('"').strip("'")
-    return values
 
 
 def first_value(*values: str | None) -> str | None:
     return next((value.strip() for value in values if value and value.strip()), None)
 
 
-def file_value(values: dict[str, str], *names: str) -> str | None:
-    return first_value(*(values.get(name) for name in names))
-
-
 def collect_secrets() -> dict[str, dict[str, str | None]]:
-    kis, kb, alpaca = read_key_file("kis.key"), read_key_file("kb.key"), read_key_file("al.key")
     return {
         "kis": {
-            "app_key": first_value(os.getenv("KIS_PAPER_APP_KEY"), os.getenv("KIS_APP_KEY"), file_value(kis, "app_key", "appkey")),
-            "secret": first_value(os.getenv("KIS_PAPER_APP_SECRET"), os.getenv("KIS_APP_SECRET"), file_value(kis, "secret", "app_secret", "appsecret")),
-            "account": first_value(os.getenv("KIS_PAPER_ACCOUNT_NO"), os.getenv("KIS_ACCOUNT_NO"), file_value(kis, "account", "account_no")),
+            "app_key": first_value(os.getenv("KIS_PAPER_APP_KEY")),
+            "secret": first_value(os.getenv("KIS_PAPER_APP_SECRET")),
+            "account": first_value(os.getenv("KIS_PAPER_ACCOUNT_NO")),
         },
         "kb": {
-            "app_key": first_value(os.getenv("KB_APP_KEY"), file_value(kb, "appkey", "app_key")),
-            "secret": first_value(os.getenv("KB_APP_SECRET"), file_value(kb, "secret", "appsecret", "app_secret")),
+            "app_key": first_value(os.getenv("KB_APP_KEY")),
+            "secret": first_value(os.getenv("KB_APP_SECRET")),
         },
         "alpaca": {
-            "api_key": first_value(os.getenv("ALPACA_API_KEY"), file_value(alpaca, "key", "api_key", "alpaca_api_key", "apca_api_key_id")),
-            "secret_key": first_value(os.getenv("ALPACA_SECRET_KEY"), file_value(alpaca, "secret", "secret_key", "alpaca_secret_key", "apca_api_secret_key")),
+            "api_key": first_value(os.getenv("ALPACA_API_KEY")),
+            "secret_key": first_value(os.getenv("ALPACA_SECRET_KEY")),
         },
     }
 

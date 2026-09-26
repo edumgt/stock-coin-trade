@@ -156,7 +156,7 @@ def upsert_ticker(engine, code, name, market, rows):
             SET name = EXCLUDED.name, market = EXCLUDED.market
         """), {"code": code, "name": name, "market": market})
         if rows:
-            conn.execute(text("""
+            result = conn.execute(text("""
                 INSERT INTO ohlcv
                     (ticker_code, trade_date, open, high, low, close, adj_close, volume)
                 VALUES
@@ -173,6 +173,8 @@ def upsert_ticker(engine, code, name, market, rows):
                       (EXCLUDED.open, EXCLUDED.high, EXCLUDED.low, EXCLUDED.close,
                        EXCLUDED.adj_close, EXCLUDED.volume)
             """), [{"ticker_code": code, **row} for row in rows])
+            return result.rowcount
+    return 0
 
 
 def parse_args():

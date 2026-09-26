@@ -20,7 +20,7 @@
       <h1 style="margin:7px 0;font-size:30px;line-height:1.25;font-weight:900;color:var(--fg);">한국투자증권 가입과 모의투자 계좌 준비</h1>
       <p class="desc" style="max-width:850px">KIS Open API를 쓰려면 먼저 한국투자증권 고객 ID와 <strong>모의투자 전용 계좌</strong>가 있어야 합니다. 이 단계에서는 계좌 개설, 모의투자 참가 신청, 모의 계좌번호(CANO-상품코드) 확인까지만 진행합니다. API 키는 아직 발급하지 않습니다.</p>
       <div class="flow"><span>고객 ID·계좌 확인</span><i>→</i><span>모의투자 참가 신청</span><i>→</i><span>모의 계좌번호 확인</span><i>→</i><span>다음: 키 발급</span></div>
-      <nav class="stage-nav" aria-label="KIS 모의투자 실습 단계"><a href="/learning/kis-regist.html" class="on"><b>1단계 · 가입</b><small>한국투자증권 계좌와 모의투자 계좌 준비</small></a><a href="/learning/kis-dev.html"><b>2단계 · 키 발급</b><small>KIS Developers API 신청과 kis.key 설정</small></a><a href="/learning/kis-test.html"><b>3단계 · 테스트</b><small>현재가 조회부터 모의 주문 흐름까지 점검</small></a></nav>
+      <nav class="stage-nav" aria-label="KIS 모의투자 실습 단계"><a href="/learning/kis-regist.html" class="on"><b>1단계 · 가입</b><small>한국투자증권 계좌와 모의투자 계좌 준비</small></a><a href="/learning/kis-dev.html"><b>2단계 · 키 발급</b><small>KIS Developers API 신청과 .env 설정</small></a><a href="/learning/kis-test.html"><b>3단계 · 테스트</b><small>현재가 조회부터 모의 주문 흐름까지 점검</small></a></nav>
     </section>
 
 <section class="card">
@@ -68,14 +68,14 @@
         <div class="step"><span class="num">1</span><div><h3>공식 모의투자 안내로 이동하고 로그인</h3><p>아래의 공식 안내에서 <strong>모의투자안내</strong> 또는 참가 신청 화면으로 이동합니다. 한국투자증권 고객 ID로 로그인하며, 이 웹앱 계정으로는 신청할 수 없습니다.</p></div></div>
         <div class="step"><span class="num">2</span><div><h3>참가 신청 정보를 선택</h3><p>신청 화면에서 모의투자 비밀번호, 참여 리그 또는 투자 기간, 개인정보·약관 동의 등 현재 표시되는 항목을 확인하고 제출합니다. 항목명과 참가 조건은 바뀔 수 있으므로 화면의 최신 안내를 우선합니다.</p></div></div>
         <div class="step"><span class="num">3</span><div><h3>신청 완료 후 모의계좌 정보 확인</h3><p>모의투자 서비스의 <strong>나의계좌 → 계좌정보</strong>에서 새로 생성된 모의투자 계좌번호를 확인합니다. 계좌번호 전체를 메신저·캡처·Git에 공유하지 않습니다.</p></div></div>
-        <div class="step"><span class="num">4</span><div><h3>계좌번호를 <code>kis.key</code> 형식으로 분리</h3><p>화면의 계좌번호가 <code>12345678-01</code>처럼 보이면 앞 8자리(CANO)와 뒤 2자리(상품코드)를 하이픈으로 유지해 <code>account=12345678-01</code>로 적습니다. 이 값은 잔고 조회와 향후 주문성 API에 필요합니다.</p></div></div>
+        <div class="step"><span class="num">4</span><div><h3>계좌번호를 <code>.env</code> 형식으로 분리</h3><p>화면의 계좌번호가 <code>12345678-01</code>처럼 보이면 앞 8자리(CANO)와 뒤 2자리(상품코드)를 하이픈으로 유지해 <code>KIS_PAPER_ACCOUNT_NO=12345678-01</code>로 적습니다. 이 값은 잔고 조회와 향후 주문성 API에 필요합니다.</p></div></div>
         <div class="step"><span class="num">5</span><div><h3>모의계좌와 모의 API 키를 같은 환경으로 맞춤</h3><p>다음 단계(2단계 · 키 발급)에서 KIS Developers API 신청 시 모의투자 계좌에 대응하는 키를 발급받습니다. 실전 계좌·실전 키와 한 파일에 섞지 않습니다.</p></div></div>
       </div>
       <figure style="margin:16px 0 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface-2)"><img src="/images/kis-mock-investment-application.svg" alt="모의투자 비밀번호, 리그와 투자기간을 선택하고 개인정보 활용 동의 후 신청하는 화면 예시" width="1200" height="700" style="display:block;width:100%;height:auto"><figcaption style="padding:9px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">모의투자 신청 화면 예시 · 비밀번호 규칙, 리그 종류, 투자기간 및 동의 항목은 신청 시점의 공식 화면을 따르세요.</figcaption></figure>
       <figure style="margin:16px 0 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface-2)"><img src="/images/kis-mock-account-confirmation.svg" alt="나의계좌의 계좌정보에서 모의투자 전용 계좌번호를 확인하는 화면 예시" width="1200" height="620" style="display:block;width:100%;height:auto"><figcaption style="padding:9px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">모의투자 전용 계좌 생성 및 확인 화면 예시 · 실제 계좌번호와 투자기간은 개인정보이므로 화면·로그·Git에 기록하지 마세요.</figcaption></figure>
       <div class="table-wrap"><table class="table"><thead><tr><th>확인 항목</th><th>이 웹앱에 쓰는 방법</th><th>주의</th></tr></thead><tbody>
-        <tr><td>모의투자 계좌번호</td><td><code>account=CANO-상품코드</code>로 <code>kis.key</code>에 저장</td><td>현재가·차트·호가·지수 조회에는 필요 없고, 잔고 조회부터 필요합니다.</td></tr>
-        <tr><td>모의투자 비밀번호</td><td>한국투자증권 모의투자 서비스에서만 사용</td><td><strong>kis.key</strong>, 이 웹앱, KIS API 요청에 넣지 않습니다.</td></tr>
+        <tr><td>모의투자 계좌번호</td><td><code>KIS_PAPER_ACCOUNT_NO=CANO-상품코드</code>로 <code>.env</code>에 저장</td><td>현재가·차트·호가·지수 조회에는 필요 없고, 잔고 조회부터 필요합니다.</td></tr>
+        <tr><td>모의투자 비밀번호</td><td>한국투자증권 모의투자 서비스에서만 사용</td><td><strong>.env</strong>, 이 웹앱, KIS API 요청에 넣지 않습니다.</td></tr>
         <tr><td>실전 증권계좌</td><td>이 모듈에서는 사용하지 않음</td><td>실전 계좌번호·실전 키를 Testbed 파일에 기록하지 않습니다.</td></tr>
       </tbody></table></div>
       <a class="btn" href="https://www.truefriend.com/main/research/virtual/_static/TF07da010000.jsp" target="_blank" rel="noopener noreferrer">공식 모의투자 안내 열기 ↗</a>
@@ -84,7 +84,7 @@
 
     <section class="card">
       <div class="kicker">STEP 3 · 계좌번호 읽는 법</div><h2 class="title">CANO와 계좌상품코드를 구분합니다</h2>
-      <p class="desc">모의투자 계좌번호는 <code>12345678-01</code>처럼 표시됩니다. KIS API는 이 값을 두 필드로 나눠 받으며, 이 웹앱은 <code>account=CANO-상품코드</code> 한 줄로 적으면 서버가 하이픈 기준으로 분리합니다.</p>
+      <p class="desc">모의투자 계좌번호는 <code>12345678-01</code>처럼 표시됩니다. KIS API는 이 값을 두 필드로 나눠 받으며, 이 웹앱은 <code>KIS_PAPER_ACCOUNT_NO=CANO-상품코드</code> 한 줄로 적으면 서버가 하이픈 기준으로 분리합니다.</p>
       <div class="table-wrap"><table class="table"><thead><tr><th>위치</th><th>KIS 필드명</th><th>의미</th><th>자릿수</th></tr></thead><tbody>
         <tr><td>하이픈 앞</td><td><code>CANO</code></td><td>종합계좌번호 (고객 계좌 식별)</td><td>8자리</td></tr>
         <tr><td>하이픈 뒤</td><td><code>ACNT_PRDT_CD</code></td><td>계좌상품코드 (계좌 종류)</td><td>2자리</td></tr>
@@ -96,7 +96,7 @@
       <div class="kicker">STEP 4 · 모의와 실전의 차이</div><h2 class="title">모의투자와 실전투자는 계좌와 API 키가 서로 다릅니다</h2>
       <p class="desc">모의투자는 한국투자증권 회원으로 로그인한 뒤 모의투자 참가를 신청하고, 발급된 <strong>모의투자용 계좌번호</strong>와 다음 단계의 <strong>모의 App Key·Secret</strong>을 사용합니다. 실제 자금 주문을 하려면 주식 거래가 가능한 <strong>별도의 실전 계좌</strong>, 실전 서비스 신청, <strong>실전 App Key·Secret</strong>이 필요하지만 이 실전연습에서는 사용하지 않습니다.</p>
       <figure style="margin:16px 0 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface-2)"><img src="/images/kis-account-requirements.svg" alt="KIS 모의투자와 실전투자에 필요한 계좌, API 키, 서버와 거래 ID의 구분" width="1200" height="470" style="display:block;width:100%;height:auto"><figcaption style="padding:9px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">모의투자 참가 신청 경로와 실전 계좌·API 권한은 변경될 수 있으므로, 신청 전 한국투자증권의 최신 안내와 KIS Developers 서비스 신청 화면을 확인하세요.</figcaption></figure>
-      <div class="notice"><strong>학습 환경의 원칙:</strong> 이 실전연습에서는 모의투자 계좌와 모의 API 키만 사용합니다. 실전 계좌번호·실전 App Key·Secret·TTTC 거래 ID를 <code>kis.key</code>, <code>.env</code> 또는 코드에 넣지 마세요. 모의투자 신청에는 실전 거래용 계좌가 항상 필요한 것은 아니며, 가입·이용 조건은 공식 모의투자 안내를 따릅니다.</div>
+      <div class="notice"><strong>학습 환경의 원칙:</strong> 이 실전연습에서는 모의투자 계좌와 모의 API 키만 사용합니다. 실전 계좌번호·실전 App Key·Secret·TTTC 거래 ID를 <code>.env</code> 또는 코드에 넣지 마세요. 모의투자 신청에는 실전 거래용 계좌가 항상 필요한 것은 아니며, 가입·이용 조건은 공식 모의투자 안내를 따릅니다.</div>
     </section>
 
     <section class="card">

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+import time
 from typing import Any
 
 import requests
@@ -9,8 +11,11 @@ import requests
 from broker_test import BrokerApiError
 
 
-BINANCE_BASE_URL = "https://api.binance.com/api/v3"
+BINANCE_BASE_URL = "https://data-api.binance.vision/api/v3"
 KORBIT_BASE_URL = "https://api.korbit.co.kr/v2"
+_binance_symbols_cache: dict[str, Any] = {"expires_at": 0.0, "symbols": []}
+_binance_symbols_lock = threading.Lock()
+_BINANCE_SYMBOLS_CACHE_SECONDS = 900
 
 
 def _json(response: requests.Response, exchange: str) -> Any:
@@ -32,6 +37,73 @@ def get_binance_ticker(symbol: str) -> dict[str, Any]:
 def get_binance_orderbook(symbol: str) -> dict[str, Any]:
     body = _json(requests.get(f"{BINANCE_BASE_URL}/depth", params={"symbol": symbol, "limit": 10}, timeout=15), "Binance")
     return {"exchange": "Binance Spot", "symbol": symbol, "lastUpdateId": body.get("lastUpdateId"), "bids": body.get("bids", []), "asks": body.get("asks", [])}
+
+
+def _load_binance_symbols() -> list[dict[str, str]]:
+    now = time.monotonic()
+    cached = _binance_symbols_cache["symbols"]
+    if cached and now < _binance_symbols_cache["expires_at"]:
+        return cached
+    with _binance_symbols_lock:
+        now = time.monotonic()
+        cached = _binance_symbols_cache["symbols"]
+        if cached and now < _binance_symbols_cache["expires_at"]:
+            return cached
+        body = _json(
+            requests.get(
+                f"{BINANCE_BASE_URL}/exchangeInfo",
+                params={"permissions": "SPOT", "showPermissionSets": "false"},
+                timeout=15,
+            ),
+            "Binance",
+        )
+        rows = body.get("symbols", []) if isinstance(body, dict) else []
+        symbols = [
+            {
+                "symbol": str(row.get("symbol", "")),
+                "baseAsset": str(row.get("baseAsset", "")),
+                "quoteAsset": str(row.get("quoteAsset", "")),
+                "status": str(row.get("status", "")),
+            }
+            for row in rows
+            if row.get("status") == "TRADING" and row.get("symbol")
+        ]
+        symbols.sort(key=lambda row: (row["quoteAsset"], row["baseAsset"], row["symbol"]))
+        _binance_symbols_cache.update(
+            {"expires_at": time.monotonic() + _BINANCE_SYMBOLS_CACHE_SECONDS, "symbols": symbols}
+        )
+        return symbols
+
+
+def get_binance_symbols(query: str = "", quote_asset: str = "", limit: int = 50) -> dict[str, Any]:
+    """Search currently trading Binance Spot symbols without exposing the full upstream payload."""
+    query = query.strip().upper()
+    quote_asset = quote_asset.strip().upper()
+    rows = _load_binance_symbols()
+    matches = [
+        row for row in rows
+        if (not quote_asset or row["quoteAsset"] == quote_asset)
+        and (
+            not query
+            or query in row["symbol"]
+            or query in row["baseAsset"]
+            or query in row["quoteAsset"]
+        )
+    ]
+    matches.sort(
+        key=lambda row: (
+            0 if row["symbol"] == query else 1 if row["baseAsset"] == query else 2 if row["symbol"].startswith(query) else 3,
+            row["symbol"],
+        )
+    )
+    return {
+        "exchange": "Binance Spot",
+        "query": query,
+        "quoteAsset": quote_asset or None,
+        "totalMatches": len(matches),
+        "symbols": matches[:limit],
+        "cacheSeconds": _BINANCE_SYMBOLS_CACHE_SECONDS,
+    }
 
 
 def get_korbit_ticker(symbol: str) -> dict[str, Any]:

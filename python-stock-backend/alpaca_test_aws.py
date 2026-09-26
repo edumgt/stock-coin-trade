@@ -2,7 +2,7 @@
 
 Parallel track to ``alpaca_test.py``: the same read-only Paper endpoints, but
 the API Key/Secret come from an AWS Secrets Manager JSON secret instead of
-``al.key`` or ``ALPACA_API_KEY``/``ALPACA_SECRET_KEY``. ``alpaca_test.py``
+local ``.env`` credentials. ``alpaca_test.py``
 itself is not modified or used by this module.
 """
 

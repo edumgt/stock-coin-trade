@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import stat
 import threading
 import time
 from typing import Any
@@ -11,7 +10,7 @@ from urllib.parse import urlsplit
 
 import requests
 
-from broker_test import BrokerApiError, ROOT_DIR, SECRETS_DIR, _read_key_file
+from broker_test import BrokerApiError
 
 
 ALPACA_PAPER_BASE = "https://paper-api.alpaca.markets/v2"
@@ -25,32 +24,11 @@ def get_alpaca_configuration_status() -> dict[str, Any]:
     """Return Paper credential readiness without exposing credential values."""
     env_key = bool(os.environ.get("ALPACA_API_KEY", "").strip())
     env_secret = bool(os.environ.get("ALPACA_SECRET_KEY", "").strip())
-    key_path = next((candidate for candidate in (SECRETS_DIR / "al.key", ROOT_DIR / "al.key") if candidate.is_file()), None)
-    file_valid = False
-    file_mode = None
-    if key_path is not None:
-        file_mode = stat.S_IMODE(key_path.stat().st_mode)
-        try:
-            _read_key_file(
-                "al.key",
-                ("key", "api_key", "alpaca_api_key", "apca_api_key_id"),
-                ("secret", "secret_key", "alpaca_secret_key", "apca_api_secret_key"),
-            )
-            file_valid = True
-        except BrokerApiError:
-            pass
     env_complete = env_key and env_secret
-    source = "environment" if env_complete else "al.key" if file_valid else "missing"
     return {
-        "configured": bool(env_complete or file_valid),
-        "source": source,
+        "configured": env_complete,
+        "source": "environment" if env_complete else "missing",
         "environment": {"apiKey": env_key, "secretKey": env_secret, "complete": env_complete},
-        "keyFile": {
-            "mounted": key_path is not None,
-            "valid": file_valid,
-            "permission": format(file_mode, "03o") if file_mode is not None else None,
-            "securePermission": bool(file_mode is not None and file_mode & 0o077 == 0),
-        },
         "tradingEndpoint": ALPACA_PAPER_BASE,
         "dataEndpoint": ALPACA_DATA_BASE,
         "mode": "paper",
@@ -84,15 +62,11 @@ def _audit_response_summary(body: Any) -> dict[str, Any]:
 
 
 def _credentials() -> tuple[str, str]:
-    api_key = os.environ.get("ALPACA_API_KEY")
-    secret_key = os.environ.get("ALPACA_SECRET_KEY")
+    api_key = os.environ.get("ALPACA_API_KEY", "").strip()
+    secret_key = os.environ.get("ALPACA_SECRET_KEY", "").strip()
     if api_key and secret_key:
         return api_key, secret_key
-    return _read_key_file(
-        "al.key",
-        ("key", "api_key", "alpaca_api_key", "apca_api_key_id"),
-        ("secret", "secret_key", "alpaca_secret_key", "apca_api_secret_key"),
-    )
+    raise BrokerApiError(".env에 ALPACA_API_KEY와 ALPACA_SECRET_KEY를 모두 설정하세요.", 503)
 
 
 def _headers() -> dict[str, str]:

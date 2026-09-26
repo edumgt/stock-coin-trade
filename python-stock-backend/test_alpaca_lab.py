@@ -25,8 +25,7 @@ class AlpacaLabTest(unittest.TestCase):
     @patch("alpaca_test_api.get_alpaca_configuration_status")
     def test_status_contains_no_credentials(self, status):
         status.return_value = {
-            "configured": True, "source": "al.key", "environment": {"complete": False},
-            "keyFile": {"mounted": True, "valid": True, "permission": "600", "securePermission": True},
+            "configured": True, "source": "environment", "environment": {"complete": True},
             "tradingEndpoint": alpaca_test.ALPACA_PAPER_BASE, "dataEndpoint": alpaca_test.ALPACA_DATA_BASE,
             "mode": "paper", "liveEnabled": False,
         }

@@ -56,10 +56,19 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get("SESSION_COOKIE_SECURE", "f
 CORS(
     app,
     resources={
-        r"/api/*": {"origins": ["http://localhost:*", "http://127.0.0.1:*"]},
-        r"/openapi/*": {"origins": "*"},
+        r"/api/*": {
+            "origins": ["http://localhost:*", "http://127.0.0.1:*"],
+            "supports_credentials": True,
+        },
+        r"/openapi/*": {
+            "origins": "*",
+            "supports_credentials": False,
+            "send_wildcard": True,
+            "allow_headers": ["Authorization", "Content-Type"],
+            "methods": ["GET", "POST", "OPTIONS"],
+            "max_age": 86400,
+        },
     },
-    supports_credentials=True,
 )
 
 app.register_blueprint(member_bp)

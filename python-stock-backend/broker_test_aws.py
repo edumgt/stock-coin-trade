@@ -2,7 +2,7 @@
 
 Parallel track to ``broker_test.py``: the same read-only calls against the
 KIS Testbed and KB증권 Open API, but credentials come from AWS Secrets
-Manager JSON secrets instead of ``kis.key``/``kb.key`` or
+Manager JSON secrets instead of local ``.env`` credentials or
 ``KIS_*``/``KB_*`` environment variables. ``broker_test.py`` itself is not
 modified or used by this module.
 """

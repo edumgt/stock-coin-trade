@@ -3,9 +3,8 @@
 사용법:
     python kis_quote_test.py --symbol 005930
 
-키는 환경변수(KIS_APP_KEY, KIS_APP_SECRET)를 우선 사용하며, 없을 때만
-프로젝트 루트의 gitignore 대상 파일 ``kis.key``를 읽습니다. 키와 토큰은
-절대로 출력하거나 파일로 저장하지 않습니다.
+키는 저장소 루트 ``.env``의 KIS_PAPER_APP_KEY/KIS_PAPER_APP_SECRET만
+사용합니다. 키와 토큰은 절대로 출력하거나 파일로 저장하지 않습니다.
 """
 
 from __future__ import annotations
@@ -15,6 +14,10 @@ import os
 from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
+
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 
 
 TESTBED_URL = "https://openapivts.koreainvestment.com:29443"
@@ -23,33 +26,12 @@ QUOTE_PATH = "/uapi/domestic-stock/v1/quotations/inquire-price"
 QUOTE_TR_ID = "FHKST01010100"
 
 
-def _read_key_file(path: Path) -> tuple[str, str]:
-    """Read the local key file without exposing values in errors or output."""
-    values: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        if "=" not in raw_line:
-            continue
-        name, value = raw_line.split("=", 1)
-        values[name.strip().lower()] = value.strip()
-
-    app_key = values.get("app-key") or values.get("app_key")
-    app_secret = values.get("secret") or values.get("app-secret") or values.get("app_secret")
-    if not app_key or not app_secret:
-        raise RuntimeError("kis.key에 App-KEY와 Secret을 설정하세요.")
-    return app_key, app_secret
-
-
 def load_credentials() -> tuple[str, str]:
-    """Use environment variables first; fall back to the ignored local key file."""
-    app_key = os.environ.get("KIS_APP_KEY")
-    app_secret = os.environ.get("KIS_APP_SECRET")
+    app_key = os.environ.get("KIS_PAPER_APP_KEY")
+    app_secret = os.environ.get("KIS_PAPER_APP_SECRET")
     if app_key and app_secret:
         return app_key, app_secret
-
-    key_file = Path(__file__).resolve().parents[1] / "kis.key"
-    if not key_file.is_file():
-        raise RuntimeError("KIS_APP_KEY/KIS_APP_SECRET 또는 프로젝트 루트의 kis.key가 필요합니다.")
-    return _read_key_file(key_file)
+    raise RuntimeError(".env에 KIS_PAPER_APP_KEY와 KIS_PAPER_APP_SECRET을 설정하세요.")
 
 
 def get_mock_quote(symbol: str) -> dict[str, str]:

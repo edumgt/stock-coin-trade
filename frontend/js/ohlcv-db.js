@@ -15,7 +15,7 @@
     const response = await apiFetch('/api/ohlcv-db/summary');
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'OHLCV 집계 조회 실패');
-    const { totals, yearly, quality, markets } = data;
+    const { totals, yearly, quality, markets, sync } = data;
     document.getElementById('ohlcv-total-tickers').textContent = `${number(totals.ticker_count)}개`;
     document.getElementById('ohlcv-total-rows').textContent = `${number(totals.ohlcv_rows)}건`;
     document.getElementById('ohlcv-average-rows').textContent = totals.ticker_count
@@ -30,8 +30,11 @@
       <td>${Number(row.average_rows).toFixed(1)}</td><td>${dateText(row.first_date)} ~ ${dateText(row.last_date)}</td></tr>
     `).join('');
     const marketText = markets.map(row => `${row.market || '미분류'} ${number(row.ticker_count)}종목`).join(' · ');
+    const syncText = sync?.last_completed_at
+      ? `자동 수집 ${number(sync.success_ranges)}/${number(sync.tracked_ranges)} 구간 완료 · 최근 ${dateText(sync.last_completed_at)}`
+      : '자동 수집 이력 대기 중';
     document.getElementById('ohlcv-quality-note').textContent =
-      `검증 격리 ${number(quality.quarantined_rows)}건 (${number(quality.affected_tickers)}종목) · ${marketText}`;
+      `검증 격리 ${number(quality.quarantined_rows)}건 (${number(quality.affected_tickers)}종목) · ${syncText} · ${marketText}`;
   }
 
   function filterParams() {

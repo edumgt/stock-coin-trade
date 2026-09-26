@@ -16,7 +16,7 @@ Codex CLI·IDE (.codex/config.toml) ───────┐
 VS Code Copilot Chat (.vscode/mcp.json) ───┼─→ scripts/kis_mcp.py ─→ 공식 KIS MCP 서버
 VS Code 탐색기 KIS MCP 패널 ────────────────┘          │                 ├─ Code Assistant
                                                     │                 └─ Trading (모의투자)
-                                                    └─ .env 또는 kis.key에서 모의투자 키 읽기
+                                                    └─ .env 또는 .env에서 모의투자 키 읽기
 ```
 
 - [`scripts/setup_kis_mcp.sh`](scripts/setup_kis_mcp.sh)는 공식 저장소를 Git 무시 대상인 `mcp/open-trading-api/`에 내려받고, `mcp/.venv/`에 `uv`를 설치한 뒤 각 공식 서버의 의존성을 동기화합니다.
@@ -35,7 +35,7 @@ KIS_PAPER_APP_SECRET=<모의투자 App Secret>
 KIS_PAPER_ACCOUNT_NO=12345678-01
 ```
 
-기존 모의투자용 `kis.key`의 `App-KEY`, `Secret`, `account`도 사용할 수 있습니다. 호환용 `KIS_APP_KEY`, `KIS_APP_SECRET`, `KIS_ACCOUNT_NO`는 `KIS_ENVIRONMENT=paper`에서만 사용합니다. 새 설정에는 `KIS_PAPER_*` 변수를 사용하세요. 실행 스크립트는 환경변수, `.env`, `kis.key`를 순서대로 확인하며, 모의투자 키 쌍과 계좌번호 형식을 검사합니다. 키를 `.codex/config.toml`이나 `.vscode/mcp.json`에 넣을 필요는 없습니다.
+기존 모의투자용 `.env`의 `App-KEY`, `Secret`, `account`도 사용할 수 있습니다. 호환용 `KIS_PAPER_APP_KEY`, `KIS_PAPER_APP_SECRET`, `KIS_PAPER_ACCOUNT_NO`는 `KIS_ENVIRONMENT=paper`에서만 사용합니다. 새 설정에는 `KIS_PAPER_*` 변수를 사용하세요. 실행 스크립트는 환경변수, `.env`, `.env`를 순서대로 확인하며, 모의투자 키 쌍과 계좌번호 형식을 검사합니다. 키를 `.codex/config.toml`이나 `.vscode/mcp.json`에 넣을 필요는 없습니다.
 
 ```bash
 bash scripts/setup_kis_mcp.sh
@@ -85,7 +85,7 @@ code --install-extension kis-mcp-explorer-0.1.0.vsix
 
 탐색기 패널은 Trading 도구에서 `env_dv=real`을 거부하고 실제 API 호출에는 `env_dv=demo`를 넣습니다. 조회 예시 외의 Trading 호출에는 VS Code 확인창을 띄웁니다. 패널의 Webview에는 키와 계좌정보를 보내지 않습니다. 다른 MCP 클라이언트에서도 모의 주문 도구를 호출할 수 있으므로 도구명과 인자를 확인한 뒤 실행하세요.
 
-`.env`, `kis.key`, 내려받은 `mcp/` 폴더는 Git 무시 대상입니다. 응답이나 화면을 공유할 때도 App Key, Secret, 토큰, 계좌번호를 제거하세요.
+`.env`, 내려받은 `mcp/` 폴더는 Git 무시 대상입니다. 응답이나 화면을 공유할 때도 App Key, Secret, 토큰, 계좌번호를 제거하세요.
 
 ## 연결 문제 확인
 

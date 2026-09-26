@@ -38,7 +38,7 @@
       <h1>브로커 키를 AWS에 저장하고 boto3로 읽기</h1>
       <p>이 저장소의 KIS·KB증권·Alpaca 키를 <strong>AWS Secrets Manager의 JSON 보안 암호 3개</strong>로 실제 생성했습니다. Flask 서버만 IAM 권한으로 값을 읽으며 브라우저, API 응답, 로그에는 원문을 보내지 않습니다.</p>
       <div class="steps">
-        <div class="step"><b>1</b><strong>키 수집</strong><span>로컬 키 파일을 안전하게 읽기</span></div>
+        <div class="step"><b>1</b><strong>키 수집</strong><span>루트 .env를 안전하게 읽기</span></div>
         <div class="step"><b>2</b><strong>AWS 적재</strong><span>JSON Secret 3개 생성·교체</span></div>
         <div class="step"><b>3</b><strong>boto3 조회</strong><span>GetSecretValue로 서버에서 읽기</span></div>
         <div class="step"><b>4</b><strong>연결 검증</strong><span>3/3 및 브로커 읽기 API 확인</span></div>
@@ -77,9 +77,9 @@ credentials = json.loads(response["SecretString"])</div>
       <div class="table-wrap"><table class="table">
         <thead><tr><th>보안 암호 이름</th><th>JSON 필드</th><th>원본</th><th>사용 기능</th></tr></thead>
         <tbody>
-          <tr><td><code>stock-coin-trade/kis</code></td><td><code>app_key</code>, <code>secret</code>, <code>account</code></td><td><code>kis.key</code> 또는 <code>KIS_*</code></td><td>KIS 모의 현재가·잔고</td></tr>
-          <tr><td><code>stock-coin-trade/kb</code></td><td><code>app_key</code>, <code>secret</code></td><td><code>kb.key</code> 또는 <code>KB_*</code></td><td>KB 토큰·현재가</td></tr>
-          <tr><td><code>stock-coin-trade/alpaca</code></td><td><code>api_key</code>, <code>secret_key</code></td><td><code>al.key</code> 또는 <code>ALPACA_*</code></td><td>Alpaca Paper 계정·포지션</td></tr>
+          <tr><td><code>stock-coin-trade/kis</code></td><td><code>app_key</code>, <code>secret</code>, <code>account</code></td><td><code>.env</code>의 <code>KIS_PAPER_*</code></td><td>KIS 모의 현재가·잔고</td></tr>
+          <tr><td><code>stock-coin-trade/kb</code></td><td><code>app_key</code>, <code>secret</code></td><td><code>.env</code>의 <code>KB_*</code></td><td>KB 토큰·현재가</td></tr>
+          <tr><td><code>stock-coin-trade/alpaca</code></td><td><code>api_key</code>, <code>secret_key</code></td><td><code>.env</code>의 <code>ALPACA_*</code></td><td>Alpaca Paper 계정·포지션</td></tr>
         </tbody>
       </table></div>
       <p>세 Secret에는 <code>Application=stock-coin-trade</code>, <code>ManagedBy=upload_keys_to_secrets_manager.py</code> 태그를 적용했습니다.</p>
@@ -91,7 +91,7 @@ credentials = json.loads(response["SecretString"])</div>
         <thead><tr><th>파일</th><th>역할</th></tr></thead>
         <tbody>
           <tr><td><code>python-stock-backend/aws_secret_store.py</code></td><td><code>DescribeSecret</code>, <code>GetSecretValue</code>, JSON 검증, 5분 캐시</td></tr>
-          <tr><td><code>python-stock-backend/upload_keys_to_secrets_manager.py</code></td><td>키 파일을 읽어 값 노출 없이 미리보기·생성·교체</td></tr>
+          <tr><td><code>python-stock-backend/upload_keys_to_secrets_manager.py</code></td><td><code>.env</code>를 읽어 값 노출 없이 미리보기·생성·교체</td></tr>
           <tr><td><code>python-stock-backend/broker_test_aws_api.py</code></td><td>3개 Secret 준비 상태와 KIS·KB 읽기 API</td></tr>
           <tr><td><code>aws/iam/secrets-manager-provisioner-policy.json</code></td><td>최초 생성·키 교체 담당자용 쓰기 정책</td></tr>
           <tr><td><code>aws/iam/secrets-manager-runtime-policy.json</code></td><td>애플리케이션/EC2용 읽기 전용 정책</td></tr>
@@ -167,7 +167,7 @@ secretsmanager:GetSecretValue</div>
         <li><code>AccessDeniedException</code>: 생성 담당자는 Create/Update, 앱 Role은 Describe/Get 권한이 있는지 구분합니다. IAM 정책 반영에는 잠시 시간이 걸릴 수 있습니다.</li>
         <li><code>ResourceNotFoundException</code>: AWS 계정, 서울 리전, <code>AWS_SECRETS_MANAGER_PREFIX</code>가 생성 시점과 같은지 확인합니다.</li>
         <li><code>ResourceExistsException</code>: 같은 이름이 이미 있습니다. 키 회전이 맞을 때만 <code>--overwrite</code>를 사용합니다.</li>
-        <li>필드 누락: 상태 응답의 <code>missingFields</code>를 확인하고 원본 키 파일의 필드명을 점검합니다.</li>
+        <li>필드 누락: 상태 응답의 <code>missingFields</code>를 확인하고 <code>.env</code>의 변수명을 점검합니다.</li>
         <li>브로커 인증 실패: Secrets Manager가 3/3이면 Paper/실전 키 종류, 계좌 형식, 브로커 측 활성 상태를 확인합니다.</li>
         <li>앱 Role에는 Secret 생성·갱신·삭제 권한을 주지 않으며, 키 원문을 Git·README·Dockerfile·명령 인자에 넣지 않습니다.</li>
       </ul>

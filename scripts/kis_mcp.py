@@ -31,32 +31,27 @@ def read_values(path: Path) -> dict[str, str]:
 
 
 def trade_environment() -> dict[str, str]:
-    local = read_values(ROOT / "kis.key")
     dotenv = read_values(ROOT / ".env")
     if (os.environ.get("KIS_ENVIRONMENT") or dotenv.get("KIS_ENVIRONMENT") or "paper") != "paper":
         raise ValueError("KIS_ENVIRONMENT must be paper for the MCP trading server")
 
     def pick(*names: str) -> str:
         for name in names:
-            value = os.environ.get(name) or dotenv.get(name) or local.get(name)
+            value = os.environ.get(name) or dotenv.get(name)
             if value:
                 return value
         return ""
 
     paper_key, paper_secret = pick("KIS_PAPER_APP_KEY"), pick("KIS_PAPER_APP_SECRET")
-    legacy_key, legacy_secret = pick("KIS_APP_KEY"), pick("KIS_APP_SECRET")
     if bool(paper_key) != bool(paper_secret):
         raise ValueError("KIS_PAPER_APP_KEY and KIS_PAPER_APP_SECRET must both be set")
     if paper_key:
         key, secret = paper_key, paper_secret
-    elif legacy_key and legacy_secret:
-        key, secret = legacy_key, legacy_secret
     else:
-        key = local.get("App-KEY") or local.get("app_key", "")
-        secret = local.get("Secret") or local.get("secret", "")
-    account = pick("KIS_PAPER_ACCOUNT_NO", "KIS_ACCOUNT_NO", "account")
+        key, secret = "", ""
+    account = pick("KIS_PAPER_ACCOUNT_NO")
     if not key or not secret:
-        raise ValueError("KIS paper credentials are missing from .env or kis.key")
+        raise ValueError("KIS paper credentials are missing from .env")
     if not re.fullmatch(r"\d{8}-\d{2}", account):
         raise ValueError("KIS paper account must have the form 12345678-01")
 

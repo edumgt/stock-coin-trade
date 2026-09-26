@@ -86,21 +86,30 @@ services:
       QUANT_DATABASE_URL: ${QUANT_DATABASE_URL:-postgresql+psycopg://${QUANT_DB_USER:-quant}:${QUANT_DB_PASSWORD:-quant}@postgres:5432/${QUANT_DB_NAME:-quant_research}}
       # docker-class의 pg-stock은 백테스트 데이터 집계 API에서 읽기 전용으로만 사용한다.
       OHLCV_DATABASE_URL: ${OHLCV_DATABASE_URL:-postgresql+psycopg://admin:admin1234@pg-stock:5432/admin}
+      OHLCV_SYNC_ENABLED: ${OHLCV_SYNC_ENABLED:-true}
+      OHLCV_SYNC_TICKERS: ${OHLCV_SYNC_TICKERS:-major}
+      OHLCV_SYNC_PROVIDER: ${OHLCV_SYNC_PROVIDER:-naver}
+      OHLCV_SYNC_START_YEAR: ${OHLCV_SYNC_START_YEAR:-2020}
+      OHLCV_SYNC_CORRECTION_DAYS: ${OHLCV_SYNC_CORRECTION_DAYS:-7}
+      OHLCV_SYNC_HOUR: ${OHLCV_SYNC_HOUR:-18}
+      OHLCV_SYNC_MINUTE: ${OHLCV_SYNC_MINUTE:-20}
+      OHLCV_RECONCILE_ENABLED: ${OHLCV_RECONCILE_ENABLED:-true}
+      OHLCV_RECONCILE_DAY: ${OHLCV_RECONCILE_DAY:-sun}
+      OHLCV_RECONCILE_HOUR: ${OHLCV_RECONCILE_HOUR:-3}
+      OHLCV_RECONCILE_MINUTE: ${OHLCV_RECONCILE_MINUTE:-20}
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
       CMC_API_KEY: ${CMC_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # ARIA 암복호화 예제(/api/aria)의 서버 기본 키. 비우면 데모용 고정 키를 쓴다.
       ARIA_DEMO_KEY: ${ARIA_DEMO_KEY:-}
-      # 증권사 키는 kis.key/kb.key/al.key 파일(/run/secrets)이 기본이며, 아래
-      # 환경변수를 .env에 채우면 파일보다 우선 적용된다. KIS_ACCOUNT_NO는
-      # 'CANO-계좌상품코드'(예: 12345678-01) 형식이고 하이픈 뒤는 임의로 바꾸지 않는다.
-      KIS_APP_KEY: ${KIS_APP_KEY:-}
-      KIS_APP_SECRET: ${KIS_APP_SECRET:-}
-      KIS_ACCOUNT_NO: ${KIS_ACCOUNT_NO:-}
+      # 모든 인증정보는 저장소 루트 .env에서만 읽는다.
+      # KIS_PAPER_ACCOUNT_NO는 'CANO-계좌상품코드'(예: 12345678-01) 형식이다.
       KIS_ENVIRONMENT: ${KIS_ENVIRONMENT:-paper}
       KIS_PAPER_APP_KEY: ${KIS_PAPER_APP_KEY:-}
       KIS_PAPER_APP_SECRET: ${KIS_PAPER_APP_SECRET:-}
       KIS_PAPER_ACCOUNT_NO: ${KIS_PAPER_ACCOUNT_NO:-}
+      KIS_PAPER_MAX_ORDER_AMOUNT: ${KIS_PAPER_MAX_ORDER_AMOUNT:-10000000}
+      KIS_PAPER_MAX_ORDER_QUANTITY: ${KIS_PAPER_MAX_ORDER_QUANTITY:-1000}
       # 실전 잔고조회 전용. 모의 키와 절대 혼용하지 않으며 주문 API에서는 사용하지 않는다.
       KIS_REAL_APP_KEY: ${KIS_REAL_APP_KEY:-}
       KIS_REAL_APP_SECRET: ${KIS_REAL_APP_SECRET:-}
@@ -114,23 +123,17 @@ services:
       ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY:-}
       # 비우면 qdrant_service.py가 인메모리 Qdrant를 사용한다.
       QDRANT_URL: ${QDRANT_URL:-:memory:}
-      # Secrets Manager 트랙(aws_secret_store.py, *_aws.py)에서만
-      # 사용한다. kis.key/kb.key/al.key 기반 기존 모듈에는 영향이 없다. EC2에
+      # Secrets Manager 트랙(aws_secret_store.py, *_aws.py)에서만 사용한다. EC2에
       # IAM 인스턴스 프로파일이 붙어 있으면 액세스 키 3종은 비워 둬도 된다.
       AWS_REGION: ${AWS_REGION:-}
       AWS_SECRETS_MANAGER_PREFIX: ${AWS_SECRETS_MANAGER_PREFIX:-stock-coin-trade}
       AWS_SECRETS_MANAGER_KMS_KEY_ID: ${AWS_SECRETS_MANAGER_KMS_KEY_ID:-}
-      AWS_PROFILE: ${AWS_PROFILE:-}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
       # 기존 회원·보유자산을 변경하지 않고 없는 샘플 투자자만 추가한다.
       DEMO_SEED_ENABLED: ${DEMO_SEED_ENABLED:-true}
-    # 키 파일은 이미지에 복사하지 않고 읽기 전용으로만 전달한다.
     volumes:
-      - ./al.key:/run/secrets/al.key:ro
-      - ./kb.key:/run/secrets/kb.key:ro
-      - ./kis.key:/run/secrets/kis.key:ro
       # AI Sheet의 "LEAN" 버튼: 호스트 Docker 데몬에 접근해 QuantConnect LEAN
       # 컨테이너를 직접 실행한다(Docker-outside-of-Docker). 빌드 컨텍스트는
       # 읽기 전용으로, 실행 데이터/결과는 LEAN 컨테이너와 이름으로 공유하는

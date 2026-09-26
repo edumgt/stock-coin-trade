@@ -1,7 +1,7 @@
 const API_BASE = window.APP_CONFIG?.apiBase ?? '';
 
 // 모든 화면의 JavaScript 오류를 진단 API에 best-effort로 전달한다.
-// 폼 값·쿠키·요청 헤더는 전송하지 않으며, 상세 열람은 관리자만 가능하다.
+// 폼 값·쿠키·요청 헤더는 전송하지 않으며, 상세 열람은 로그인 회원만 가능하다.
 if (!window.__errorReporterInstalled) {
   window.__errorReporterInstalled = true;
   let reportedErrorCount = 0;
@@ -196,18 +196,18 @@ function renderHeader(user) {
       { href: '/trade/history.html', label: '내 거래이력',   icon: 'fa-solid fa-clock-rotate-left' },
       { href: '/trade/avg-down.html', label: '물타기 계산기', icon: 'fa-solid fa-calculator' },
     ]},
-    { type: 'group', label: 'KIS 모의투자 실습', items: [
+    { type: 'group', label: 'KIS Testbed · 외부 모의투자', items: [
       { href: '/learning/kis-regist.html', label: '1단계 · 가입', icon: 'fa-solid fa-user-plus' },
       { href: '/learning/kis-dev.html', label: '2단계 · 키 발급', icon: 'fa-solid fa-key' },
       { href: '/learning/kis-test.html', label: '3단계 · 테스트', icon: 'fa-solid fa-plug-circle-check' },
       { href: '/broker-api-test.html', label: 'KIS 연결 테스트', icon: 'fa-solid fa-chart-line' },
       { href: '/kis-order-flow-test.html', label: '모의 주문 흐름 테스트', icon: 'fa-solid fa-vial-circle-check' },
-      { href: '/kis-real-trading-practice.html', label: 'KIS 실거래 연습', icon: 'fa-solid fa-arrow-right-arrow-left' },
+      { href: '/kis-real-trading-practice.html', label: 'KIS 모의투자', icon: 'fa-solid fa-arrow-right-arrow-left' },
       { href: '/kis-api-explorer.html', label: 'KIS API 탐색기', icon: 'fa-solid fa-compass' },
       { href: '/kis-chart.html', label: 'KIS 종목 차트', icon: 'fa-solid fa-chart-column' },
       { href: '/kis-api-history.html', label: 'KIS API 호출 이력', icon: 'fa-solid fa-table-list' },
     ]},
-    { type: 'group', label: 'TR 실전연습', items: [
+    { type: 'group', label: 'TradingView · 외부 실습', items: [
       { href: '/learning/tr-pine/step-01.html', label: '01 · TradingView 가입', icon: 'fa-solid fa-user-plus' },
       { href: '/learning/tr-pine/step-02.html', label: '02 · Pine Editor 테스트', icon: 'fa-solid fa-code' },
       { href: '/learning/tr-pine/step-03.html', label: '03 · indicator() 테스트', icon: 'fa-solid fa-code' },
@@ -223,8 +223,8 @@ function renderHeader(user) {
       { href: '/learning/tr-pine/step-13.html', label: '13 · volume 거래량', icon: 'fa-solid fa-chart-column' },
       { href: '/learning/tr-pine/step-14.html', label: '14 · ta.bb() 볼린저 밴드', icon: 'fa-solid fa-chart-area' },
     ]},
-    { type: 'group', label: 'KB증권 Open API 실습', items: [
-      { href: '/learning/kb-securities.html', label: '전체 · 2일차 과정', icon: 'fa-solid fa-book-open' },
+    { type: 'group', label: 'KB증권 · 외부 API 조회', items: [
+      { href: '/learning/kb-securities.html', label: 'KB 전체 과정', icon: 'fa-solid fa-book-open' },
       { href: '/learning/kb-signup.html', label: '1단계 · 가입·신청', icon: 'fa-solid fa-user-plus' },
       { href: '/learning/kb-key.html', label: '2단계 · Key 발급', icon: 'fa-solid fa-key' },
       { href: '/learning/kb-install.html', label: '3단계 · 설치', icon: 'fa-solid fa-download' },
@@ -233,7 +233,7 @@ function renderHeader(user) {
       { href: '/kb-chart.html', label: 'KB 종목 캔들 차트', icon: 'fa-solid fa-chart-column' },
       { href: '/kb-api-history.html', label: '6단계 · 호출 이력', icon: 'fa-solid fa-table-list' },
     ]},
-    { type: 'group', label: 'Alpaca 미국주식 조회·분석', items: [
+    { type: 'group', label: 'Alpaca Paper · 외부 모의투자', items: [
       { href: '/learning/alpaca-api.html', label: '전체 · 미장 분석 API 과정', icon: 'fa-solid fa-book-open' },
       { href: '/learning/alpaca-signup.html', label: '1단계 · 가입·Paper 계정', icon: 'fa-solid fa-user-plus' },
       { href: '/learning/alpaca-key.html', label: '2단계 · Paper Key 발급', icon: 'fa-solid fa-key' },
@@ -243,11 +243,11 @@ function renderHeader(user) {
       { href: '/alpaca-order-flow-test.html', label: '6단계 · Paper 주문 흐름', icon: 'fa-solid fa-vial-circle-check' },
       { href: '/alpaca-api-history.html', label: '7단계 · 호출 이력', icon: 'fa-solid fa-table-list' },
     ]},
-    { type: 'group', label: 'Binance 실전연습', items: [
+    { type: 'group', label: 'Binance · 외부 공개 API', items: [
       { href: '/learning/binance-api.html', label: 'Binance Spot API 학습', icon: 'fa-brands fa-bitcoin' },
       { href: '/binance-api-test.html', label: 'Binance 공개 시세 테스트', icon: 'fa-solid fa-chart-line' },
     ]},
-    { type: 'group', label: 'Korbit 실전연습', items: [
+    { type: 'group', label: 'Korbit · 외부 공개 API', items: [
       { href: '/learning/korbit-api.html', label: 'Korbit Open API 학습', icon: 'fa-solid fa-coins' },
       { href: '/korbit-api-test.html', label: 'Korbit 공개 시세 테스트', icon: 'fa-solid fa-chart-line' },
     ]},
@@ -290,11 +290,11 @@ function renderHeader(user) {
     return `<a href="${n.href}" data-nav-key="${navigationKey(n.href)}" data-nav-label="${n.label}" class="oc-nav-item${sub ? ' oc-nav-item--sub' : ''}${active ? ' active' : ''}"${active ? ' aria-current="page"' : ''}><i class="${n.icon}" aria-hidden="true" style="width:16px;text-align:center;"></i> ${n.label}</a>`;
   };
 
-  // 좌측은 TR·브로커 실전연습, 우측은 대시보드·거래·자산·분석·관리 메뉴로 나눈다.
+  // 좌측은 외부 사업자 API/Testbed/Paper 실습만, 우측은 저장소 내부 거래·자산·분석 메뉴로 나눈다.
   const rightMenuLabels = new Set(['대시보드', '거래', '자산관리', 'POSTGRESQL QUANT', '분석 · 도구', 'Secrets Manager']);
   const leftNavGroups = navGroups.filter(group => !rightMenuLabels.has(group.label));
   const rightPanelGroups = navGroups.filter(group => rightMenuLabels.has(group.label));
-  const practiceItems = navGroups.find(group => group.label === 'TR 실전연습')?.items || [];
+  const practiceItems = navGroups.find(group => group.label === 'TradingView · 외부 실습')?.items || [];
 
   let ocGroupIdx = -1;
   const ocNavItems = leftNavGroups.map(g => {
@@ -333,7 +333,7 @@ function renderHeader(user) {
   const ocNavGuest = `
     <div class="oc-group open">
       <button type="button" class="oc-group-toggle" onclick="toggleOcGroup(0)" aria-expanded="true">
-        <span>TR 실전연습</span>
+        <span>TradingView · 외부 실습</span>
         <i class="fa-solid fa-chevron-down oc-group-chevron" aria-hidden="true"></i>
       </button>
       <div class="oc-group-body">
@@ -356,14 +356,14 @@ function renderHeader(user) {
     <!-- 왼쪽 오프캔버스 — 네비게이션 메뉴 -->
     <aside id="oc-panel">
       <div class="oc-header">
-        <span class="brand-logo-text" style="font-size:18.7px;letter-spacing:1.5px;"><i class="fa-solid fa-chart-pie" aria-hidden="true" style="margin-right:6px;"></i>실전투자</span>
+        <span class="brand-logo-text" style="font-size:18.7px;letter-spacing:1.5px;"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true" style="margin-right:6px;"></i>외부 API 실습</span>
         <button class="oc-close-btn" onclick="closeOffcanvas()">✕</button>
       </div>
-      <nav class="oc-nav" aria-label="TR 실전연습 메뉴">
+      <nav class="oc-nav" aria-label="외부 3rd-party API 실습 메뉴">
         ${isLoggedIn ? ocNavAuthed : ocNavGuest}
       </nav>
       <div class="oc-footer" style="font-size:12.1px;color:var(--muted);">
-        <div>(주)에듀엠지티</div>
+        <div>3rd-party API · Paper/Testbed</div>
         <a href="https://www.edumgt.co.kr" target="_blank" style="color:var(--accent-dark);text-decoration:none;font-weight:600;">www.edumgt.co.kr</a>
       </div>
     </aside>
@@ -867,7 +867,7 @@ function ensureSiteFooter() {
   if (document.body.querySelector(':scope > footer')) return;
   const footer = document.createElement('footer');
   footer.id = 'site-footer';
-  footer.innerHTML = '<div>EDUMGT · 모의투자 교육 플랫폼 <span aria-hidden="true">·</span> 모든 거래 기능은 학습·테스트 용도입니다.</div>';
+  footer.innerHTML = '<div>EDUMGT · 투자 교육 플랫폼 <span aria-hidden="true">·</span> 외부 API 거래연습은 제공사의 Testbed·Paper 환경을 사용합니다.</div>';
   document.body.appendChild(footer);
 }
 
@@ -882,7 +882,7 @@ function mountApiTestGuide() {
         ['KIS 현재가', 'GET /api/broker-test/kis/quote?symbol=005930', 'symbol: 6자리 KRX 코드', 'ok: true, quote.price·changeRate·volume·tradeTime'],
         ['KIS 일봉', 'GET /api/broker-test/kis/chart?symbol=005930', 'symbol: 6자리 KRX 코드', 'ok: true, chart.data 배열(날짜·OHLC 가격)'],
         ['KIS 호가', 'GET /api/broker-test/kis/orderbook?symbol=005930', 'symbol: 6자리 KRX 코드', 'ok: true, orderbook 매도·매수 10단계'],
-        ['KIS 잔고', 'GET /api/broker-test/kis/balance', '서버의 KIS_ACCOUNT_NO', 'ok: true, balance 현금·평가·보유종목 정보'],
+        ['KIS 잔고', 'GET /api/broker-test/kis/balance', '서버의 KIS_PAPER_ACCOUNT_NO', 'ok: true, balance 현금·평가·보유종목 정보'],
         ['KIS 지수', 'GET /api/broker-test/kis/index?code=0001', '0001(코스피) 또는 1001(코스닥)', 'ok: true, index 현재 지수·등락 정보'],
       ],
     },
@@ -890,7 +890,7 @@ function mountApiTestGuide() {
       title: '이 화면의 API 호출과 기대 결과',
       rate: '<strong>KB증권: 고정 분당 호출 한도 미공개</strong> — 공식 포털은 API·운영 정책별 호출 제한이 적용된다고 안내합니다. 따라서 이 화면에서는 버튼을 연속 클릭하지 말고, 429 또는 제한 오류가 나면 잠시 기다린 뒤 재시도하세요.',
       rows: [
-        ['Access Token', 'GET /api/broker-test/kb/token', '서버의 kb.key 또는 환경변수', 'ok: true, check.tokenType·expiresIn. 토큰 원문은 표시하지 않음'],
+        ['Access Token', 'GET /api/broker-test/kb/token', '서버 .env의 KB_APP_KEY·KB_APP_SECRET', 'ok: true, check.tokenType·expiresIn. 토큰 원문은 표시하지 않음'],
         ['현재가 (IVU10140)', 'GET /api/broker-test/kb/quote?symbol=005930', 'symbol: 6자리 KRX 코드', 'ok: true, quote.price·changeRate·volume'],
         ['종목 기본정보', 'GET /api/broker-test/kb/base-info?symbol=005930', 'symbol: 6자리 KRX 코드', 'ok: true, result 내 종목명·시장·상장 정보'],
         ['호가', 'GET /api/broker-test/kb/orderbook?symbol=005930', 'symbol: 6자리 KRX 코드', 'ok: true, result 내 매수·매도 호가 정보'],
@@ -929,6 +929,7 @@ function mountApiTestGuide() {
       title: '이 화면의 API 호출과 기대 결과',
       rate: '<strong>Binance Spot 공개 API: IP당 분당 6,000 request weight</strong> — “6,000회”가 아니라 엔드포인트별 가중치 합계입니다. 현재 사용량은 <code>X-MBX-USED-WEIGHT-1M</code> 응답 헤더에서 확인하며, 429가 나오면 <code>Retry-After</code>만큼 기다립니다.',
       rows: [
+        ['Spot 심볼 검색', 'GET /api/crypto-exchange-test/binance/symbols?q=BTC&quote=USDT', 'q: 코인/심볼, quote: 결제 자산', 'TRADING 상태의 symbol·baseAsset·quoteAsset 목록'],
         ['24시간 시세', 'GET /api/crypto-exchange-test/binance/ticker?symbol=BTCUSDT', 'symbol: BTCUSDT 형식, 6~20자리 영문·숫자', 'ok: true, result 내 lastPrice·priceChangePercent·volume 등'],
         ['호가 10단계', 'GET /api/crypto-exchange-test/binance/orderbook?symbol=BTCUSDT', '동일 symbol', 'ok: true, result 내 bids·asks 배열 각 최대 10단계'],
       ],

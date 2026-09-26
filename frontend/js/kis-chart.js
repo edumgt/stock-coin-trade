@@ -1,4 +1,4 @@
-// KIS 종목 차트: 서버(/api/kis-chart/*)가 kis.key 로 KIS Testbed 를 호출해 준 캔들을 lightweight-charts 로 그린다.
+// KIS 종목 차트: 서버(/api/kis-chart/*)가 .env로 KIS Testbed를 호출해 준 캔들을 lightweight-charts로 그린다.
 (() => {
   const apiBase = window.APP_CONFIG?.apiBase || '';
   const $ = (id) => document.getElementById(id);

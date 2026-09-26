@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "mcp" / "open-trading-api" / "examples_llm" / "domestic_stock"
 OUT = ROOT / "python-stock-backend" / "kis_api_catalog.json"
 
-# 서버가 kis.key 로 채우는 계좌 파라미터. 브라우저에서 받지 않는다.
+# 서버가 .env로 채우는 계좌 파라미터. 브라우저에서 받지 않는다.
 SERVER_FILLED = {"CANO", "ACNT_PRDT_CD"}
 # 연속조회 키는 탐색기에서 항상 공란(최초 조회)으로 보낸다.
 ALWAYS_BLANK = {"CTX_AREA_FK100", "CTX_AREA_NK100", "CTX_AREA_FK200", "CTX_AREA_NK200"}
@@ -162,7 +162,7 @@ def build_entry(d: Path) -> dict | None:
     for key, var, const in parse_params(src):
         p: dict = {"key": key}
         if key in SERVER_FILLED:
-            p.update(source="server", label={"CANO": "종합계좌번호"}.get(key, "계좌상품코드"), desc="서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다.")
+            p.update(source="server", label={"CANO": "종합계좌번호"}.get(key, "계좌상품코드"), desc="서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다.")
         elif key in ALWAYS_BLANK or var in {"FK100", "NK100", "FK200", "NK200"}:
             p.update(source="blank", label="연속조회 키", desc="탐색기는 최초 조회만 수행하므로 공란으로 보냅니다.")
         elif const is not None:

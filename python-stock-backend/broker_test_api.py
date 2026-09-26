@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 import secrets
 import time
 
@@ -16,10 +17,13 @@ from broker_test import (
     get_kb_stock_orderbook,
     get_kb_configuration_status,
     get_kis_balance,
+    get_kis_configuration_status,
     get_kis_daily_chart,
     get_kis_index,
+    get_kis_orders_today,
     get_kis_orderbook,
     get_kis_quote,
+    place_kis_paper_order,
     run_kis_mock_order_flow_test,
 )
 from authz import can_use_kis_account
@@ -69,9 +73,31 @@ def kis_balance():
     return _kis_response(lambda: {"balance": get_kis_balance()})
 
 
+@broker_test_bp.get("/kis/status")
+def kis_status():
+    return jsonify({"ok": True, "status": get_kis_configuration_status()})
+
+
+@broker_test_bp.get("/kis/orders")
+def kis_orders():
+    if not can_use_kis_account(session.get("member_id")):
+        return jsonify({"ok": False, "message": "KIS 모의계좌 주문내역은 로그인 후 조회할 수 있습니다."}), 401
+    try:
+        limit = int(request.args.get("limit", "50"))
+    except ValueError:
+        return jsonify({"ok": False, "message": "limit은 숫자여야 합니다."}), 400
+    return _kis_response(lambda: {"history": get_kis_orders_today(limit)})
+
+
 @broker_test_bp.get("/kis/chart")
 def kis_chart():
-    return _kis_response(lambda: {"chart": get_kis_daily_chart(_symbol())})
+    try:
+        days = int(request.args.get("days", "30"))
+    except ValueError:
+        return jsonify({"ok": False, "message": "days는 숫자여야 합니다."}), 400
+    if not 5 <= days <= 365:
+        return jsonify({"ok": False, "message": "days는 5~365 사이여야 합니다."}), 400
+    return _kis_response(lambda: {"chart": get_kis_daily_chart(_symbol(), days)})
 
 
 @broker_test_bp.get("/kis/orderbook")
@@ -88,6 +114,78 @@ def kis_index():
 
 
 _ORDER_APPROVAL_KEY = "kis_order_approval"
+_PAPER_ORDER_APPROVAL_KEY = "kis_paper_order_approval"
+
+
+def _paper_order_intent() -> dict:
+    payload = request.get_json(silent=True) or {}
+    symbol = str(payload.get("symbol", "")).strip()
+    side = str(payload.get("side", "")).strip().upper()
+    order_type = str(payload.get("orderType", "MARKET")).strip().upper()
+    quantity = payload.get("quantity")
+    price = payload.get("price", 0)
+    if len(symbol) != 6 or not symbol.isdigit():
+        raise BrokerApiError("종목코드는 6자리 KRX 숫자 코드여야 합니다.", 400)
+    if side not in {"BUY", "SELL"}:
+        raise BrokerApiError("주문 구분은 BUY 또는 SELL이어야 합니다.", 400)
+    if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity < 1:
+        raise BrokerApiError("주문수량은 1주 이상의 정수여야 합니다.", 400)
+    if order_type not in {"MARKET", "LIMIT"}:
+        raise BrokerApiError("주문유형은 MARKET 또는 LIMIT만 지원합니다.", 400)
+    if order_type == "LIMIT" and (not isinstance(price, int) or isinstance(price, bool) or price < 1):
+        raise BrokerApiError("지정가 주문가격은 1원 이상의 정수여야 합니다.", 400)
+    return {"symbol": symbol, "side": side, "quantity": quantity, "orderType": order_type, "price": price if order_type == "LIMIT" else 0}
+
+
+def _intent_digest(intent: dict) -> str:
+    return hashlib.sha256(json.dumps(intent, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+@broker_test_bp.post("/kis/order-approval")
+def kis_paper_order_approval():
+    member_id = session.get("member_id")
+    if not member_id or not can_use_kis_account(member_id):
+        return jsonify({"ok": False, "message": "KIS 모의주문은 로그인 후 이용할 수 있습니다."}), 401
+    if not csrf_is_valid():
+        return jsonify({"ok": False, "message": "요청 검증에 실패했습니다. 화면을 새로고침한 뒤 다시 시도하세요."}), 403
+    try:
+        intent = _paper_order_intent()
+    except BrokerApiError as exc:
+        return jsonify({"ok": False, "message": str(exc)}), exc.status_code
+    token = secrets.token_urlsafe(32)
+    session[_PAPER_ORDER_APPROVAL_KEY] = {
+        "tokenDigest": hashlib.sha256(token.encode()).hexdigest(),
+        "intentDigest": _intent_digest(intent),
+        "expiresAt": time.time() + 60,
+    }
+    return jsonify({"ok": True, "approvalToken": token, "expiresIn": 60, "intent": intent})
+
+
+@broker_test_bp.post("/kis/orders")
+def kis_paper_order():
+    member_id = session.get("member_id")
+    if not member_id or not can_use_kis_account(member_id):
+        return jsonify({"ok": False, "message": "KIS 모의주문은 로그인 후 이용할 수 있습니다."}), 401
+    if not csrf_is_valid():
+        return jsonify({"ok": False, "message": "요청 검증에 실패했습니다. 화면을 새로고침한 뒤 다시 시도하세요."}), 403
+    try:
+        intent = _paper_order_intent()
+    except BrokerApiError as exc:
+        return jsonify({"ok": False, "message": str(exc)}), exc.status_code
+    payload = request.get_json(silent=True) or {}
+    approval = session.pop(_PAPER_ORDER_APPROVAL_KEY, None) or {}
+    token_digest = hashlib.sha256(str(payload.get("approvalToken", "")).encode()).hexdigest()
+    valid = (
+        approval
+        and approval.get("expiresAt", 0) >= time.time()
+        and hmac.compare_digest(approval.get("tokenDigest", ""), token_digest)
+        and hmac.compare_digest(approval.get("intentDigest", ""), _intent_digest(intent))
+    )
+    if not valid:
+        return jsonify({"ok": False, "message": "주문 승인이 만료되었거나 주문 내용이 변경되었습니다. 다시 확인하세요."}), 403
+    return _kis_response(lambda: {"order": place_kis_paper_order(
+        intent["symbol"], intent["side"], intent["quantity"], intent["orderType"], intent["price"],
+    )})
 
 
 @broker_test_bp.post("/kis/order-flow-approval")

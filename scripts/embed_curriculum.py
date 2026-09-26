@@ -25,10 +25,10 @@ GITHUB_BLOB = "https://github.com/edumgt/stock-coin-trade/blob/main/"
 
 # (curriculum 파일, 라벨, 대상 페이지들, 기본으로 접어 둘 ## 절 제목 접두어)
 TARGETS = [
-    ("01.md", "1일차", ["kis-test.html"]),
-    ("02.md", "2일차", ["kb-securities.html"]),
-    ("03.md", "3일차", ["alpaca-api.html"]),
-    ("04.md", "4일차", ["binance-api.html", "korbit-api.html"]),
+    ("01.md", "KIS TESTBED", ["kis-test.html"]),
+    ("02.md", "KB OPEN API", ["kb-securities.html"]),
+    ("03.md", "ALPACA PAPER", ["alpaca-api.html"]),
+    ("04.md", "BINANCE · KORBIT", ["binance-api.html", "korbit-api.html"]),
 ]
 COLLAPSED_PREFIXES = ("준비·설정 상세",)
 

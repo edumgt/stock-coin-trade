@@ -43,6 +43,11 @@ def _db():
     return _engine
 
 
+def get_ohlcv_engine():
+    """Shared engine for internal screens and authenticated Open API reads."""
+    return _db()
+
+
 def _value(value):
     if isinstance(value, Decimal):
         return float(value)
@@ -93,7 +98,16 @@ def summary():
             markets = _rows(conn.execute(text("""
                 SELECT market, count(*) AS ticker_count FROM tickers GROUP BY market ORDER BY market
             """)))
-        return jsonify({"totals": totals, "yearly": yearly, "quality": quality, "markets": markets})
+            sync = {"tracked_ranges": 0, "success_ranges": 0, "failed_ranges": 0, "last_completed_at": None}
+            if conn.execute(text("SELECT to_regclass('public.ohlcv_sync_status')")).scalar_one():
+                sync = _rows(conn.execute(text("""
+                    SELECT count(*) AS tracked_ranges,
+                           count(*) FILTER (WHERE status IN ('success','empty')) AS success_ranges,
+                           count(*) FILTER (WHERE status='failed') AS failed_ranges,
+                           max(completed_at) AS last_completed_at
+                    FROM ohlcv_sync_status
+                """)))[0]
+        return jsonify({"totals": totals, "yearly": yearly, "quality": quality, "markets": markets, "sync": sync})
     except SQLAlchemyError:
         logger.exception("Failed to query OHLCV summary")
         return jsonify({"message": "OHLCV DB 집계를 조회할 수 없습니다."}), 503

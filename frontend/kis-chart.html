@@ -62,7 +62,7 @@
         <div style="flex:1 1 100%">
           <div class="kicker">KIS 모의투자 실습 · 종목 차트</div>
           <h1>KIS 모의투자 API 종목 차트</h1>
-          <p>서버의 <code>kis.key</code>(모의투자 App Key·Secret)로 KIS Testbed 의 기간별시세·당일분봉 API 를 호출해 캔들 차트를 그립니다. 계좌 설정과 로그인은 필요 없고, 조회 전용입니다. 종목명 또는 6자리 코드를 입력하세요.</p>
+          <p>서버의 <code>.env</code>(모의투자 App Key·Secret)로 KIS Testbed 의 기간별시세·당일분봉 API 를 호출해 캔들 차트를 그립니다. 계좌 설정과 로그인은 필요 없고, 조회 전용입니다. 종목명 또는 6자리 코드를 입력하세요.</p>
           <p style="margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.6"><strong>호출 경로:</strong> 브라우저 → 이 저장소 백엔드 <code>/api/kis-chart/candles·minutes</code> → KIS Testbed <code>inquire-daily-itemchartprice·inquire-time-itemchartprice</code>. 브라우저가 KIS 를 직접 호출하지 않으며 키·토큰은 백엔드에만 있습니다. 자세한 표는 <a href="/learning/kis-test.html" style="text-decoration:underline">3단계 · 테스트</a>의 "호출 경로" 참고.</p>
         </div>
         <div class="c-search">

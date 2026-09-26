@@ -1,0 +1,19 @@
+# AWS 운영 전용 TLS 오버레이 (Let's Encrypt).
+#
+# 로컬 개발  : docker compose up -d
+#              (이미지 내장 docker/nginx.conf 로 HTTP만 서비스. SSL 미사용)
+# AWS 운영   : docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+#              (docker/nginx.ssl.conf 로 443 TLS 종단 + 80→443 리다이렉트)
+#
+# 최초 인증서 발급과 자동 갱신 설정은 scripts/ec2/init-letsencrypt.sh 참고.
+# .env 의 FRONTEND_PORT 는 80 이어야 한다(80: ACME/리다이렉트, 443: 서비스).
+services:
+  frontend:
+    ports:
+      - "443:443"
+    volumes:
+      # HTTP 전용 내장 설정을 TLS 설정으로 덮어쓴다.
+      - ./docker/nginx.ssl.conf:/etc/nginx/conf.d/default.conf:ro
+      # Let's Encrypt 인증서와 ACME webroot(갱신용).
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro

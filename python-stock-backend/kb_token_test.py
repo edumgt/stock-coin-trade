@@ -2,9 +2,8 @@
 
 사용법: python kb_token_test.py
 
-KB_APP_KEY/KB_APP_SECRET 환경변수를 우선 사용하며, 없을 때만 프로젝트 루트의
-gitignore 대상 파일 kb.key를 읽습니다. AppKey, Secret, Access Token은
-출력하거나 저장하지 않습니다.
+저장소 루트 ``.env``의 KB_APP_KEY/KB_APP_SECRET만 사용합니다.
+AppKey, Secret, Access Token은 출력하거나 저장하지 않습니다.
 """
 
 from __future__ import annotations
@@ -13,25 +12,14 @@ import os
 from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
+
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 
 
 KB_API_BASE_URL = "https://developer.kbsec.com:32484"
 TOKEN_PATH = "/oauth2/token"
-
-
-def _read_key_file(path: Path) -> tuple[str, str]:
-    values: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        if "=" not in raw_line:
-            continue
-        name, value = raw_line.split("=", 1)
-        values[name.strip().lower()] = value.strip()
-
-    app_key = values.get("appkey") or values.get("app_key")
-    app_secret = values.get("secret") or values.get("appsecret") or values.get("app_secret")
-    if not app_key or not app_secret:
-        raise RuntimeError("kb.key에 AppKey와 Secret을 설정하세요.")
-    return app_key, app_secret
 
 
 def load_credentials() -> tuple[str, str]:
@@ -40,10 +28,7 @@ def load_credentials() -> tuple[str, str]:
     if app_key and app_secret:
         return app_key, app_secret
 
-    key_file = Path(__file__).resolve().parents[1] / "kb.key"
-    if not key_file.is_file():
-        raise RuntimeError("KB_APP_KEY/KB_APP_SECRET 또는 프로젝트 루트의 kb.key가 필요합니다.")
-    return _read_key_file(key_file)
+    raise RuntimeError(".env에 KB_APP_KEY와 KB_APP_SECRET을 설정하세요.")
 
 
 def request_access_token() -> tuple[str, int]:

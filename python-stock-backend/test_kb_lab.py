@@ -25,8 +25,7 @@ class KbLabTest(unittest.TestCase):
     @patch("broker_test_api.get_kb_configuration_status")
     def test_kb_status_returns_no_secret_values(self, status):
         status.return_value = {
-            "configured": True, "source": "kb.key", "environment": {"complete": False},
-            "keyFile": {"mounted": True, "valid": True, "permission": "600", "securePermission": True},
+            "configured": True, "source": "environment", "environment": {"complete": True},
             "endpoint": broker_test.KB_API_BASE_URL, "mode": "production", "readOnly": True,
         }
         self.login()

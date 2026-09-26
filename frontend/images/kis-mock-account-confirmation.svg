@@ -36,5 +36,5 @@
   <rect x="176" y="494" width="848" height="70" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
   <circle cx="211" cy="529" r="14" fill="#0b82c5"/>
   <text x="206" y="535" fill="#fff" font-family="Arial, sans-serif" font-size="17" font-weight="700">i</text>
-  <text x="240" y="535" fill="#1e3a8a" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif" font-size="17" font-weight="700">여기서 확인한 모의 계좌번호만 KIS_ACCOUNT_NO에 설정합니다. 실전 계좌번호와 섞어 쓰지 마세요.</text>
+  <text x="240" y="535" fill="#1e3a8a" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif" font-size="17" font-weight="700">여기서 확인한 모의 계좌번호만 KIS_PAPER_ACCOUNT_NO에 설정합니다. 실전 계좌번호와 섞어 쓰지 마세요.</text>
 </svg>

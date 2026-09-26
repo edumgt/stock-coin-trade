@@ -1,4 +1,4 @@
-"""System-wide error collection and administrator-only diagnostic APIs."""
+"""System-wide error collection and signed-in member diagnostic APIs."""
 import hashlib
 import json
 import re
@@ -12,7 +12,6 @@ from db import engine, session_scope
 from models import Member, SystemErrorLog
 
 error_analysis_bp = Blueprint("error_analysis", __name__, url_prefix="/api/error-analysis")
-ADMIN_EMAIL = "admin@admin.com"
 MAX_MESSAGE = 2000
 MAX_STACK = 12000
 MAX_META = 5000
@@ -100,17 +99,16 @@ def ensure_error_analysis_table():
         conn.execute(text(statement))
 
 
-def _is_admin():
+def _is_member():
     member_id = session.get("member_id")
     if not member_id:
         return False
     with session_scope() as db:
-        member = db.get(Member, member_id)
-        return bool(member and member.email == ADMIN_EMAIL)
+        return db.get(Member, member_id) is not None
 
 
-def _forbidden():
-    return jsonify({"error": "관리자만 시스템 오류 로그를 조회할 수 있습니다."}), 403
+def _unauthorized():
+    return jsonify({"error": "UNAUTHORIZED", "message": "로그인이 필요합니다."}), 401
 
 
 @error_analysis_bp.post("/client")
@@ -136,16 +134,18 @@ def _serialize(row, detailed=False):
         "message": row.message, "reason": row.reason, "fingerprint": row.fingerprint,
     }
     if detailed:
-        data.update({"stackTrace": row.stack_trace, "requestMeta": json.loads(row.request_meta) if row.request_meta else None,
-                     "memberId": row.member_id})
+        data.update({"stackTrace": row.stack_trace, "requestMeta": json.loads(row.request_meta) if row.request_meta else None})
     return data
 
 
 @error_analysis_bp.get("/logs")
 def list_logs():
-    if not _is_admin():
-        return _forbidden()
-    limit = max(1, min(int(request.args.get("limit", 100)), 300))
+    if not _is_member():
+        return _unauthorized()
+    try:
+        limit = max(1, min(int(request.args.get("limit", 300)), 1000))
+    except (TypeError, ValueError):
+        limit = 300
     source = request.args.get("source", "").upper()
     status = request.args.get("status", "")
     with session_scope() as db:
@@ -160,8 +160,8 @@ def list_logs():
 
 @error_analysis_bp.get("/logs/<int:log_id>")
 def get_log(log_id):
-    if not _is_admin():
-        return _forbidden()
+    if not _is_member():
+        return _unauthorized()
     with session_scope() as db:
         row = db.get(SystemErrorLog, log_id)
         if not row:

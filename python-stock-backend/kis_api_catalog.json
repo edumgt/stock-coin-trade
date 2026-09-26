@@ -33,13 +33,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "PDNO",
@@ -140,13 +140,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "KRX_FWDG_ORD_ORGNO",
@@ -275,13 +275,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "INQR_STRT_DT",
@@ -470,13 +470,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "AFHR_FLPR_YN",
@@ -633,13 +633,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "PDNO",
@@ -727,13 +727,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "PDNO",
@@ -982,13 +982,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "INQR_DVSN_1",
@@ -1067,13 +1067,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "PDNO",
@@ -1190,13 +1190,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "RSVN_ORD_SEQ",
@@ -1373,13 +1373,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "PRCS_DVSN_CD",
@@ -1490,13 +1490,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "USER_DVSN_CD",
@@ -1563,13 +1563,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "USER_DVSN_CD",
@@ -1663,13 +1663,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "PDNO",
@@ -1750,13 +1750,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACCA_DVSN_CD",
@@ -1796,13 +1796,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACCA_DVSN_CD",
@@ -1882,13 +1882,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "AFHR_FLPR_YN",
@@ -2057,13 +2057,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "PDNO",
@@ -2161,13 +2161,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "INQR_DVSN_1",
@@ -2244,13 +2244,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "INQR_STRT_DT",
@@ -2374,13 +2374,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "SORT_DVSN",
@@ -2502,13 +2502,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "PDNO",
@@ -2556,13 +2556,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "CMA_EVLU_AMT_ICLD_YN",
@@ -2732,13 +2732,13 @@
      "key": "CANO",
      "source": "server",
      "label": "종합계좌번호",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "ACNT_PRDT_CD",
      "source": "server",
      "label": "계좌상품코드",
-     "desc": "서버의 kis.key(account) 또는 .env 의 KIS_ACCOUNT_NO 에서 채웁니다."
+     "desc": "서버 .env의 KIS_PAPER_ACCOUNT_NO에서 채웁니다."
     },
     {
      "key": "INQR_STRT_DT",

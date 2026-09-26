@@ -22,7 +22,7 @@
   <main class="test-wrap"><section class="card">
     <div class="kicker">READ-ONLY · ALPACA PAPER API · SECRETS MANAGER</div>
     <h1 style="margin:7px 0;font-size:28px;font-weight:900;color:var(--fg)">Alpaca Secrets 테스트</h1>
-    <p style="margin:0;color:var(--fg-2);line-height:1.7"><code>/alpaca-test.html</code>과 같은 Paper 조회를 수행하지만, API Key·Secret을 <code>al.key</code> 파일이 아니라 <strong>AWS Secrets Manager의 JSON 보안 암호</strong>에서 읽습니다. 이 페이지·백엔드 모듈은 기존 키 파일 트랙과 완전히 분리된 별도 구현이며, 기존 트랙은 이 모듈과 무관하게 그대로 동작합니다.</p>
+    <p style="margin:0;color:var(--fg-2);line-height:1.7"><code>/alpaca-test.html</code>과 같은 Paper 조회를 수행하지만, API Key·Secret을 로컬 <code>.env</code>가 아니라 <strong>AWS Secrets Manager의 JSON 보안 암호</strong>에서 읽습니다. 이 페이지·백엔드 모듈은 로컬 <code>.env</code> 트랙과 분리된 운영용 구현입니다.</p>
     <div class="notice"><strong>테스트 범위:</strong> 계정·포지션만 조회 전용으로 확인합니다. 주문, 취소, 포지션 변경 등 거래 API는 호출하지 않습니다.</div>
     <div class="notice"><strong>먼저 준비:</strong> <a href="/learning/aws-ssm-key-management.html">키 적재·연결 가이드</a>를 따라 <code>stock-coin-trade/alpaca</code> 보안 암호에 <code>api_key</code>, <code>secret_key</code> JSON 필드를 저장하세요.</div>
     <button id="run-test" class="run">Paper API 연결 테스트</button>

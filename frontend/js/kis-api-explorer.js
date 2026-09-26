@@ -50,7 +50,7 @@
   const githubUrl = (api) => `https://github.com/koreainvestment/open-trading-api/blob/main/${api.source}`;
   function fieldHtml(p) {
     if (p.source === 'server') {
-      return `<div class="x-field server"><label>${esc(p.label)}<code>${esc(p.key)}</code></label><input value="서버 설정(kis.key / .env) 사용" readonly><div class="hint">${esc(p.desc)}</div></div>`;
+      return `<div class="x-field server"><label>${esc(p.label)}<code>${esc(p.key)}</code></label><input value="서버 .env 설정 사용" readonly><div class="hint">${esc(p.desc)}</div></div>`;
     }
     if (p.source !== 'user') return '';
     const descClean = (p.desc || '').replace(/\s*\(ex\..*\)\s*$/, '').trim();

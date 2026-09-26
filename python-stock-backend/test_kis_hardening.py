@@ -140,6 +140,52 @@ class KisHardeningTest(unittest.TestCase):
         self.assertEqual(replay.status_code, 403)
         run_flow.assert_called_once()
 
+    @patch("broker_test_api.place_kis_paper_order", return_value={"orderNo": "123", "environment": "paper"})
+    @patch("broker_test_api.can_use_kis_account", return_value=True)
+    def test_paper_order_approval_binds_exact_intent_and_is_single_use(self, _access, place_order):
+        csrf = self._login_with_csrf()
+        headers = {"X-CSRF-Token": csrf}
+        intent = {"symbol": "005930", "side": "BUY", "quantity": 1, "orderType": "MARKET", "price": 0}
+        approval_response = self.client.post(
+            "/api/broker-test/kis/order-approval", json=intent, headers=headers,
+        )
+        self.assertEqual(approval_response.status_code, 200)
+        token = approval_response.get_json()["approvalToken"]
+
+        tampered = self.client.post(
+            "/api/broker-test/kis/orders",
+            json={**intent, "quantity": 2, "approvalToken": token}, headers=headers,
+        )
+        self.assertEqual(tampered.status_code, 403)
+        place_order.assert_not_called()
+
+        second_approval = self.client.post(
+            "/api/broker-test/kis/order-approval", json=intent, headers=headers,
+        ).get_json()["approvalToken"]
+        accepted = self.client.post(
+            "/api/broker-test/kis/orders",
+            json={**intent, "approvalToken": second_approval}, headers=headers,
+        )
+        self.assertEqual(accepted.status_code, 200)
+        place_order.assert_called_once_with("005930", "BUY", 1, "MARKET", 0)
+
+        replay = self.client.post(
+            "/api/broker-test/kis/orders",
+            json={**intent, "approvalToken": second_approval}, headers=headers,
+        )
+        self.assertEqual(replay.status_code, 403)
+        place_order.assert_called_once()
+
+    @patch("broker_test.get_kis_balance", return_value={"cashBalance": "1000000", "holdings": []})
+    @patch("broker_test.get_kis_quote", return_value={"price": "70000"})
+    @patch("broker_test._kis_order_post", return_value={"rt_cd": "0", "msg1": "접수", "output": {"ODNO": "77"}})
+    @patch("broker_test._kis_account", return_value=("12345678", "01"))
+    def test_general_paper_order_uses_testbed_buy_tr_id(self, _account, order_post, _quote, _balance):
+        result = broker_test.place_kis_paper_order("005930", "BUY", 1, "MARKET", 0)
+        self.assertEqual(result["environment"], "paper")
+        self.assertEqual(result["orderNo"], "77")
+        self.assertEqual(order_post.call_args.args[1], "VTTC0012U")
+        self.assertEqual(order_post.call_args.args[2]["ORD_DVSN"], "01")
 
 if __name__ == "__main__":
     unittest.main()

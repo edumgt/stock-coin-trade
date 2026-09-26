@@ -1,6 +1,6 @@
 """KIS 종목 차트 웹앱 백엔드 (/api/kis-chart/*).
 
-kis.key(또는 .env)의 모의투자 App Key·Secret 으로 KIS Testbed 의 시세 API 를 호출해
+.env의 모의투자 App Key·Secret 으로 KIS Testbed 의 시세 API 를 호출해
 차트용 캔들 데이터를 만든다. 계좌 정보는 필요 없고, 읽기 전용이며 로그인도 요구하지 않는다.
 
 - /candles  : 국내주식기간별시세 (inquire-daily-itemchartprice, FHKST03010100)

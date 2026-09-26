@@ -1,26 +1,22 @@
 """Read-only broker OpenAPI quote checks used by the local test web page.
 
-Credentials stay on the Flask server. Values from key files are never returned
-or logged; the browser only receives a small normalized quote or a safe error.
+Credentials stay in server environment variables loaded from ``.env``. They
+are never returned or logged; the browser only receives normalized data.
 """
 
 from __future__ import annotations
 
 import os
 import socket
-import stat
 import threading
 import time
 import uuid
 from collections import OrderedDict
-from pathlib import Path
 from typing import Any
 
 import requests
 
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-SECRETS_DIR = Path(os.environ.get("BROKER_KEYS_DIR", "/run/secrets"))
 KB_API_BASE_URL = "https://developer.kbsec.com:32484"
 KIS_TESTBED_URL = "https://openapivts.koreainvestment.com:29443"
 _kis_token_cache: dict[str, Any] = {"value": None, "expires_at": 0.0}
@@ -31,6 +27,7 @@ _kis_token_lock = threading.Lock()
 _kis_quote_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
 _kis_quote_lock = threading.Lock()
 _kis_order_flow_lock = threading.Lock()
+_kis_paper_order_lock = threading.Lock()
 _kis_api_rate_lock = threading.Lock()
 _kis_last_api_call_at = 0.0
 _KIS_API_CALL_GAP_SECONDS = 1.05
@@ -51,55 +48,22 @@ class BrokerApiError(RuntimeError):
         self.status_code = status_code
 
 
-def _read_key_file(filename: str, key_names: tuple[str, ...], secret_names: tuple[str, ...]) -> tuple[str, str]:
-    path = next((candidate for candidate in (SECRETS_DIR / filename, ROOT_DIR / filename) if candidate.is_file()), None)
-    if path is None:
-        raise BrokerApiError(f"{filename} 파일을 찾을 수 없습니다.")
-    values: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        if "=" not in raw_line:
-            continue
-        name, value = raw_line.split("=", 1)
-        values[name.strip().lower().replace("-", "_")] = value.strip()
-    app_key = next((values.get(name) for name in key_names if values.get(name)), None)
-    app_secret = next((values.get(name) for name in secret_names if values.get(name)), None)
+def _credentials(prefix: str) -> tuple[str, str]:
+    app_key = os.environ.get(f"{prefix}_APP_KEY", "").strip()
+    app_secret = os.environ.get(f"{prefix}_APP_SECRET", "").strip()
     if not app_key or not app_secret:
-        raise BrokerApiError(f"{filename}에 App Key와 Secret을 설정하세요.")
+        raise BrokerApiError(f".env에 {prefix}_APP_KEY와 {prefix}_APP_SECRET을 모두 설정하세요.", 503)
     return app_key, app_secret
-
-
-def _credentials(prefix: str, filename: str, key_names: tuple[str, ...], secret_names: tuple[str, ...]) -> tuple[str, str]:
-    app_key = os.environ.get(f"{prefix}_APP_KEY")
-    app_secret = os.environ.get(f"{prefix}_APP_SECRET")
-    if app_key and app_secret:
-        return app_key, app_secret
-    return _read_key_file(filename, key_names, secret_names)
 
 
 def get_kb_configuration_status() -> dict[str, Any]:
     """Return KB credential readiness without returning any credential value."""
     env_key = bool(os.environ.get("KB_APP_KEY", "").strip())
     env_secret = bool(os.environ.get("KB_APP_SECRET", "").strip())
-    key_path = next((candidate for candidate in (SECRETS_DIR / "kb.key", ROOT_DIR / "kb.key") if candidate.is_file()), None)
-    file_valid = False
-    file_mode = None
-    if key_path is not None:
-        file_mode = stat.S_IMODE(key_path.stat().st_mode)
-        try:
-            _read_key_file("kb.key", ("appkey", "app_key"), ("secret", "appsecret", "app_secret"))
-            file_valid = True
-        except BrokerApiError:
-            pass
     env_complete = env_key and env_secret
-    source = "environment" if env_complete else "kb.key" if file_valid else "missing"
     return {
-        "configured": bool(env_complete or file_valid), "source": source,
+        "configured": env_complete, "source": "environment" if env_complete else "missing",
         "environment": {"appKey": env_key, "appSecret": env_secret, "complete": env_complete},
-        "keyFile": {
-            "mounted": key_path is not None, "valid": file_valid,
-            "permission": format(file_mode, "03o") if file_mode is not None else None,
-            "securePermission": bool(file_mode is not None and file_mode & 0o077 == 0),
-        },
         "endpoint": KB_API_BASE_URL, "mode": "production", "readOnly": True,
     }
 
@@ -120,7 +84,7 @@ def _json(response: requests.Response, broker: str) -> dict[str, Any]:
 
 
 def _kb_token_response() -> dict[str, Any]:
-    app_key, app_secret = _credentials("KB", "kb.key", ("appkey", "app_key"), ("secret", "appsecret", "app_secret"))
+    app_key, app_secret = _credentials("KB")
     started = time.perf_counter()
     try:
         response = requests.post(
@@ -190,7 +154,7 @@ def check_kb_token() -> dict[str, Any]:
 
 def _kb_investment_info(endpoint: str, data_body: dict[str, str]) -> dict[str, Any]:
     """Call a read-only KB B2C investment-information TR."""
-    app_key, _ = _credentials("KB", "kb.key", ("appkey", "app_key"), ("secret", "appsecret", "app_secret"))
+    app_key, _ = _credentials("KB")
     token_body = _kb_token_response()
     access_token = token_body.get("access_token") or token_body.get("dataBody", {}).get("access_token")
     started = time.perf_counter()
@@ -315,25 +279,15 @@ def _kis_credentials() -> tuple[str, str]:
         if not paper_key or not paper_secret:
             raise BrokerApiError("KIS_PAPER_APP_KEY와 KIS_PAPER_APP_SECRET을 함께 설정하세요.", 503)
         return paper_key, paper_secret
-    return _credentials("KIS", "kis.key", ("app_key",), ("secret", "app_secret"))
+    raise BrokerApiError(".env에 KIS_PAPER_APP_KEY와 KIS_PAPER_APP_SECRET을 설정하세요.", 503)
 
 
 def _kis_account() -> tuple[str, str]:
-    account_no = os.environ.get("KIS_PAPER_ACCOUNT_NO") or os.environ.get("KIS_ACCOUNT_NO")
-    if not account_no:
-        values: dict[str, str] = {}
-        path = next((c for c in (SECRETS_DIR / "kis.key", ROOT_DIR / "kis.key") if c.is_file()), None)
-        if path is not None:
-            for raw_line in path.read_text(encoding="utf-8").splitlines():
-                if "=" not in raw_line:
-                    continue
-                name, value = raw_line.split("=", 1)
-                values[name.strip().lower().replace("-", "_")] = value.strip()
-            account_no = values.get("account") or values.get("account_no") or values.get("cano")
+    account_no = os.environ.get("KIS_PAPER_ACCOUNT_NO")
     if not account_no or "-" not in account_no:
         raise BrokerApiError(
-            "모의투자 계좌번호가 설정되지 않았습니다. KIS_PAPER_ACCOUNT_NO(또는 기존 KIS_ACCOUNT_NO) "
-            "환경변수나 kis.key의 account 항목에 'CANO-계좌상품코드'(예: 12345678-01) 형식으로 설정하세요.",
+            "모의투자 계좌번호가 설정되지 않았습니다. .env의 KIS_PAPER_ACCOUNT_NO에 "
+            "'CANO-계좌상품코드'(예: 12345678-01) 형식으로 설정하세요.",
             503,
         )
     cano, _, acnt_prdt_cd = account_no.partition("-")
@@ -518,6 +472,7 @@ def get_kis_balance() -> dict[str, Any]:
         {
             "symbol": item.get("pdno"), "name": item.get("prdt_name"),
             "quantity": item.get("hldg_qty"), "avgPrice": item.get("pchs_avg_pric"),
+            "currentPrice": item.get("prpr"),
             "evalAmount": item.get("evlu_amt"), "profitLoss": item.get("evlu_pfls_amt"),
             "profitLossRate": item.get("evlu_pfls_rt"),
         }
@@ -531,6 +486,65 @@ def get_kis_balance() -> dict[str, Any]:
         "holdingsCount": len(holdings),
         "holdings": holdings,
     }
+
+
+def get_kis_configuration_status() -> dict[str, Any]:
+    """Report Testbed readiness without returning credentials or account numbers."""
+    status = {
+        "environment": os.environ.get("KIS_ENVIRONMENT", "paper").strip().lower(),
+        "testbedUrl": KIS_TESTBED_URL,
+        "credentials": False,
+        "account": False,
+        "ready": False,
+    }
+    messages = []
+    try:
+        _kis_credentials()
+        status["credentials"] = True
+    except BrokerApiError as exc:
+        messages.append(str(exc))
+    try:
+        _kis_account()
+        status["account"] = True
+    except BrokerApiError as exc:
+        messages.append(str(exc))
+    status["ready"] = status["environment"] == "paper" and status["credentials"] and status["account"]
+    status["message"] = "KIS Testbed 모의주문 준비가 완료되었습니다." if status["ready"] else " ".join(messages)
+    return status
+
+
+def get_kis_orders_today(limit: int = 50) -> dict[str, Any]:
+    """Return today's KIS Testbed order/execution history."""
+    if not 1 <= limit <= 100:
+        raise BrokerApiError("주문내역 limit은 1~100 사이여야 합니다.", 400)
+    cano, acnt_prdt_cd = _kis_account()
+    today = time.strftime("%Y%m%d", time.localtime())
+    _, body = kis_request(
+        "GET", "/uapi/domestic-stock/v1/trading/inquire-daily-ccld", "VTTC8001R",
+        params={
+            "CANO": cano, "ACNT_PRDT_CD": acnt_prdt_cd,
+            "INQR_STRT_DT": today, "INQR_END_DT": today,
+            "SLL_BUY_DVSN_CD": "00", "INQR_DVSN": "00", "PDNO": "",
+            "CCLD_DVSN": "00", "ORD_GNO_BRNO": "", "ODNO": "",
+            "INQR_DVSN_3": "00", "INQR_DVSN_1": "",
+            "CTX_AREA_FK100": "", "CTX_AREA_NK100": "",
+        },
+        label="당일 주문내역 조회",
+    )
+    orders = []
+    for row in (body.get("output1") or [])[:limit]:
+        side_code = str(row.get("sll_buy_dvsn_cd") or row.get("sll_buy_dvsn_cd_name") or "")
+        side_name = str(row.get("sll_buy_dvsn_cd_name") or "")
+        side = "SELL" if side_code in {"01", "매도"} or "매도" in side_name else "BUY"
+        orders.append({
+            "orderNo": row.get("odno"), "symbol": row.get("pdno"),
+            "name": row.get("prdt_name"), "side": side,
+            "orderQuantity": row.get("ord_qty"), "filledQuantity": row.get("tot_ccld_qty"),
+            "remainingQuantity": row.get("rmn_qty"), "orderPrice": row.get("ord_unpr"),
+            "filledPrice": row.get("avg_prvs"), "orderTime": row.get("ord_tmd"),
+            "status": row.get("ord_dvsn_name") or ("체결" if str(row.get("rmn_qty") or "0") == "0" else "미체결"),
+        })
+    return {"broker": "한국투자증권 Testbed", "date": today, "orders": orders}
 
 
 def get_kis_daily_chart(symbol: str, days: int = 20) -> dict[str, Any]:
@@ -605,6 +619,83 @@ def _kis_order_post(path: str, tr_id: str, payload: dict[str, str], label: str) 
         extra_headers={"custtype": "P"},
     )
     return body
+
+
+def place_kis_paper_order(
+    symbol: str,
+    side: str,
+    quantity: int,
+    order_type: str = "MARKET",
+    price: int = 0,
+) -> dict[str, Any]:
+    """Place an explicitly approved order against the KIS Testbed account only."""
+    symbol = str(symbol).strip()
+    side = str(side).strip().upper()
+    order_type = str(order_type).strip().upper()
+    if len(symbol) != 6 or not symbol.isdigit():
+        raise BrokerApiError("종목코드는 6자리 KRX 숫자 코드여야 합니다.", 400)
+    if side not in {"BUY", "SELL"}:
+        raise BrokerApiError("주문 구분은 BUY 또는 SELL이어야 합니다.", 400)
+    max_quantity = int(os.environ.get("KIS_PAPER_MAX_ORDER_QUANTITY", "1000"))
+    if not isinstance(quantity, int) or isinstance(quantity, bool) or not 1 <= quantity <= max_quantity:
+        raise BrokerApiError(f"주문수량은 1~{max_quantity}주 사이의 정수여야 합니다.", 400)
+    if order_type not in {"MARKET", "LIMIT"}:
+        raise BrokerApiError("주문유형은 MARKET 또는 LIMIT만 지원합니다.", 400)
+    if order_type == "LIMIT":
+        if not isinstance(price, int) or isinstance(price, bool) or price <= 0:
+            raise BrokerApiError("지정가 주문가격은 1원 이상의 정수여야 합니다.", 400)
+        if _kis_round_down_to_tick(price) != price:
+            raise BrokerApiError("지정가가 KRX 호가 단위에 맞지 않습니다.", 400)
+    else:
+        price = 0
+
+    quote = get_kis_quote(symbol)
+    try:
+        current_price = int(str(quote.get("price") or "0").replace(",", ""))
+    except ValueError as exc:
+        raise BrokerApiError("현재가를 확인할 수 없어 주문을 중단했습니다.") from exc
+    reference_price = price if order_type == "LIMIT" else current_price
+    if reference_price <= 0:
+        raise BrokerApiError("현재가가 0원으로 조회되어 주문을 중단했습니다.")
+    max_amount = int(os.environ.get("KIS_PAPER_MAX_ORDER_AMOUNT", "10000000"))
+    estimated_amount = reference_price * quantity
+    if estimated_amount > max_amount:
+        raise BrokerApiError(f"1회 모의주문 한도 {max_amount:,}원을 초과했습니다.", 400)
+
+    balance = get_kis_balance()
+    if side == "BUY" and int(float(balance.get("cashBalance") or 0)) < estimated_amount:
+        raise BrokerApiError("KIS 모의계좌 주문 가능 예수금이 부족합니다.", 409)
+    if side == "SELL":
+        holding = next((item for item in balance.get("holdings", []) if item.get("symbol") == symbol), None)
+        if int(float((holding or {}).get("quantity") or 0)) < quantity:
+            raise BrokerApiError("KIS 모의계좌 보유수량이 부족합니다.", 409)
+
+    if not _kis_paper_order_lock.acquire(blocking=False):
+        raise BrokerApiError("다른 KIS 모의주문을 처리 중입니다. 잠시 후 다시 시도하세요.", 409)
+    try:
+        cano, acnt_prdt_cd = _kis_account()
+        body = _kis_order_post(
+            "/uapi/domestic-stock/v1/trading/order-cash",
+            "VTTC0012U" if side == "BUY" else "VTTC0011U",
+            {
+                "CANO": cano, "ACNT_PRDT_CD": acnt_prdt_cd, "PDNO": symbol,
+                "ORD_DVSN": "01" if order_type == "MARKET" else "00",
+                "ORD_QTY": str(quantity), "ORD_UNPR": str(price),
+                "EXCG_ID_DVSN_CD": "KRX",
+            },
+            f"모의 {('매수' if side == 'BUY' else '매도')} 주문",
+        )
+    finally:
+        _kis_paper_order_lock.release()
+    output = body.get("output") or {}
+    return {
+        "broker": "한국투자증권 Testbed", "environment": "paper",
+        "symbol": symbol, "side": side, "quantity": quantity,
+        "orderType": order_type, "price": price,
+        "estimatedAmount": estimated_amount,
+        "orderNo": output.get("ODNO"), "orderTime": output.get("ORD_TMD"),
+        "message": body.get("msg1") or "KIS Testbed 모의주문이 접수되었습니다.",
+    }
 
 
 def _kis_tick_size(price: int) -> int:

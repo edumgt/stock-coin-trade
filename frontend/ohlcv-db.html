@@ -56,15 +56,15 @@
 
       <section class="quant-hero">
         <span>DOCKER CLASS · OHLCV DB</span>
-        <h1>docker-class 배치 파이프라인이 적재하는 종목별 과거 시세 DB</h1>
-        <p>이 화면이 설명하는 PostgreSQL(<code>pg-stock</code>)은 <code>/home/ubuntu/docker-class</code> 학습 저장소의 cron 배치가 KOSPI·KOSDAQ 전 종목의 일봉 OHLCV를 수집해 쌓는 <b>별도의 로컬 학습용 DB</b>입니다. 이 앱은 집계 확인을 위해 읽기 전용으로만 조회하며, 실거래·모의투자 백엔드와는 데이터를 주고받지 않습니다. <a href="/quant.html?tab=schema" style="color:#0d4ebb;font-weight:700;text-decoration:none;">퀀트 연구용 PostgreSQL(quant.html)</a>과도 별개의 인스턴스입니다.</p>
+        <h1>종목·연도별로 계속 갱신되는 일봉 OHLCV 데이터 서비스</h1>
+        <p>별도 PostgreSQL(<code>pg-stock</code>)에 KOSPI·KOSDAQ 일봉을 저장합니다. 백엔드 스케줄러가 현재 연도를 매일 증분 갱신하고 매주 종목·연도별 전체 구간을 재검증하며, 복합 PK upsert로 중복 없이 공급자 정정값을 반영합니다. 저장 데이터는 내부 검색 화면과 API Key 기반 <code>/openapi/v1/ohlcv/*</code>에서 함께 제공합니다. <a href="/quant.html?tab=schema" style="color:#0d4ebb;font-weight:700;text-decoration:none;">퀀트 연구용 PostgreSQL(quant.html)</a>과는 별개의 인스턴스입니다.</p>
       </section>
 
       <section class="quant-stats">
         <b>PostgreSQL 실시간 조회</b>
         <span>AG Grid Community 36</span>
         <span>종목·시장·기간·가격·거래량 검색</span>
-        <span>2020년 이후 주요 종목 우선 수집</span>
+        <span>2020년 이후 종목·연도별 자동 수집</span>
         <span>서버 페이징·정렬</span>
       </section>
 
@@ -108,35 +108,35 @@
       </section>
 
       <section class="quant-card quant-guide-card">
-        <header><b><i class="fa-brands fa-docker" aria-hidden="true"></i></b><div><h2>4단계 파이프라인</h2><p>수집 → 3단계 동기화 → DB 적재 → 백업까지 전부 cron으로 자동화되어 있습니다.</p></div></header>
+        <header><b><i class="fa-brands fa-docker" aria-hidden="true"></i></b><div><h2>4단계 자동 수집·제공 파이프라인</h2><p>종목 선정 → 연도별 수집 → PostgreSQL upsert → CORS Open API 제공 흐름입니다.</p></div></header>
         <div class="guide-body">
           <div class="dataset-grid ohlcv-pipeline schema-flow">
             <article>
               <b>1</b>
-              <h3>수집 (매 1분)</h3>
-              <p>기존 전 종목 배치와 함께 이 앱의 주요 종목 수집기가 yfinance에서 2020년 이후 일봉을 받아 PostgreSQL에 직접 upsert합니다.</p>
-              <code>crawl_major_ohlcv.py --start 2020-01-01</code>
+              <h3>수집 대상 선정</h3>
+              <p><code>OHLCV_SYNC_TICKERS</code>로 주요 종목, 쉼표 구분 종목 목록 또는 전체 종목을 선택합니다. 기본값은 주요 KOSPI·KOSDAQ 24종목입니다.</p>
+              <code>major · 005930,000660 · all</code>
             </article>
             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
             <article>
               <b>2</b>
-              <h3>3단계 동기화</h3>
-              <p><code>rsync --update</code>로 <code>data-1 → data-2</code>(10초 간격) → <code>data-3</code>(1분 간격) 순으로 새 파일만 전달합니다. 3단계로 나눈 덕분에 수집 작업이 최종 적재 대상 폴더를 직접 건드리지 않습니다.</p>
-              <code>sync-loop-10s.sh · sync-data2-to-data3.sh</code>
+              <h3>종목 × 연도 수집</h3>
+              <p>매일 18:20에는 최근 7일을 포함해 현재 연도를 증분 갱신합니다. 매주 일요일 03:20에는 2020년부터 현재까지 연도별 구간을 다시 요청해 누락을 보정합니다.</p>
+              <code>APScheduler · Asia/Seoul</code>
             </article>
             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
             <article>
               <b>3</b>
-              <h3>DB 적재 (매시 정각)</h3>
-              <p><code>data-3/</code>의 모든 CSV를 읽어 <code>tickers</code>·<code>ohlcv</code> 테이블에 적재합니다. PK <code>(ticker_code, trade_date)</code> + <code>ON CONFLICT DO NOTHING</code>이라 재실행해도 중복 없이 새 행만 들어갑니다.</p>
-              <code>load_data3_to_db.sh → load_data3_to_db.py</code>
+              <h3>검증 · Upsert</h3>
+              <p>OHLC 가격 범위와 거래량을 검증한 뒤 <code>tickers</code>·<code>ohlcv</code>에 적재합니다. PK <code>(ticker_code, trade_date)</code>와 update-on-conflict로 재실행과 공급자 정정을 안전하게 처리합니다.</p>
+              <code>ohlcv_sync_status · 성공/실패 이력</code>
             </article>
             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
             <article>
               <b>4</b>
-              <h3>백업 (2시간마다)</h3>
-              <p>실행 중인 <code>pg-stock</code> 컨테이너를 <code>docker commit</code>으로 스냅샷 떠서 Docker Hub로 push합니다. 트랜잭션 정합 백업이 아닌 crash-consistent 백업이라는 한계를 README에 명시해 두었습니다.</p>
-              <code>backup_pg_to_dockerhub.sh → edumgt/pg-stock-backup</code>
+              <h3>내부 화면 · Open API</h3>
+              <p>AG Grid 검색과 <code>/openapi/v1/ohlcv/&lt;ticker&gt;?year=YYYY</code>가 같은 DB를 조회합니다. Bearer API Key와 분당 제한을 적용하고 외부 브라우저용 CORS 헤더를 기본 제공합니다.</p>
+              <code>Access-Control-Allow-Origin: *</code>
             </article>
           </div>
         </div>

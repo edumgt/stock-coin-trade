@@ -3,7 +3,7 @@
 공식 저장소(open-trading-api) 예제에서 추출한 카탈로그(kis_api_catalog.json)를 제공하고,
 Testbed(모의투자)를 지원하는 읽기 전용(GET) API 만 서버가 대신 호출한다.
 
-- 계좌 파라미터(CANO, ACNT_PRDT_CD)는 브라우저 값을 쓰지 않고 서버의 kis.key/.env 로 채운다.
+- 계좌 파라미터(CANO, ACNT_PRDT_CD)는 브라우저 값을 쓰지 않고 서버의 .env로 채운다.
 - 주문성(POST) API 는 탐색기에서 호출하지 않는다. 보호된 모의 주문 흐름 테스트로 안내한다.
 - 응답은 KIS 원문(rt_cd, msg_cd, msg1, output*)을 그대로 돌려주고, 한글 필드명 매핑을 함께 준다.
 """

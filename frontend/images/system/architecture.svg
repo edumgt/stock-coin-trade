@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2752" height="1536" viewBox="0 0 2752 1536" role="img" aria-labelledby="title desc">
+  <title id="title">모의투자·OpenAPI 학습 플랫폼 시스템 아키텍처</title>
+  <desc id="desc">브라우저, Nginx 프론트엔드, Flask 백엔드, 데이터 저장소, LEAN 백테스트, AWS 및 외부 금융 API의 연결 구조</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/><stop offset="0.55" stop-color="#0b1728"/><stop offset="1" stop-color="#101a2d"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#172e52"/><stop offset="1" stop-color="#10233f"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#302557"/><stop offset="1" stop-color="#1d2140"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#143c3e"/><stop offset="1" stop-color="#102b32"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#44351f"/><stop offset="1" stop-color="#2a281f"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#000814" flood-opacity=".45"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#7fa7d8"/>
+    </marker>
+    <style>
+      text{font-family:'Noto Sans CJK KR','NanumSquare',sans-serif;fill:#f5f8ff}
+      .title{font-size:58px;font-weight:800;letter-spacing:-2px}
+      .subtitle{font-size:25px;fill:#aebcd1}
+      .zone{font-size:25px;font-weight:800;letter-spacing:1px}
+      .h1{font-size:31px;font-weight:800}
+      .h2{font-size:25px;font-weight:800}
+      .body{font-size:20px;fill:#c7d3e5}
+      .small{font-size:17px;fill:#aebcd1}
+      .pill{font-size:17px;font-weight:700}
+      .card{stroke-width:2;filter:url(#shadow)}
+      .line{fill:none;stroke:#7fa7d8;stroke-width:4;marker-end:url(#arrow)}
+      .dash{fill:none;stroke:#6984a6;stroke-width:3;stroke-dasharray:10 10;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <rect width="2752" height="1536" fill="url(#bg)"/>
+  <circle cx="2240" cy="210" r="430" fill="#1e3a60" opacity=".12"/>
+  <circle cx="820" cy="1320" r="500" fill="#194c47" opacity=".09"/>
+
+  <text x="120" y="92" class="title">모의투자 · OpenAPI 학습 플랫폼 시스템 아키텍처</text>
+  <text x="122" y="132" class="subtitle">현재 저장소 기준 · Nginx + Flask + 분리형 데이터 저장소 + Docker 기반 Quant/AI</text>
+
+  <!-- 사용자 -->
+  <rect x="70" y="225" width="350" height="310" rx="28" fill="url(#violet)" stroke="#766bd1" class="card"/>
+  <text x="100" y="270" class="zone" fill="#bdb8ff">CLIENT</text>
+  <rect x="118" y="307" width="254" height="150" rx="14" fill="#0c1727" stroke="#7b89e8" stroke-width="4"/>
+  <rect x="136" y="329" width="218" height="98" rx="8" fill="#152c4b"/>
+  <circle cx="155" cy="348" r="6" fill="#f87171"/><circle cx="177" cy="348" r="6" fill="#fbbf24"/><circle cx="199" cy="348" r="6" fill="#34d399"/>
+  <path d="M142 443h206" stroke="#7b89e8" stroke-width="7" stroke-linecap="round"/>
+  <text x="245" y="493" text-anchor="middle" class="h2">웹 브라우저</text>
+  <text x="245" y="520" text-anchor="middle" class="small">회원 · 거래 · 분석 · API 실습</text>
+
+  <!-- EC2 / compose boundary -->
+  <rect x="500" y="180" width="1565" height="1050" rx="34" fill="#0b1524" fill-opacity=".72" stroke="#3e668f" stroke-width="3"/>
+  <text x="540" y="228" class="zone" fill="#8ac5ff">AWS EC2 / LINUX VM · DOCKER COMPOSE</text>
+  <text x="540" y="260" class="small">internal bridge network · 운영 이미지는 Amazon ECR에서 배포</text>
+
+  <!-- Frontend -->
+  <rect x="555" y="300" width="575" height="275" rx="24" fill="url(#blue)" stroke="#4b83c6" class="card"/>
+  <rect x="585" y="326" width="154" height="34" rx="17" fill="#2673b8"/>
+  <text x="662" y="349" text-anchor="middle" class="pill">FRONTEND</text>
+  <text x="585" y="402" class="h1">Nginx Alpine</text>
+  <text x="585" y="438" class="body">정적 HTML · CSS · Vanilla JavaScript</text>
+  <text x="585" y="472" class="body">Tailwind CDN · AG Grid · Font Awesome</text>
+  <line x1="585" y1="496" x2="1100" y2="496" stroke="#3f668e"/>
+  <text x="585" y="530" class="small">:3333 → :80 · /api/* · /openapi/* reverse proxy</text>
+
+  <!-- Backend -->
+  <rect x="1200" y="300" width="810" height="275" rx="24" fill="url(#violet)" stroke="#7466bd" class="card"/>
+  <rect x="1230" y="326" width="149" height="34" rx="17" fill="#6d55b5"/>
+  <text x="1304" y="349" text-anchor="middle" class="pill">BACKEND</text>
+  <text x="1230" y="402" class="h1">Python 3.11 · Flask 3 · Gunicorn</text>
+  <text x="1230" y="438" class="body">SQLAlchemy · Requests · APScheduler · boto3</text>
+  <text x="1230" y="472" class="body">회원/모의거래 · 시세 · Open API · AI · 관리자</text>
+  <line x1="1230" y1="496" x2="1980" y2="496" stroke="#5a5280"/>
+  <text x="1230" y="530" class="small">1 worker · 8 threads · 내부 포트 8200</text>
+
+  <!-- Connections client/front/back -->
+  <path d="M420 380H555" class="line"/>
+  <text x="487" y="358" text-anchor="middle" class="small">HTTP(S)</text>
+  <path d="M1130 438H1200" class="line"/>
+
+  <!-- Data layer -->
+  <text x="555" y="640" class="zone" fill="#75e2c1">DATA STORES</text>
+  <rect x="555" y="670" width="445" height="225" rx="22" fill="url(#green)" stroke="#3d9b88" class="card"/>
+  <ellipse cx="620" cy="726" rx="32" ry="13" fill="#4fd1b1"/><path d="M588 726v52c0 8 14 14 32 14s32-6 32-14v-52" fill="#257a6e" stroke="#78ead2" stroke-width="3"/>
+  <text x="680" y="732" class="h2">MariaDB 11.4</text>
+  <text x="590" y="824" class="body">회원 · 포지션 · 모의 주문 · 로그</text>
+  <text x="590" y="858" class="small">local-db profile / 외부 MariaDB 선택</text>
+
+  <rect x="1040" y="670" width="445" height="225" rx="22" fill="url(#green)" stroke="#3d9b88" class="card"/>
+  <ellipse cx="1105" cy="726" rx="32" ry="13" fill="#62c8f2"/><path d="M1073 726v52c0 8 14 14 32 14s32-6 32-14v-52" fill="#25708d" stroke="#87dcff" stroke-width="3"/>
+  <text x="1165" y="732" class="h2">PostgreSQL 16</text>
+  <text x="1075" y="814" class="body">OHLCV · 전략 · 체결 · 성과 지표</text>
+  <text x="1075" y="848" class="small">별도 pg-stock은 읽기 전용 OHLCV 집계</text>
+
+  <rect x="1525" y="670" width="445" height="225" rx="22" fill="url(#green)" stroke="#3d9b88" class="card"/>
+  <polygon points="1595,704 1627,722 1627,760 1595,778 1563,760 1563,722" fill="#cc2d73" stroke="#ff78ae" stroke-width="3"/>
+  <circle cx="1595" cy="741" r="12" fill="#17243a"/>
+  <text x="1655" y="732" class="h2">Qdrant + FastEmbed</text>
+  <text x="1560" y="814" class="body">지식 문서 임베딩 · 벡터 검색</text>
+  <text x="1560" y="848" class="small">기본 :memory: / QDRANT_URL 선택 연결</text>
+
+  <path d="M1450 575V625H777V670" class="dash"/>
+  <path d="M1570 575V625H1262V670" class="dash"/>
+  <path d="M1690 575V625H1747V670" class="dash"/>
+
+  <!-- Quant / Lean -->
+  <rect x="555" y="965" width="1415" height="215" rx="24" fill="url(#amber)" stroke="#a98545" class="card"/>
+  <rect x="585" y="992" width="169" height="34" rx="17" fill="#9b7028"/>
+  <text x="669" y="1015" text-anchor="middle" class="pill">QUANT / AI</text>
+  <text x="585" y="1066" class="h1">QuantConnect LEAN · scikit-learn · AI 분석</text>
+  <text x="585" y="1105" class="body">Docker socket으로 LEAN 컨테이너 실행 · named volume로 데이터/결과 교환</text>
+  <text x="585" y="1141" class="small">월별 종가 백테스트 · LinearRegression 예측 · Anthropic Claude 분석 · Qdrant RAG 근거</text>
+  <path d="M1262 895V965" class="dash"/>
+
+  <!-- External services -->
+  <text x="2140" y="228" class="zone" fill="#ffca72">EXTERNAL SERVICES</text>
+
+  <rect x="2130" y="260" width="552" height="225" rx="24" fill="#17263a" stroke="#54779e" class="card"/>
+  <text x="2170" y="311" class="h2">시세 · 거래소 데이터</text>
+  <text x="2170" y="353" class="body">KRX · 네이버 금융 · yfinance</text>
+  <text x="2170" y="389" class="body">Upbit · Bithumb · Coinone</text>
+  <text x="2170" y="425" class="body">Binance · Korbit 공개 API</text>
+  <path d="M2130 382H2010" class="line"/>
+
+  <rect x="2130" y="530" width="552" height="225" rx="24" fill="#2a203e" stroke="#765da4" class="card"/>
+  <text x="2170" y="581" class="h2">증권사 · 브로커 API</text>
+  <text x="2170" y="623" class="body">한국투자증권 KIS Testbed</text>
+  <text x="2170" y="659" class="body">KB증권 Open API</text>
+  <text x="2170" y="695" class="body">Alpaca Paper / Market Data</text>
+  <path d="M2130 642H2010" class="line"/>
+
+  <rect x="2130" y="800" width="552" height="260" rx="24" fill="#342b1d" stroke="#b28742" class="card"/>
+  <text x="2170" y="851" class="h2">AWS 운영 서비스</text>
+  <text x="2170" y="893" class="body">Secrets Manager · IAM Role</text>
+  <text x="2170" y="929" class="body">ECR · EC2 / Linux VM</text>
+  <text x="2170" y="965" class="body">선택: KMS 암호화 키</text>
+  <text x="2170" y="1014" class="small">브로커 키 원문은 브라우저/로그에 미노출</text>
+  <path d="M2130 910H2065" class="line"/>
+
+  <rect x="2130" y="1105" width="552" height="125" rx="24" fill="#29253f" stroke="#7466bd" class="card"/>
+  <text x="2170" y="1153" class="h2">Anthropic Messages API</text>
+  <text x="2170" y="1191" class="body">Claude 기반 스트리밍 시장 분석</text>
+  <path d="M2130 1165H1970" class="line"/>
+
+  <!-- security / legend -->
+  <rect x="70" y="1290" width="2612" height="175" rx="28" fill="#111d2d" stroke="#334d6c" stroke-width="2"/>
+  <text x="110" y="1340" class="h2">보안 및 운영 경계</text>
+  <text x="110" y="1382" class="body">브라우저는 데이터베이스와 외부 인증정보에 직접 접근하지 않으며, Nginx → Flask API에서 세션/API Key 인증·입력 검증·민감정보 마스킹을 수행합니다.</text>
+  <rect x="110" y="1410" width="300" height="35" rx="17" fill="#1f4770"/><text x="260" y="1434" text-anchor="middle" class="pill">Docker internal network</text>
+  <rect x="430" y="1410" width="335" height="35" rx="17" fill="#235849"/><text x="597" y="1434" text-anchor="middle" class="pill">DB host port 비공개</text>
+  <rect x="785" y="1410" width="395" height="35" rx="17" fill="#665024"/><text x="982" y="1434" text-anchor="middle" class="pill">.env 단일 설정 · Git 제외</text>
+  <rect x="1200" y="1410" width="390" height="35" rx="17" fill="#503e78"/><text x="1395" y="1434" text-anchor="middle" class="pill">Secrets Manager 선택 경로</text>
+  <rect x="1610" y="1410" width="455" height="35" rx="17" fill="#2c536a"/><text x="1837" y="1434" text-anchor="middle" class="pill">ECR image · Compose 배포</text>
+</svg>
