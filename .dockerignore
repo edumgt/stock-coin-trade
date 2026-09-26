@@ -11,3 +11,7 @@ package.json
 package-lock.json
 README.md
 *.md
+certbot
+.env
+*.key
+*.pem
