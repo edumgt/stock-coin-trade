@@ -255,9 +255,10 @@ function renderHeader(user) {
     ]},
     { type: 'group', label: 'POSTGRESQL QUANT', items: [
       { href: '/quant.html?tab=schema', label: 'DB 스키마', icon: 'fa-solid fa-sitemap' },
+      { href: '/ohlcv-db.html', label: 'OHLCV DB', icon: 'fa-brands fa-docker' },
+      { href: '/ohlcv-openapi.html', label: 'OHLCV Open API', icon: 'fa-solid fa-code' },
       { href: '/quant.html?tab=algorithm', label: '알고리즘', icon: 'fa-solid fa-code-branch' },
       { href: '/quant.html?tab=simulation', label: '시뮬레이션', icon: 'fa-solid fa-flask-vial' },
-      { href: '/ohlcv-db.html', label: 'OHLCV DB', icon: 'fa-brands fa-docker' },
     ]},
     { type: 'group', label: '분석 · 도구', items: [
       { href: '/hts.html', label: 'HTS 시뮬레이션', icon: 'fa-solid fa-desktop' },

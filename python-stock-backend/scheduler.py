@@ -10,7 +10,8 @@ from sqlalchemy import text
 from db import session_scope
 from market_bots import run_bot_trading_round
 from models import CryptoRank, UpbitMarket
-from ohlcv_sync import reconcile_enabled, run_incremental_sync, run_yearly_reconciliation, sync_enabled
+from ohlcv_aggregate import bootstrap_ohlcv_aggregates
+from ohlcv_sync import run_daily_ohlcv_batch, sync_enabled
 
 log = logging.getLogger(__name__)
 
@@ -69,32 +70,23 @@ def start_scheduler() -> BackgroundScheduler:
     scheduler.add_job(sync_coinmarketcap_rankings, CronTrigger(minute=0, timezone="Asia/Seoul"))
     scheduler.add_job(sync_upbit_markets, CronTrigger(hour=18, minute=0, timezone="Asia/Seoul"))
     scheduler.add_job(run_bot_trading_round, IntervalTrigger(minutes=10))
+    try:
+        result = bootstrap_ohlcv_aggregates()
+        log.info("OHLCV aggregate bootstrap: %s", result)
+    except Exception:
+        log.exception("OHLCV aggregate bootstrap failed; daily batch will retry aggregation")
     if sync_enabled():
         scheduler.add_job(
-            run_incremental_sync,
+            run_daily_ohlcv_batch,
             CronTrigger(
                 hour=int(os.environ.get("OHLCV_SYNC_HOUR", "18")),
                 minute=int(os.environ.get("OHLCV_SYNC_MINUTE", "20")),
                 timezone="Asia/Seoul",
             ),
-            id="ohlcv-incremental",
+            id="ohlcv-daily-batch",
             max_instances=1,
             coalesce=True,
             misfire_grace_time=3600,
         )
-        if reconcile_enabled():
-            scheduler.add_job(
-                run_yearly_reconciliation,
-                CronTrigger(
-                    day_of_week=os.environ.get("OHLCV_RECONCILE_DAY", "sun"),
-                    hour=int(os.environ.get("OHLCV_RECONCILE_HOUR", "3")),
-                    minute=int(os.environ.get("OHLCV_RECONCILE_MINUTE", "20")),
-                    timezone="Asia/Seoul",
-                ),
-                id="ohlcv-yearly-reconciliation",
-                max_instances=1,
-                coalesce=True,
-                misfire_grace_time=21600,
-            )
     scheduler.start()
     return scheduler

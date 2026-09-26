@@ -80,37 +80,30 @@ def summary():
     try:
         with _db().connect() as conn:
             totals = _rows(conn.execute(text("""
-                SELECT count(*) AS ohlcv_rows, count(DISTINCT ticker_code) AS ticker_count,
-                       min(trade_date) AS first_date, max(trade_date) AS last_date
-                FROM ohlcv
+                SELECT ohlcv_rows, ticker_count, first_date, last_date, refreshed_at
+                FROM ohlcv_summary_snapshot WHERE snapshot_id=1
             """)))[0]
             yearly = _rows(conn.execute(text("""
-                SELECT extract(year FROM trade_date)::int AS year, count(*) AS row_count,
-                       count(DISTINCT ticker_code) AS ticker_count,
-                       round(count(*)::numeric / nullif(count(DISTINCT ticker_code), 0), 1) AS average_rows,
-                       min(trade_date) AS first_date, max(trade_date) AS last_date
-                FROM ohlcv GROUP BY 1 ORDER BY 1
+                SELECT data_year AS year, row_count, ticker_count,
+                       round(row_count::numeric / nullif(ticker_count, 0), 1) AS average_rows,
+                       first_date, last_date, refreshed_at
+                FROM ohlcv_yearly_summary ORDER BY data_year
             """)))
             quality = _rows(conn.execute(text("""
-                SELECT count(*) AS quarantined_rows, count(DISTINCT ticker_code) AS affected_tickers
-                FROM ohlcv_data_quality_issues
+                SELECT quarantined_rows, affected_tickers
+                FROM ohlcv_summary_snapshot WHERE snapshot_id=1
             """)))[0]
             markets = _rows(conn.execute(text("""
-                SELECT market, count(*) AS ticker_count FROM tickers GROUP BY market ORDER BY market
+                SELECT market, ticker_count FROM ohlcv_market_summary ORDER BY market
             """)))
-            sync = {"tracked_ranges": 0, "success_ranges": 0, "failed_ranges": 0, "last_completed_at": None}
-            if conn.execute(text("SELECT to_regclass('public.ohlcv_sync_status')")).scalar_one():
-                sync = _rows(conn.execute(text("""
-                    SELECT count(*) AS tracked_ranges,
-                           count(*) FILTER (WHERE status IN ('success','empty')) AS success_ranges,
-                           count(*) FILTER (WHERE status='failed') AS failed_ranges,
-                           max(completed_at) AS last_completed_at
-                    FROM ohlcv_sync_status
-                """)))[0]
+            sync = _rows(conn.execute(text("""
+                SELECT tracked_ranges, success_ranges, failed_ranges, last_completed_at
+                FROM ohlcv_summary_snapshot WHERE snapshot_id=1
+            """)))[0]
         return jsonify({"totals": totals, "yearly": yearly, "quality": quality, "markets": markets, "sync": sync})
-    except SQLAlchemyError:
+    except (IndexError, SQLAlchemyError):
         logger.exception("Failed to query OHLCV summary")
-        return jsonify({"message": "OHLCV DB 집계를 조회할 수 없습니다."}), 503
+        return jsonify({"message": "OHLCV 일일 집계가 아직 준비되지 않았습니다."}), 503
 
 
 @ohlcv_db_bp.get("/tickers")

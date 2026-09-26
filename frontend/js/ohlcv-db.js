@@ -18,16 +18,12 @@
     const { totals, yearly, quality, markets, sync } = data;
     document.getElementById('ohlcv-total-tickers').textContent = `${number(totals.ticker_count)}개`;
     document.getElementById('ohlcv-total-rows').textContent = `${number(totals.ohlcv_rows)}건`;
-    document.getElementById('ohlcv-average-rows').textContent = totals.ticker_count
-      ? `${(Number(totals.ohlcv_rows) / Number(totals.ticker_count)).toFixed(1)}건`
-      : '–';
     const firstYear = dateText(totals.first_date).slice(0, 4);
     const lastYear = dateText(totals.last_date).slice(0, 4);
     document.getElementById('ohlcv-data-year').textContent = firstYear === lastYear ? `${lastYear}년` : `${firstYear}–${lastYear}`;
     document.getElementById('ohlcv-data-range').textContent = `${dateText(totals.first_date)} ~ ${dateText(totals.last_date)}`;
     document.getElementById('ohlcv-year-summary').innerHTML = yearly.map(row => `
-      <tr><td>${row.year}</td><td>${number(row.row_count)}</td><td>${number(row.ticker_count)}</td>
-      <td>${Number(row.average_rows).toFixed(1)}</td><td>${dateText(row.first_date)} ~ ${dateText(row.last_date)}</td></tr>
+      <tr><td>${row.year}</td><td>${number(row.row_count)}</td><td>${dateText(row.first_date)} ~ ${dateText(row.last_date)}</td></tr>
     `).join('');
     const marketText = markets.map(row => `${row.market || '미분류'} ${number(row.ticker_count)}종목`).join(' · ');
     const syncText = sync?.last_completed_at

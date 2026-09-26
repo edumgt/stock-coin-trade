@@ -13,7 +13,7 @@
     @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
     .ohlcv-pipeline { grid-template-columns:1fr auto 1fr auto 1fr auto 1fr !important; }
     .ohlcv-pipeline article code { display:block; margin-top:6px; padding:3px 6px; border-radius:5px; color:#0d4ebb; background:#eaf2ff; font-size:11px; }
-    .ohlcv-summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .ohlcv-summary-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
     .ohlcv-summary-grid article { padding:15px; border:1px solid var(--quant-line); border-radius:9px; background:#fbfdff; }
     .ohlcv-summary-grid span { display:block; color:#60738b; font-size:12px; font-weight:600; }
     .ohlcv-summary-grid strong { display:block; margin-top:5px; color:var(--quant-ink); font-size:25px; line-height:1.1; }
@@ -29,10 +29,10 @@
     .ohlcv-table-toolbar input { width:min(100%,230px); padding:8px 10px; border:1px solid #b9cae2; border-radius:7px; font:inherit; font-size:12px; }
     .ohlcv-table-toolbar button { padding:8px 10px; border:1px solid #b9cae2; border-radius:7px; color:#315579; background:#fff; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
     .ohlcv-table-toolbar button:disabled { opacity:.45; cursor:default; }
-    .ohlcv-search-panel { display:grid; grid-template-columns:2fr repeat(2,minmax(130px,1fr)) repeat(4,minmax(110px,1fr)); gap:9px; padding:14px; border:1px solid var(--quant-line); border-radius:10px; background:#f7faff; }
+    .ohlcv-search-panel { display:grid; grid-template-columns:minmax(220px,1.55fr) minmax(115px,.8fr) repeat(2,minmax(125px,.9fr)) repeat(4,minmax(100px,.8fr)) auto; gap:9px; align-items:end; padding:14px; border:1px solid var(--quant-line); border-radius:10px; background:#f7faff; }
     .ohlcv-search-panel label { display:grid; gap:5px; color:#526a86; font-size:11px; font-weight:700; }
     .ohlcv-search-panel input,.ohlcv-search-panel select { min-width:0; padding:8px 9px; border:1px solid #b9cae2; border-radius:7px; background:#fff; font:inherit; font-size:12px; }
-    .ohlcv-search-actions { display:flex; gap:7px; align-items:end; grid-column:1/-1; }
+    .ohlcv-search-actions { display:flex; gap:7px; align-items:end; grid-column:auto; white-space:nowrap; }
     .ohlcv-search-actions button { padding:8px 13px; border:1px solid #9db5d4; border-radius:7px; color:#244f7d; background:#fff; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
     .ohlcv-search-actions button.primary { border-color:#2563eb; color:#fff; background:#2563eb; }
     #ohlcv-grid { width:100%; height:640px; border:1px solid var(--quant-line); border-radius:10px; overflow:hidden; }
@@ -40,7 +40,7 @@
     .ohlcv-positive { color:#dc2626; font-weight:700; }
     .ohlcv-negative { color:#2563eb; font-weight:700; }
     @media (max-width:1050px) { .ohlcv-pipeline { grid-template-columns:repeat(2,minmax(0,1fr)) !important; } .ohlcv-pipeline > i { display:none; } }
-    @media (max-width:1100px) { .ohlcv-search-panel { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+    @media (max-width:1720px) { .ohlcv-search-panel { grid-template-columns:repeat(4,minmax(0,1fr)); } .ohlcv-search-actions { grid-column:1/-1; } }
     @media (max-width:760px) { .ohlcv-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ohlcv-table-toolbar { align-items:stretch; flex-direction:column; } .ohlcv-table-toolbar input { width:100%; box-sizing:border-box; } .ohlcv-search-panel { grid-template-columns:repeat(2,minmax(0,1fr)); } #ohlcv-grid { height:560px; } }
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -57,24 +57,23 @@
       <section class="quant-hero">
         <span>DOCKER CLASS · OHLCV DB</span>
         <h1>종목·연도별로 계속 갱신되는 일봉 OHLCV 데이터 서비스</h1>
-        <p>별도 PostgreSQL(<code>pg-stock</code>)에 KOSPI·KOSDAQ 일봉을 저장합니다. 백엔드 스케줄러가 현재 연도를 매일 증분 갱신하고 매주 종목·연도별 전체 구간을 재검증하며, 복합 PK upsert로 중복 없이 공급자 정정값을 반영합니다. 저장 데이터는 내부 검색 화면과 API Key 기반 <code>/openapi/v1/ohlcv/*</code>에서 함께 제공합니다. <a href="/quant.html?tab=schema" style="color:#0d4ebb;font-weight:700;text-decoration:none;">퀀트 연구용 PostgreSQL(quant.html)</a>과는 별개의 인스턴스입니다.</p>
+        <p>별도 PostgreSQL(<code>pg-stock</code>)에 KOSPI·KOSDAQ 일봉을 최초 적재한 뒤 매일 한 번 증분 갱신합니다. 대시보드는 일일 배치가 만든 별도 집계 테이블을 조회하고, 원본 데이터는 내부 검색 화면과 API Key 기반 <code>/openapi/v1/ohlcv/*</code>에서 제공합니다. <a href="/quant.html?tab=schema" style="color:#0d4ebb;font-weight:700;text-decoration:none;">퀀트 연구용 PostgreSQL(quant.html)</a>과는 별개의 인스턴스입니다.</p>
       </section>
 
       <section class="quant-stats">
-        <b>PostgreSQL 실시간 조회</b>
+        <b>PostgreSQL 원본 검색 · 일일 집계</b>
         <span>AG Grid Community 36</span>
         <span>종목·시장·기간·가격·거래량 검색</span>
-        <span>2020년 이후 종목·연도별 자동 수집</span>
+        <span>최초 적재 후 일 1회 증분 수집·집계</span>
         <span>서버 페이징·정렬</span>
       </section>
 
       <section class="quant-card quant-guide-card">
-        <header><b>집계</b><div><h2>적재 데이터 집계</h2><p><code>tickers</code>와 <code>ohlcv</code> 테이블을 읽기 전용으로 조회합니다. 페이지를 다시 열면 최신 적재 상태가 표시됩니다.</p></div></header>
+        <header><b>현황</b><div><h2>OHLCV 적재 현황</h2><p>현재 저장된 종목·일봉 건수와 데이터 기간입니다.</p></div></header>
         <div class="guide-body">
           <div class="ohlcv-summary-grid" aria-label="OHLCV 핵심 집계">
             <article><span>전체 종목 수</span><strong id="ohlcv-total-tickers">–</strong><small><code>COUNT(DISTINCT ticker_code)</code></small></article>
             <article><span>전체 OHLCV 건수</span><strong id="ohlcv-total-rows">–</strong><small>종목·거래일별 일봉 행</small></article>
-            <article><span>종목당 평균 건수</span><strong id="ohlcv-average-rows">–</strong><small>전체 행 ÷ 적재 종목</small></article>
             <article><span>데이터 기간</span><strong id="ohlcv-data-year">–</strong><small id="ohlcv-data-range">집계 조회 중</small></article>
           </div>
 
@@ -82,8 +81,8 @@
             <h3 style="margin:0 0 9px;color:var(--quant-ink);font-size:15px">연도별 집계</h3>
             <div class="ohlcv-table-wrap">
               <table class="ohlcv-aggregate-table">
-                <thead><tr><th>연도</th><th>OHLCV 건수</th><th>적재 종목 수</th><th>종목당 평균 건수</th><th>기간</th></tr></thead>
-                <tbody id="ohlcv-year-summary"><tr><td colspan="5">집계 조회 중…</td></tr></tbody>
+                <thead><tr><th>연도</th><th>OHLCV 건수</th><th>기간</th></tr></thead>
+                <tbody id="ohlcv-year-summary"><tr><td colspan="3">집계 조회 중…</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -121,15 +120,15 @@
             <article>
               <b>2</b>
               <h3>종목 × 연도 수집</h3>
-              <p>매일 18:20에는 최근 7일을 포함해 현재 연도를 증분 갱신합니다. 매주 일요일 03:20에는 2020년부터 현재까지 연도별 구간을 다시 요청해 누락을 보정합니다.</p>
-              <code>APScheduler · Asia/Seoul</code>
+              <p>최초 적재 후 매일 18:20에 최근 7일 보정 구간과 현재 연도를 한 번만 증분 갱신합니다. 같은 날짜의 중복 배치는 실행 이력 PK로 차단합니다.</p>
+              <code>APScheduler · 일 1회 · Asia/Seoul</code>
             </article>
             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
             <article>
               <b>3</b>
               <h3>검증 · Upsert</h3>
-              <p>OHLC 가격 범위와 거래량을 검증한 뒤 <code>tickers</code>·<code>ohlcv</code>에 적재합니다. PK <code>(ticker_code, trade_date)</code>와 update-on-conflict로 재실행과 공급자 정정을 안전하게 처리합니다.</p>
-              <code>ohlcv_sync_status · 성공/실패 이력</code>
+              <p>원본 upsert가 끝나면 전체·연도·시장 집계를 별도 스냅샷 테이블에 저장합니다. 화면 조회 시 원본 일봉을 다시 집계하지 않습니다.</p>
+              <code>summary_snapshot · yearly_summary · market_summary</code>
             </article>
             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
             <article>

@@ -241,6 +241,10 @@ def main():
             print(f"ERROR {code} {name}: {exc}")
 
     print(f"completed: {len(selected) - len(failed)}/{len(selected)} tickers, {total_rows:,} rows")
+    if engine is not None:
+        from ohlcv_aggregate import refresh_ohlcv_aggregates
+        snapshot = refresh_ohlcv_aggregates(engine)
+        print(f"aggregate refreshed: {snapshot['ohlcv_rows']:,} rows")
     if failed:
         raise SystemExit(f"failed tickers: {', '.join(failed)}")
 

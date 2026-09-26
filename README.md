@@ -52,17 +52,21 @@ Nginx Frontend (:3333)
   ├─ /api/*      → Flask Backend
   └─ /openapi/*  → Flask Backend
                      │
-                     ├─ MariaDB (회원·모의 주문)
-                     ├─ PostgreSQL (퀀트 OHLCV·전략·체결·성과)
+                     ├─ MariaDB (회원·웹 모의 주문·감사 로그)
+                     ├─ PostgreSQL quant_research (퀀트 시계열·전략·체결·성과)
+                     ├─ PostgreSQL pg-stock (국내주식 일봉·일일 집계)
+                     ├─ Qdrant market_knowledge (현재 인메모리 RAG)
                      ├─ 국내·해외 시세 제공처
                      └─ KIS / KB증권 / Alpaca Paper API (선택, 읽기 전용 테스트)
+
+Redis는 현재 서비스·클라이언트·환경변수 연결이 없으며 운영 저장소로 사용하지 않습니다.
 ```
 
 | 영역 | 구성 | 역할 |
 |---|---|---|
 | Frontend | Nginx, HTML, Vanilla JS, Tailwind CDN | 화면·오프캔버스 메뉴·API 호출 |
 | Backend | Flask, SQLAlchemy, Requests | 회원·모의 주문·시세·Open API·외부 API 테스트 |
-| Data | MariaDB, PostgreSQL, Qdrant(선택) | 사용자·주문, 퀀트 시계열/백테스트, AI 지식 검색 |
+| Data | MariaDB, PostgreSQL Quant, PostgreSQL pg-stock, Qdrant | 서비스 트랜잭션, 퀀트 연구, 주식 원본·집계, AI 지식 검색 |
 | 운영 | Docker Compose | frontend, python-backend, mariadb(local profile) |
 
 ## 빠른 시작
@@ -192,7 +196,7 @@ docker compose exec python-backend python crawl_major_ohlcv.py
 docker compose exec python-backend python crawl_major_ohlcv.py --ticker 005930 --start 2020-01-01
 ```
 
-백엔드 스케줄러는 기본적으로 매일 18:20(Asia/Seoul)에 현재 연도를 증분 갱신하고, 매주 일요일 03:20에 종목·연도별 전체 구간을 다시 조회해 누락과 공급자 정정값을 upsert합니다. 실행 결과는 `ohlcv_sync_status`에 종목·연도별로 기록됩니다. 수집 범위는 `.env`의 `OHLCV_SYNC_TICKERS`로 설정합니다.
+최초 적재가 끝나면 전체·연도·시장 집계를 `ohlcv_*_summary` 스냅샷 테이블에 한 번 생성합니다. 이후 백엔드 스케줄러는 기본적으로 매일 18:20(Asia/Seoul)에 현재 연도를 증분 갱신하고 같은 배치 안에서 집계 스냅샷도 한 번 갱신합니다. `ohlcv_daily_batch_runs.batch_date` PK가 같은 날짜의 중복 실행을 막으며, 대시보드 `/summary`는 원본 `ohlcv`를 매 요청마다 집계하지 않습니다. 수집 범위는 `.env`의 `OHLCV_SYNC_TICKERS`로 설정합니다.
 
 ```text
 OHLCV_SYNC_TICKERS=major          # 내장 주요 24종목
@@ -202,7 +206,7 @@ OHLCV_SYNC_TICKERS=all            # tickers 테이블 전체(공급자 호출량
 
 | Method | Path | 설명 |
 |---|---|---|
-| `GET` | `/api/ohlcv-db/summary` | 전체·연도·시장별 적재 현황 |
+| `GET` | `/api/ohlcv-db/summary` | 일일 스냅샷 기반 전체·연도·시장별 적재 현황 |
 | `GET` | `/api/ohlcv-db/tickers` | 종목별 적재 건수 요약 |
 | `GET` | `/api/ohlcv-db/rows` | AG Grid용 일별 OHLCV 조건 검색·정렬·페이징 |
 
@@ -289,6 +293,8 @@ AWS 보안 그룹에는 PostgreSQL `5432` 인바운드 규칙을 추가하지 �
 | `POST` | `/openapi/v1/orders` | 가상 주식 주문 |
 
 API 키당 분당 60회 제한이 적용됩니다. 키 원문은 발급 시 한 번만 표시되고 서버에는 SHA-256 해시만 저장됩니다. `/openapi/v1/*`는 `Access-Control-Allow-Origin: *`와 `Authorization` preflight를 기본 제공하므로 외부 브라우저 앱이 별도 CORS 프록시 없이 호출할 수 있습니다.
+
+OHLCV 전용 인증·파라미터·응답·페이지·오류 명세는 `/ohlcv-openapi.html`에서 확인할 수 있습니다.
 
 ## 브로커·Alpaca 연결 테스트
 

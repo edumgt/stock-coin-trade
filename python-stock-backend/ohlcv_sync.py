@@ -7,6 +7,12 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import create_engine, text
 
 from crawl_major_ohlcv import MAJOR_TICKERS, fetch_naver, fetch_yahoo, upsert_ticker
+from ohlcv_aggregate import (
+    claim_daily_batch,
+    create_ohlcv_engine,
+    finish_daily_batch,
+    refresh_ohlcv_aggregates,
+)
 
 
 log = logging.getLogger(__name__)
@@ -22,10 +28,6 @@ def _enabled(name, default=True):
 
 def sync_enabled():
     return _enabled("OHLCV_SYNC_ENABLED", True)
-
-
-def reconcile_enabled():
-    return _enabled("OHLCV_RECONCILE_ENABLED", True)
 
 
 def _database_url():
@@ -189,14 +191,37 @@ def collect_ohlcv(*, reconcile=False, as_of=None, engine=None, downloader=None):
 def run_incremental_sync():
     if not sync_enabled():
         return {"status": "disabled"}
-    result = collect_ohlcv(reconcile=False)
+    engine = create_ohlcv_engine()
+    result = collect_ohlcv(reconcile=False, engine=engine)
+    result["aggregate"] = refresh_ohlcv_aggregates(engine)
     log.info("Incremental OHLCV sync finished: %s", result)
     return result
 
 
-def run_yearly_reconciliation():
-    if not sync_enabled() or not reconcile_enabled():
+def run_daily_ohlcv_batch(as_of=None):
+    """Run collection and persisted aggregation at most once per local date."""
+    if not sync_enabled():
         return {"status": "disabled"}
-    result = collect_ohlcv(reconcile=True)
-    log.info("Yearly OHLCV reconciliation finished: %s", result)
-    return result
+    batch_date = as_of or date.today()
+    engine = create_ohlcv_engine()
+    if not claim_daily_batch(engine, batch_date):
+        result = {"status": "already_executed", "batchDate": batch_date.isoformat()}
+        log.info("Daily OHLCV batch skipped: %s", result)
+        return result
+    try:
+        result = collect_ohlcv(reconcile=False, as_of=batch_date, engine=engine)
+        aggregate = refresh_ohlcv_aggregates(engine)
+        status = result.get("status", "completed")
+        finish_daily_batch(
+            engine, batch_date, status=status,
+            fetched_rows=result.get("fetchedRows", 0),
+            upserted_rows=result.get("upsertedRows", 0),
+            refreshed_at=aggregate.get("refreshed_at"),
+        )
+        result.update({"batchDate": batch_date.isoformat(), "aggregate": aggregate})
+        log.info("Daily OHLCV batch finished: %s", result)
+        return result
+    except Exception as exc:
+        finish_daily_batch(engine, batch_date, status="failed", error=exc)
+        log.exception("Daily OHLCV batch failed")
+        raise
