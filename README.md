@@ -680,3 +680,22 @@ curl -fsSL https://st.edumgt.co.kr/index.html
 - 외부 API의 URL·인증 방식·호출 제한·이용 가능 국가와 상품은 변경될 수 있으므로 실제 연동 전 공식 문서를 확인하세요.
 - 배포 환경에서는 개발용 기본 비밀번호를 사용하지 말고, 비밀 관리 도구 또는 안전한 환경 변수 주입 방식을 사용하세요.
 - AI Sheet의 LEAN 백테스트 버튼은 `python-backend` 컨테이너에 호스트의 `/var/run/docker.sock`을 마운트해 QuantConnect LEAN 컨테이너를 직접 실행합니다(Docker-outside-of-Docker). 이는 해당 컨테이너에 사실상 호스트 Docker 데몬 전체에 대한 권한을 부여하는 것과 같으므로, 신뢰할 수 없는 사용자가 접근 가능한 배포 환경에서는 이 기능을 비활성화하거나 별도로 격리하는 것을 고려하세요. `docker/lean/`의 이미지를 미리 빌드해두어야 하며(`docker build -t stock-coin-trade-lean:latest docker/lean`), 없으면 최초 요청 시 자동으로 빌드합니다.
+
+
+### Trading view 의 Pine Script 추천 
+> https://kr.tradingview.com/chart/3aw3WjMv/
+
+```chart url
+트레이딩뷰 커뮤니티 스크립트 라이브러리에서 바로 확인 및 추가할 수 있는 공식 URL 주소입니다.
+
+1. **UT Bot Alerts (by QuantNomad)**
+* **URL:** [https://kr.tradingview.com/script/8411CUSF-UT-Bot-Alerts/](https://www.google.com/search?q=https://kr.tradingview.com/script/8411CUSF-UT-Bot-Alerts/)
+
+
+2. **Supertrend (by KivancOzbilgic)**
+* **URL:** [https://kr.tradingview.com/script/39m4ThA1-SuperTrend/](https://www.google.com/search?q=https://kr.tradingview.com/script/39m4ThA1-SuperTrend/)
+
+
+3. **Ehlers Fisher Transform (by Everget / 존 에일러스 사이클 기반)**
+* **URL:** [https://kr.tradingview.com/script/P8mEBA9g-Fisher-Transform/](https://www.google.com/search?q=https://kr.tradingview.com/script/P8mEBA9g-Fisher-Transform/)
+```
