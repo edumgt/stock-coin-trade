@@ -7,7 +7,7 @@
 ## AWS 에 Lambda 구성, API GW 구성, 해당 repo FE EC2 구성
 ## 개인별 ML/DL 대체 AI resource 연동
 
-Flask REST API와 Vanilla JavaScript로 만든 주식·암호화폐 모의투자 및 OpenAPI 학습 플랫폼입니다. 국내 주식·코인 모의 주문, 대체자산 실습, 외부 연동용 Open API, 증권사·Alpaca Paper API의 읽기 전용 연결 테스트를 제공합니다.
+FastAPI REST API와 Vanilla JavaScript로 만든 주식·암호화폐 모의투자 및 OpenAPI 학습 플랫폼입니다. 국내 주식·코인 모의 주문, 대체자산 실습, 외부 연동용 Open API, 증권사·Alpaca Paper API의 읽기 전용 연결 테스트를 제공합니다.
 
 > 교육·연습용 프로젝트입니다. 증권사 및 Alpaca 연결 테스트는 키 검증과 읽기 전용 조회만 다루며, 실제 주문 자동화 기능을 제공하지 않습니다.
 
@@ -49,8 +49,8 @@ Browser
   ▼
 Nginx Frontend (:3333)
   ├─ 정적 HTML / JavaScript / CSS
-  ├─ /api/*      → Flask Backend
-  └─ /openapi/*  → Flask Backend
+  ├─ /api/*      → FastAPI Backend
+  └─ /openapi/*  → FastAPI Backend
                      │
                      ├─ MariaDB (회원·웹 모의 주문·감사 로그)
                      ├─ PostgreSQL quant_research (퀀트 시계열·전략·체결·성과)
@@ -64,7 +64,7 @@ Nginx Frontend (:3333)
 | 영역 | 구성 | 역할 |
 |---|---|---|
 | Frontend | Nginx, HTML, Vanilla JS, Tailwind CDN | 화면·오프캔버스 메뉴·API 호출 |
-| Backend | Flask, Flask-Session, SQLAlchemy, Requests | 회원·Redis 로그인 세션·모의 주문·시세·Open API·외부 API 테스트 |
+| Backend | FastAPI, Pydantic v2, SQLAlchemy 2.0, Redis 서버 세션, Requests | 회원·로그인 세션·모의 주문·시세·Open API·외부 API 테스트 — 계층 구조는 [python-stock-backend/README.md](python-stock-backend/README.md) |
 | Data | MariaDB, PostgreSQL Quant, PostgreSQL pg-stock, Qdrant, Redis | 서비스 트랜잭션, 퀀트 연구, 주식 원본·집계, AI 검색, 로그인 상태 |
 | 운영 | Docker Compose | frontend, python-backend, redis, mariadb/postgres(local profile) |
 
@@ -81,7 +81,7 @@ Nginx Frontend (:3333)
 cp .env.example .env
 ```
 
-`.env`는 DB 비밀번호, 세션 키, 증권사·클라우드 API 키를 포함한 유일한 로컬 설정 파일입니다. 실제 값은 Git에 커밋하지 않습니다. Docker Compose는 `.env`를 자동으로 읽고, `python app.py`로 직접 실행할 때는 `app.py`가 저장소 루트의 `.env`를 `python-dotenv`로 읽습니다(이미 설정된 환경변수가 우선).
+`.env`는 DB 비밀번호, 세션 키, 증권사·클라우드 API 키를 포함한 유일한 로컬 설정 파일입니다. 실제 값은 Git에 커밋하지 않습니다. Docker Compose는 `.env`를 자동으로 읽고, `uvicorn app.main:app`으로 직접 실행할 때는 `app/core/config.py`가 저장소 루트의 `.env`를 읽습니다(이미 설정된 환경변수가 우선).
 
 ### 2. 외부 API 인증정보 설정
 
@@ -119,7 +119,7 @@ docker compose ps
 | <http://localhost:3333/openapi.html> | 외부 연동 Open API 명세 |
 | <http://localhost:3333/quant.html> | PostgreSQL 퀀트 랩 |
 
-Nginx는 `/api/*`, `/openapi/*`를 Flask로 프록시합니다. 브라우저에서는 API 호출을 같은 origin으로 처리합니다.
+Nginx는 `/api/*`, `/openapi/*`를 FastAPI로 프록시합니다. 브라우저에서는 API 호출을 같은 origin으로 처리합니다.
 
 로그인 세션은 Redis에 서버 측으로 저장됩니다. 브라우저 쿠키에는 서명된 세션 ID만 들어가며, 실제 `member_id`는 `stock-coin-trade:session:*` 키에 7일 TTL로 보관됩니다. 로그인·회원가입 성공 시 세션 ID를 재발급하고 로그아웃 시 Redis 세션을 삭제합니다.
 
@@ -213,12 +213,12 @@ OHLCV_SYNC_TICKERS=all            # tickers 테이블 전체(공급자 호출량
 
 ### PostgreSQL Quant on AWS VM
 
-퀀트 기능은 기존 회원·모의 주문 MariaDB와 분리된 PostgreSQL 16을 사용합니다. 웹 브라우저는 PostgreSQL에 직접 접근하지 않으며, Nginx → Flask API → PostgreSQL 순서로 내부 Docker 네트워크에서만 통신합니다.
+퀀트 기능은 기존 회원·모의 주문 MariaDB와 분리된 PostgreSQL 16을 사용합니다. 웹 브라우저는 PostgreSQL에 직접 접근하지 않으며, Nginx → FastAPI → PostgreSQL 순서로 내부 Docker 네트워크에서만 통신합니다.
 
 | 계층 | 기술 | 역할 |
 |---|---|---|
 | Web | Nginx, Vanilla JS | `/quant.html` 제공 및 `/api/quant/*` 프록시 |
-| API | Python 3.11, Flask, SQLAlchemy, psycopg | 백테스트·팩터 회귀·파라미터 바인딩 |
+| API | Python 3.12, FastAPI, SQLAlchemy, psycopg | 백테스트·팩터 회귀·파라미터 바인딩 |
 | Quant DB | PostgreSQL 16 Alpine | OHLCV 파티션, BRIN, JSONB, 체결·성과·팩터 데이터 |
 | Runtime | Docker Compose v2, EC2/VM | 내부 네트워크, 볼륨, 헬스체크, 재기동 |
 
@@ -232,7 +232,7 @@ docker compose --profile local-db up -d --build
 docker compose ps
 ```
 
-`postgres` 컨테이너는 `internal` Docker 네트워크에만 연결되며 호스트 포트 `5432`를 공개하지 않습니다. Flask 컨테이너는 기본적으로 다음 연결 문자열을 사용합니다.
+`postgres` 컨테이너는 `internal` Docker 네트워크에만 연결되며 호스트 포트 `5432`를 공개하지 않습니다. FastAPI 컨테이너는 기본적으로 다음 연결 문자열을 사용합니다.
 
 ```text
 postgresql+psycopg://<QUANT_DB_USER>:<QUANT_DB_PASSWORD>@postgres:5432/<QUANT_DB_NAME>
@@ -306,7 +306,7 @@ OHLCV 전용 인증·파라미터·응답·페이지·오류 명세는 `/ohlcv-o
 | KIS 연결 테스트 | `/broker-api-test.html` | KIS Testbed 현재가·일봉·호가·잔고·시장지수 조회 |
 | KIS API 탐색기 | `/kis-api-explorer.html` | 공식 저장소 `examples_llm/domestic_stock` 예제를 분석한 국내주식 REST API 131개 목록. Testbed 지원 조회 API 는 서버 경유로 호출하고 응답 JSON 을 한글 필드명 표·JSON 으로 표시. 카탈로그는 `scripts/build_kis_api_catalog.py` 로 재생성 |
 | KIS 종목 차트 | `/kis-chart.html` | 종목명·코드 검색 후 1분·일·주·월·년봉 캔들 차트(거래량·이동평균 5/20/60)와 현재가 요약, 캔들 표. 백엔드 `/api/kis-chart/candles`·`/minutes` 가 KIS 기간별시세(FHKST03010100)·당일분봉(FHKST03010200)을 호출 |
-| KIS API 호출 이력 | `/kis-api-history.html` | 자체 Flask API 요청과 공통 KIS 게이트웨이의 실제 Testbed TR 시도·재시도·오류·응답시간을 AG Grid로 조회. App Key·Secret·토큰·CANO는 저장 전에 마스킹 |
+| KIS API 호출 이력 | `/kis-api-history.html` | 자체 FastAPI 요청과 공통 KIS 게이트웨이의 실제 Testbed TR 시도·재시도·오류·응답시간을 AG Grid로 조회. App Key·Secret·토큰·CANO는 저장 전에 마스킹 |
 | KB 연결 테스트 | `/kb-api-test.html` | KB증권 토큰 인증·시세 설정 점검 |
 | Alpaca Test | `/alpaca-test.html` | Alpaca Paper `GET /v2/account` 상태 조회 |
 
@@ -348,7 +348,7 @@ KIS Testbed에는 호출 제한이 있으므로 토큰과 짧은 시세 결과�
 5. 모의(Testbed) 도메인은 `https://openapivts.koreainvestment.com:29443`이며, 실전 도메인(`https://openapi.koreainvestment.com:9443`)은 사용하지 않습니다. 모의투자 토큰 발급은 **1분당 1회** 제한이 있으므로 짧은 간격으로 재시도하지 마세요.
 6. 자세한 절차·스크린샷은 3단계 학습 페이지 [`/learning/kis-regist.html`](frontend/learning/kis-regist.html)(가입) → [`/learning/kis-dev.html`](frontend/learning/kis-dev.html)(키 발급) → [`/learning/kis-test.html`](frontend/learning/kis-test.html)(테스트)에, VS Code에서 자연어로 쓰는 공식 MCP 연동은 아래 "KIS MCP" 절에 정리되어 있습니다.
 7. 로그인 후 `/kis-real-trading-practice.html`에서 KIS Testbed 모의계좌 잔고·보유종목·당일 주문내역을 조회하고 시장가/지정가 모의 매수·매도 주문을 접수할 수 있습니다. 주문 실행은 브라우저 확인, CSRF 검증, 주문 내용에 결합된 60초짜리 1회 승인 토큰을 요구하며 기본 1회 한도는 1,000주·1,000만 원입니다.
-8. 모든 웹 기반 KIS 호출은 자체 Flask API와 `broker_test.kis_request()` 공통 게이트웨이를 순서대로 거칩니다. 로그인 회원의 자체 API 기록과 실제 KIS TR 시도는 `/kis-api-history.html`에서 확인할 수 있으며, 실패 시 사용이력과 시스템 오류 이력에 모두 마스킹하여 기록합니다.
+8. 모든 웹 기반 KIS 호출은 자체 FastAPI와 `app.services.brokers.kis.kis_request()` 공통 게이트웨이를 순서대로 거칩니다. 로그인 회원의 자체 API 기록과 실제 KIS TR 시도는 `/kis-api-history.html`에서 확인할 수 있으며, 실패 시 사용이력과 시스템 오류 이력에 모두 마스킹하여 기록합니다.
 
 ### 2. KB증권 Open API
 
@@ -432,7 +432,7 @@ EC2에서는 `AWS_ACCESS_KEY_ID`·`AWS_SECRET_ACCESS_KEY`·`AWS_SESSION_TOKEN`�
 업로드 도구는 `.env`의 대응 환경변수를 읽지만 값은 출력하지 않습니다.
 
 ```bash
-python python-stock-backend/upload_keys_to_secrets_manager.py \
+cd python-stock-backend && uv run python -m app.cli.upload_keys_to_secrets_manager \
   --profile sagemaker-admin --region ap-northeast-2
 ```
 
@@ -443,14 +443,14 @@ python python-stock-backend/upload_keys_to_secrets_manager.py \
 업로드 담당 IAM에는 [`aws/iam/secrets-manager-provisioner-policy.json`](aws/iam/secrets-manager-provisioner-policy.json)을 연결합니다. 고객 관리형 KMS 키를 쓰면 해당 키의 암호화 권한도 필요합니다.
 
 ```bash
-python python-stock-backend/upload_keys_to_secrets_manager.py \
+cd python-stock-backend && uv run python -m app.cli.upload_keys_to_secrets_manager \
   --profile sagemaker-admin --region ap-northeast-2 --apply
 ```
 
 기존 값을 회전할 때만 다음처럼 덮어씁니다.
 
 ```bash
-python python-stock-backend/upload_keys_to_secrets_manager.py \
+cd python-stock-backend && uv run python -m app.cli.upload_keys_to_secrets_manager \
   --profile sagemaker-admin --region ap-northeast-2 --apply --overwrite --only kis
 ```
 
@@ -570,7 +570,9 @@ VS Code 탐색기 KIS MCP 패널 ───────────────�
 | 변수 | 용도 |
 |---|---|
 | `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD` | 로컬 MariaDB 설정 |
-| `SECRET_KEY` | Flask 세션 서명 키 |
+| `SECRET_KEY` | 로그인 세션 쿠키 서명 키 |
+| `SESSION_STORE` | `redis`(기본) 또는 `memory`(Redis 없는 로컬 개발) |
+| `APP_STARTUP_TASKS`, `SCHEDULER_ENABLED`, `AUDIT_ENABLED` | 기동 시 테이블 보정·시드 / APScheduler / 감사 로그 기록 토글 |
 | `REDIS_URL`, `REDIS_SESSION_KEY_PREFIX` | Redis 로그인 세션 연결과 키 접두사 |
 | `CMC_API_KEY`, `ANTHROPIC_API_KEY` | 선택적 코인 데이터·AI 기능 |
 | `KIS_PAPER_*`, `KB_*` | 증권사 테스트 환경 변수 |
@@ -592,14 +594,16 @@ VS Code 탐색기 KIS MCP 패널 ───────────────�
 │   ├── member/                        # 로그인·회원가입·플랫폼 API 키
 │   ├── js/common.js                   # 모든 페이지 공통 offcanvas 메뉴
 │   └── images/                        # 학습용 이미지·안내도
-├── python-stock-backend/              # Flask API
-│   ├── app.py                         # 앱 진입점과 Blueprint 등록
-│   ├── members.py / stocks.py          # 회원·주식 모의거래
-│   ├── crypto.py / alternatives.py     # 코인·대체자산
-│   ├── openapi.py / api_keys.py        # 외부 연동 API와 키 관리
-│   ├── broker_test*.py                 # KIS·KB 읽기 전용 테스트
-│   ├── alpaca_test*.py                 # Alpaca Paper 읽기 전용 테스트
-│   └── stock_market.py                 # 국내 주식 시세·차트
+├── python-stock-backend/              # FastAPI 백엔드 (계층 구조 상세: python-stock-backend/README.md)
+│   ├── pyproject.toml / uv.lock        # uv 프로젝트·잠금 파일
+│   ├── app/main.py                     # create_app(): lifespan·미들웨어·라우터 등록
+│   ├── app/core/                       # 설정·DB 세션·Redis 세션·CSRF·의존성·오류·감사 미들웨어
+│   ├── app/models.py                   # SQLAlchemy 2.0 타입 매핑 모델
+│   ├── app/api/routes/                 # 도메인별 APIRouter(회원·주식·코인·대체자산·KIS/KB/Alpaca·OpenAPI…)
+│   ├── app/services/                   # 도메인 로직·증권사 게이트웨이(brokers/, alpaca/)·RAG·퀀트
+│   ├── app/jobs/                       # APScheduler 배치·봇 거래·OHLCV 수집
+│   ├── app/cli/                        # 독립 실행 스크립트(python -m app.cli.<name>)
+│   └── tests/                          # pytest
 ├── database/db.sql                    # MariaDB 초기 스키마·예제 데이터
 ├── docker/                            # Frontend·Backend 이미지와 Nginx 설정
 ├── docker-compose.yml                 # 로컬 실행 구성
@@ -610,10 +614,13 @@ VS Code 탐색기 KIS MCP 패널 ───────────────�
 
 ## 개발·검증
 
-### Python 문법 검사
+### Python 린트·테스트
 
 ```bash
-python3 -m py_compile python-stock-backend/*.py
+cd python-stock-backend
+uv sync                 # 최초 1회(.venv)
+uv run ruff check app tests
+uv run pytest           # DB·Redis 없이 실행 가능
 ```
 
 ### Compose 재빌드와 상태 확인
@@ -624,13 +631,13 @@ docker compose ps
 curl http://localhost:3333/api/alpaca-test/paper/account
 ```
 
-`scripts/ec2/deploy.sh`는 Python 문법 검사 후 `docker compose up -d --build --remove-orphans`를 실행합니다.
+`scripts/ec2/deploy.sh`는 ECR 이미지를 받아 `docker compose up -d --no-build --remove-orphans`를 실행합니다.
 
 ## 배포 (EC2 · CI/CD)
 
 - 서비스 주소: `https://st.edumgt.co.kr`
 - 운영: 단일 EC2 인스턴스(Elastic IP), 서비스 경로 `/opt/stock-coin-trade`
-- 컨테이너: `crypto-mock-frontend`(nginx), `crypto-mock-python`(gunicorn), `crypto-mock-mariadb`, `crypto-mock-postgres`
+- 컨테이너: `crypto-mock-frontend`(nginx), `crypto-mock-python`(uvicorn · FastAPI), `crypto-mock-mariadb`, `crypto-mock-postgres`
 
 ### 로컬 vs AWS 실행 (SSL)
 
@@ -660,7 +667,7 @@ curl http://localhost:3333/api/alpaca-test/paper/account
 ```bash
 # 로컬 검증
 docker compose config --quiet
-python3 -m py_compile python-stock-backend/*.py
+(cd python-stock-backend && uv run ruff check app tests && uv run pytest)
 git diff --check
 
 # 커밋·푸시 → Actions가 자동 배포
@@ -699,3 +706,6 @@ curl -fsSL https://st.edumgt.co.kr/index.html
 3. **Ehlers Fisher Transform (by Everget / 존 에일러스 사이클 기반)**
 * **URL:** [https://kr.tradingview.com/script/P8mEBA9g-Fisher-Transform/](https://www.google.com/search?q=https://kr.tradingview.com/script/P8mEBA9g-Fisher-Transform/)
 ```
+
+### 모의 투자 결과 화면
+![alt text](image-1.png)

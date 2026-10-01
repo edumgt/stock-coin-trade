@@ -1,4 +1,4 @@
-"""pg-stock 읽기 전용 조회. python-stock-backend/ohlcv_db.py 와 같은 SQL을 사용한다."""
+"""pg-stock 읽기 전용 조회. python-stock-backend/app/services/ohlcv_store.py 와 같은 SQL을 사용한다."""
 from datetime import date, datetime
 from decimal import Decimal
 

@@ -23,7 +23,7 @@
       <div class="kicker">LEARNING · TRADINGVIEW(PINE)</div>
       <h1 style="font-size:30px;line-height:1.25;font-weight:900;margin:7px 0;color:var(--fg);">TradingView · Pine Script 첫 실습</h1>
       <p style="max-width:820px;margin:0;color:var(--fg-2);font-size:15px;line-height:1.75;">가입과 결제·자격 확인, 기본 차트 설정부터 모의투자, Pine Script v6, 전략 검증까지 순서대로 진행합니다. 백테스트·계절성·리스크 관리 실습도 이어집니다.</p>
-      <div style="margin-top:16px"><a class="btn" href="/learning/tr-pine/step-01.html" style="display:inline-flex;text-decoration:none">11개 독립 실습 웹앱 시작 →</a></div>
+      <div style="margin-top:16px"><a class="btn" href="/learning/tr-pine/step-01.html" style="display:inline-flex;text-decoration:none">17개 독립 실습 웹앱 시작 →</a></div>
       <div class="objective"><div><b>01 · 준비</b>계정 보안과 차트·종목·시간봉 설정</div><div><b>02 · 첫 실행</b>종가 선을 그리는 가장 쉬운 Pine Script</div><div><b>03 · 모의 검증</b>전략 테스터와 앱 모의주문으로 연습</div></div>
     </section>
 
@@ -214,7 +214,7 @@ plot(ta.sma(ratio, 20), color=color.orange)</pre>
     </section>
   </main>
   <footer class="footer"><div>EDUMGT · TradingView(Pine) 학습 · 투자 교육용 콘텐츠</div></footer>
-  <script src="/js/config.js"></script><script src="/js/common.js?v=20260926-navstate4-f13"></script>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20261001-step17-f13"></script>
   <script>
     const seasonData={month:[['1월',1.8,58,15],['2월',0.6,53,15],['3월',1.1,56,15],['4월',1.5,60,15],['5월',-0.4,47,15],['6월',-0.7,45,15],['7월',0.9,55,15],['8월',-1.2,42,15],['9월',-0.8,44,15],['10월',1.3,59,15],['11월',2.1,63,15],['12월',2.5,67,15]],weekday:[['월요일',-0.15,48,780],['화요일',0.22,53,780],['수요일',0.08,51,780],['목요일',0.17,54,780],['금요일',0.31,56,780]]};
     function calculateMetrics(){const annual=Number(document.getElementById('annualReturn').value)||0,rf=Number(document.getElementById('riskFree').value)||0,vol=Math.abs(Number(document.getElementById('volatility').value))||1,mdd=Math.abs(Number(document.getElementById('mdd').value))||1,sharpe=(annual-rf)/vol,calmar=annual/mdd;document.getElementById('sharpeOut').textContent=sharpe.toFixed(2);document.getElementById('mddOut').textContent='-'+mdd.toFixed(2)+'%';document.getElementById('calmarOut').textContent=calmar.toFixed(2);document.getElementById('metricComment').textContent=sharpe>=1?'위험 대비 수익이 양호합니다. 다른 구간에서도 유지되는지 확인하세요.':'위험 대비 수익이 낮습니다. 변동성이나 낙폭을 낮출 규칙을 실험해 보세요.'}

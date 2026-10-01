@@ -15,3 +15,8 @@ certbot
 .env
 *.key
 *.pem
+python-stock-backend/.venv
+python-stock-backend/tests
+python-stock-backend/.pytest_cache
+python-stock-backend/.ruff_cache
+__pycache__

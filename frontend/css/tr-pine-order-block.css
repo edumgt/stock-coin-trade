@@ -1,0 +1,39 @@
+/* 17단계 · 오더 블록과 SMC 차트 읽기 — 읽기형 단계 페이지 전용 스타일 (tr-pine-course·advanced 공통 클래스를 보완) */
+.tpob-body .tp-shell>section{margin:0 24px 14px}
+.tpob-body .tp-title-row h1{white-space:normal}
+.tpob-intro{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;margin:0 24px 14px}
+.tpob-intro .tp-instruction{position:static;min-height:0;padding:18px 20px;border:1px solid var(--tp-line);border-radius:12px;background:#fff}
+.tpob-intro .tp-instruction h3{margin:0 0 6px;font-size:18px}
+.tpob-intro .tp-instruction p{margin:0;color:#526079;font-size:14px;line-height:1.7}
+.tpob-scope{padding:16px 18px;border:1px solid #f1c0c0;border-radius:12px;background:#fffafa;color:#7a2e2e;font-size:13.5px;line-height:1.7}
+.tpob-scope b{display:block;margin-bottom:4px;color:#b42318;font-size:13px;letter-spacing:.06em}
+.tpob-figure{margin:0 0 14px;overflow:hidden;border:1px solid #cbd5e1;border-radius:12px;background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.08)}
+.tpob-figure img{display:block;width:100%;height:auto}
+.tpob-figure figcaption{padding:12px 16px;border-top:1px solid #d8e0eb;color:#526079;font-size:13px;line-height:1.6}
+.tpob-figure figcaption b{color:#172033}
+.tpob-table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid #dce4f1;border-radius:10px;background:#fff;font-size:13.5px}
+.tpob-table th,.tpob-table td{padding:11px 13px;border-bottom:1px solid #e6ebf3;vertical-align:top;line-height:1.6;text-align:left}
+.tpob-table th{background:#eef3ff;color:#1748cf;font-size:13px;letter-spacing:.04em;white-space:nowrap}
+.tpob-table tr:last-child td{border-bottom:0}
+.tpob-table code,.tpob-body .tpa-guide p code,.tpob-body .tpa-guide li code,.tpob-body .tp-note code{padding:1px 6px;border-radius:5px;background:#f1f3f5;color:#172033;font:700 12.5px ui-monospace,SFMono-Regular,Menlo,monospace}
+.tpob-chip{display:inline-block;width:11px;height:11px;margin-right:6px;border-radius:3px;vertical-align:-1px}
+.tpob-chip.blue{background:#2d4f8f}.tpob-chip.red{background:#7a3a3a}.tpob-chip.green{background:#0f9d83}.tpob-chip.cyan{background:#19b3c6}.tpob-chip.crimson{background:#ef5350}
+.tpob-body .tpa-guide>p{margin:0 0 12px;color:#344054;font-size:14px;line-height:1.75}
+.tpob-body .tpa-guide>p:last-child{margin-bottom:0}
+.tpob-body .tpa-guide ol,.tpob-body .tpa-guide ul{margin:0;padding-left:22px;color:#344054;font-size:14px;line-height:1.8}
+.tpob-body .tpa-guide-grid.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.tpob-body .tpa-guide-grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tpob-body .tpa-guide-grid div>span{display:inline-block;margin-bottom:6px;padding:3px 8px;border-radius:999px;background:#e8efff;color:#1748cf;font-size:12px;font-weight:700}
+.tpob-scenario>div.is-down{border-color:#f1c0c0;background:#fffafa}
+.tpob-scenario>div.is-up{border-color:#bfe3d6;background:#f3fbf8}
+.tpob-flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:14px 16px;border:1px solid #d8e2f4;border-radius:10px;background:#fff;color:#172033;font-size:13.5px;font-weight:700}
+.tpob-flow>span{padding:7px 11px;border-radius:8px;background:#eef2f7}
+.tpob-flow>em{color:#2962ff;font-style:normal}
+.tpob-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tpob-links a{display:block;padding:13px 14px;border:1px solid #dce4f1;border-radius:8px;background:#fff;color:#1748cf;font-size:13.5px;font-weight:700;text-decoration:none;line-height:1.5}
+.tpob-links a:hover{border-color:#8eb0f5;background:#edf3ff}
+.tpob-links a small{display:block;margin-top:4px;color:#667085;font-weight:400}
+.tpob-body .tp-help{margin:0 24px 14px;padding:0}
+.tpob-body .tp-note{margin:0}
+@media(max-width:900px){.tpob-intro{grid-template-columns:1fr}.tpob-body .tpa-guide-grid.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}.tpob-links{grid-template-columns:1fr}}
+@media(max-width:620px){.tpob-body .tp-shell>section,.tpob-intro,.tpob-body .tp-help{margin-inline:0}.tpob-body .tpa-guide-grid.cols-4,.tpob-body .tpa-guide-grid.cols-2{grid-template-columns:1fr}.tpob-table{display:block;overflow:auto}.tpob-table th{white-space:normal}}

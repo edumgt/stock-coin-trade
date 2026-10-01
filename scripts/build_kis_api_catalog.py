@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """한국투자증권 공식 저장소(open-trading-api)의 examples_llm/domestic_stock 예제를 분석해
-웹앱 KIS API 탐색기가 쓰는 카탈로그(python-stock-backend/kis_api_catalog.json)를 만든다.
+웹앱 KIS API 탐색기가 쓰는 카탈로그(python-stock-backend/app/resources/kis_api_catalog.json)를 만든다.
 
     git clone --depth 1 https://github.com/koreainvestment/open-trading-api.git mcp/open-trading-api
     python3 scripts/build_kis_api_catalog.py
@@ -23,7 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "mcp" / "open-trading-api" / "examples_llm" / "domestic_stock"
-OUT = ROOT / "python-stock-backend" / "kis_api_catalog.json"
+OUT = ROOT / "python-stock-backend" / "app" / "resources" / "kis_api_catalog.json"
 
 # 서버가 .env로 채우는 계좌 파라미터. 브라우저에서 받지 않는다.
 SERVER_FILLED = {"CANO", "ACNT_PRDT_CD"}
