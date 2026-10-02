@@ -399,3 +399,12 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 | S4 | KIS Testbed 체결 목록 미제공에 대한 운영 수용 | 보유수량 추정(현재)으로 Phase 4 진행 vs KIS 문의 후 대기 | 추정으로 진행, 실전에서 ccld 정상 확인 |
 | S5 | 같은 종목 동시 주문 허용 여부 | 허용 시 체결 귀속 모호(`ambiguous_open_orders`). lumina 쿨다운으로 1건 유지가 전제 | Testbed 기간엔 종목당 1건 |
 | S6 | 변경분 커밋 | 10개 경로 미커밋 | 기능 단위 커밋 |
+
+### 6-6. 2026-10-02 운영 시작 (7절 권고 수용 적용)
+
+| # | 적용 |
+|---|------|
+| S3 | 권한을 `api_key.scopes` 로 **일원화**: env `KIS_AUTOTRADE_API_KEY_IDS` 를 코드·compose·.env·.env.example·문서에서 제거, `require_scope` 는 컬럼만 확인. lumina 키(api_key_id=2)에 `scopes='kis:order'` 부여. 계약서 v0.5 |
+| S4·S5 | 보유수량 추정으로 Phase 4 진행, 종목당 1건(쿨다운 30분) |
+| — | 재배포 후 lumina 사이클이 낸 첫 자동 주문 **0000030540 (삼성전자 1주 LIMIT 275,000) ACCEPTED** 가 `kis_autotrade_order` 에 기록됨 |
+| — | 테스트 총 79 통과 |
