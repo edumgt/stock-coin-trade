@@ -255,3 +255,62 @@ class ApiUsageLog(Base):
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     result_summary: Mapped[str | None] = mapped_column(String(500), nullable=True)
     response_body: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+# ── KIS 자동매매 주문 게이트웨이 (lumina-invest 등 외부 스케줄러가 Open API로 호출) ──────
+# SQLite 테스트에서도 autoincrement가 동작하도록 PK는 sqlite variant를 둔다.
+_AutoPk = BigInteger().with_variant(Integer, "sqlite")
+
+
+class KisOrderApproval(Base):
+    """60초 1회용 주문 승인 토큰. 브라우저 세션이 아닌 API Key 호출자용으로 DB에 저장한다.
+
+    원문 토큰은 저장하지 않고 SHA-256 다이제스트만 둔다. 주문 의도(intent) 다이제스트와 함께 묶여
+    발급 후 수량·가격이 바뀌면 주문 단계에서 거부된다.
+    """
+
+    __tablename__ = "kis_order_approval"
+
+    kis_order_approval_id: Mapped[int] = mapped_column(_AutoPk, primary_key=True, autoincrement=True)
+    api_key_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+    member_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    token_digest: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    intent_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    environment: Mapped[str] = mapped_column(String(10), nullable=False)  # paper | real
+    client_order_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class KisAutotradeOrder(Base):
+    """자동매매 Open API로 KIS에 보낸 주문 1건의 기록. (environment, client_order_id)가 멱등키다.
+
+    status: PENDING(KIS 호출 전) | ACCEPTED | PARTIALLY_FILLED | FILLED | CANCEL_REQUESTED | CANCELLED | REJECTED | UNKNOWN
+    """
+
+    __tablename__ = "kis_autotrade_order"
+    __table_args__ = (UniqueConstraint("environment", "client_order_id", name="uq_kis_autotrade_order_env_client"),)
+
+    kis_autotrade_order_id: Mapped[int] = mapped_column(_AutoPk, primary_key=True, autoincrement=True)
+    api_key_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+    member_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    environment: Mapped[str] = mapped_column(String(10), nullable=False)
+    client_order_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    symbol: Mapped[str] = mapped_column(String(6), nullable=False)
+    side: Mapped[str] = mapped_column(String(4), nullable=False)  # BUY | SELL
+    order_type: Mapped[str] = mapped_column(String(6), nullable=False)  # MARKET | LIMIT
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    price: Mapped[int] = mapped_column(BigInteger, nullable=False)  # LIMIT 가격, MARKET은 0
+    estimated_amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDING")
+    order_no: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    org_no: Mapped[str | None] = mapped_column(String(10), nullable=True)  # KRX_FWDG_ORD_ORGNO (정정·취소용)
+    filled_quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    avg_filled_price: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    kis_msg_cd: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    kis_msg: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    request_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # 마스킹된 요청 본문
+    response_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # KIS 응답 (rt_cd/msg/output)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())

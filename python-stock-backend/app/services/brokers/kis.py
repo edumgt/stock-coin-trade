@@ -11,6 +11,7 @@ import os
 import threading
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from typing import Any
 
 import requests
@@ -147,9 +148,17 @@ def kis_request(
     extra_headers: dict[str, str] | None = None,
     retries: int = 2,
     raise_for_api_error: bool = True,
+    base_url: str | None = None,
+    headers_factory: Callable[[str], dict[str, str]] | None = None,
 ) -> tuple[requests.Response, dict[str, Any]]:
-    """인증이 필요한 모든 KIS 호출을 프로세스 전역 제한기 하나로 보낸다."""
+    """인증이 필요한 모든 KIS 호출을 프로세스 전역 제한기 하나로 보낸다.
+
+    기본은 모의투자 Testbed(``KIS_TESTBED_URL`` + ``_kis_headers``)다. 자동매매 게이트웨이
+    (``kis_autotrade``)는 ``base_url``/``headers_factory``로 실전 환경을 같은 제한기·감사로그로 보낸다.
+    """
     global _kis_last_api_call_at
+    target_base_url = base_url or KIS_TESTBED_URL
+    make_headers = headers_factory or _kis_headers
     response = None
     body: dict[str, Any] = {}
     for attempt in range(retries + 1):
@@ -165,8 +174,8 @@ def kis_request(
         try:
             response = requests.request(
                 method,
-                f"{KIS_TESTBED_URL}{path}",
-                headers={**_kis_headers(tr_id), **(extra_headers or {})},
+                f"{target_base_url}{path}",
+                headers={**make_headers(tr_id), **(extra_headers or {})},
                 params=params,
                 json=payload,
                 timeout=15,
