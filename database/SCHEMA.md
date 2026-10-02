@@ -116,6 +116,8 @@ crypto_rank                     회원과 독립
 | `hts_watch_memo` | 관심종목 개인 메모 | `member_id` FK |
 | `api_key` | 웹앱 Open API 키 | SHA-256 해시만 저장, 원문 미저장 |
 | `api_usage_log` | 외부 API 테스트 감사 | 민감 입력·응답 마스킹, 선택적 `member_id` FK |
+| `kis_order_approval` | KIS 자동매매 60초 1회용 승인 토큰 | 토큰·의도 SHA-256 다이제스트만 저장, API Key 단위 |
+| `kis_autotrade_order` | KIS 자동매매 주문·체결 기록 | (`environment`,`client_order_id`) 멱등키, 계좌번호 마스킹 |
 | `system_error_log` | 서버·브라우저 오류 진단 | 토큰·비밀번호 마스킹, 선택적 `member_id` FK |
 | `crypto_rank` | 공개 코인 랭킹 캐시 | 회원과 독립 |
 

@@ -26,6 +26,7 @@ def _serialize(key: ApiKey) -> dict:
         "label": key.label,
         "keyPrefix": key.key_prefix,
         "isActive": key.is_active,
+        "scopes": getattr(key, "scopes", "") or "",   # 운영자가 DB에서 부여. 셀프 서비스 변경 불가
         "createdAt": key.created_at.isoformat() if key.created_at else None,
         "lastUsedAt": key.last_used_at.isoformat() if key.last_used_at else None,
     }

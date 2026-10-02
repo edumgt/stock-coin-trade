@@ -102,53 +102,53 @@ domain-rag-lab LEAN 백테스트를 통과해 export된 전략 스펙만 노출�
 ## 2. 이 저장소에서 할 일
 
 ### 2-1. 계약 합의 (Phase 0)
-- [ ] 주문 요청 스키마 확정 (lumina-invest와 합의)
+- [x] 주문 요청 스키마 확정 (lumina-invest와 합의)
   - `symbol`(6자리), `side`(BUY/SELL), `quantity`, `order_type`(MARKET/LIMIT), `price`, `environment`(paper/real), `client_order_id`(멱등키)
-- [ ] 주문 응답 스키마: `order_no`(ODNO), `order_time`, `environment`, `client_order_id`, `message`
-- [ ] 체결 조회 응답 스키마: `order_no`, `status`(접수/부분체결/체결/거부/취소), `ordered_qty`, `filled_qty`, `avg_price`, `updated_at`
-- [ ] 에러 코드 표 정리 (KIS `msg_cd` → HTTP 상태 + 내부 코드 매핑)
+- [x] 주문 응답 스키마: `order_no`(ODNO), `order_time`, `environment`, `client_order_id`, `message`
+- [x] 체결 조회 응답 스키마: `order_no`, `status`(접수/부분체결/체결/거부/취소), `ordered_qty`, `filled_qty`, `avg_price`, `updated_at`
+- [x] 에러 코드 표 정리 (KIS `msg_cd` → HTTP 상태 + 내부 코드 매핑)
 
 ### 2-2. 게이트웨이 환경 분리 (Phase 2)
-- [ ] `kis_request()`에 `environment: Literal["paper","real"]` 인자 추가, URL·토큰 캐시·자격증명을 환경별로 분리
+- [x] `kis_request()`에 `environment: Literal["paper","real"]` 인자 추가, URL·토큰 캐시·자격증명을 환경별로 분리
   - 토큰 캐시 `_kis_token_cache`를 환경별 dict로
   - `_kis_credentials()`/`_kis_account()`가 `KIS_PAPER_*` / `KIS_REAL_*` 중 선택
-- [ ] tr_id 매핑 테이블 신설 (paper ↔ real)
+- [x] tr_id 매핑 테이블 신설 (paper ↔ real)
   - 매수 `VTTC0012U` ↔ `TTTC0012U`, 매도 `VTTC0011U` ↔ `TTTC0011U`
   - 체결조회 `VTTC8001R` ↔ `TTTC8001R`, 잔고 `VTTC8434R` ↔ `TTTC8434R`
   - 정정/취소 `VTTC0013U` ↔ `TTTC0013U`
 - [ ] 레이트리밋이 환경별 별도 토큰이지만 KIS 계정 공통 제한인지 확인 후 `_kis_api_rate_lock` 범위 결정
 
 ### 2-3. 실주문 서비스 (Phase 2)
-- [ ] `place_kis_paper_order()`를 일반화한 `place_kis_order(environment, ...)` 추가 (기존 함수는 wrapper로 유지)
+- [x] `place_kis_paper_order()`를 일반화한 `place_kis_order(environment, ...)` 추가 (기존 함수는 wrapper로 유지)
   - 실전 한도 env 추가: `KIS_REAL_MAX_ORDER_AMOUNT`, `KIS_REAL_MAX_ORDER_QUANTITY`, `KIS_REAL_ALLOWED_SYMBOLS`(선택, 화이트리스트)
   - 실전은 `KIS_REAL_ORDER_ENABLED=true` 플래그가 없으면 **무조건 거부** (Phase 5까지 기본 false)
-- [ ] 멱등성: `client_order_id` 저장 테이블(`kis_orders`) 신설. 동일 키 재요청 시 새 주문 없이 기존 결과 반환
-- [ ] **승인 토큰 Open API 버전**: 세션 대신 서버 저장소(Redis 또는 DB `order_approvals`)에 `token_digest`, `intent_digest`, `api_key_id`, `expires_at(+60s)`, `used_at` 저장. 1회 사용 후 즉시 소멸, 의도(symbol/side/qty/price) 불일치 시 거부
-- [ ] 회당 주문 한도를 환경별로 분리하고 API Key 단위 한도도 추가 (`KIS_REAL_MAX_ORDER_AMOUNT`, API Key별 `max_order_amount`)
-- [ ] KIS 자격증명 로딩 순서 확정: AWS Secrets Manager(`aws_secret_store.get_secret("kis-real")`) → env 폴백. 실전 키는 **env에 두지 않는 것**을 기본으로
-- [ ] 주문 레코드 저장: 요청 원문, KIS 응답, `order_no`, 환경, 호출 주체(API Key member), 상태
-- [ ] 정정/취소 함수 `cancel_kis_order(environment, order_no, ...)` 추가 (kill switch 시 lumina가 호출)
+- [x] 멱등성: `client_order_id` 저장 테이블(`kis_orders`) 신설. 동일 키 재요청 시 새 주문 없이 기존 결과 반환
+- [x] **승인 토큰 Open API 버전**: 세션 대신 서버 저장소(Redis 또는 DB `order_approvals`)에 `token_digest`, `intent_digest`, `api_key_id`, `expires_at(+60s)`, `used_at` 저장. 1회 사용 후 즉시 소멸, 의도(symbol/side/qty/price) 불일치 시 거부
+- [x] 회당 주문 한도를 환경별로 분리하고 API Key 단위 한도도 추가 (`KIS_REAL_MAX_ORDER_AMOUNT`, API Key별 `max_order_amount`)
+- [x] KIS 자격증명 로딩 순서 확정: AWS Secrets Manager(`aws_secret_store.get_secret("kis-real")`) → env 폴백. 실전 키는 **env에 두지 않는 것**을 기본으로
+- [x] 주문 레코드 저장: 요청 원문, KIS 응답, `order_no`, 환경, 호출 주체(API Key member), 상태
+- [x] 정정/취소 함수 `cancel_kis_order(environment, order_no, ...)` 추가 (kill switch 시 lumina가 호출)
 
 ### 2-4. 체결 조회 서비스 (Phase 2)
-- [ ] `get_kis_order_status(environment, order_no)` — `inquire-daily-ccld`에서 해당 주문 찾아 상태 정규화
-- [ ] `kis_orders` 테이블 상태 갱신 (조회 시 또는 백그라운드 폴링)
-- [ ] 당일 미체결 목록 `get_kis_open_orders(environment)` (기존 `_kis_open_orders_today()` 공개 함수화)
+- [x] `get_kis_order_status(environment, order_no)` — `inquire-daily-ccld`에서 해당 주문 찾아 상태 정규화
+- [x] `kis_orders` 테이블 상태 갱신 (조회 시 또는 백그라운드 폴링)
+- [x] 당일 미체결 목록 `get_kis_open_orders(environment)` (기존 `_kis_open_orders_today()` 공개 함수화)
 
 ### 2-5. Open API 엔드포인트 신설 (Phase 2)
 `api/routes/openapi.py` 또는 새 라우터 `api/routes/openapi_kis.py` (API Key 인증 유지)
-- [ ] `POST /openapi/v1/kis/order-approval` — 60초 1회용 승인 토큰 발급 (주문 의도 포함)
-- [ ] `POST /openapi/v1/kis/orders` — 주문 (승인 토큰 필수. 기존 가상 `/orders`와 **분리**, 혼동 방지)
-- [ ] `GET  /openapi/v1/kis/orders/{order_no}` — 체결 상태
-- [ ] `GET  /openapi/v1/kis/orders?date=&status=` — 당일 주문/체결 목록
-- [ ] `DELETE /openapi/v1/kis/orders/{order_no}` — 취소
-- [ ] `GET  /openapi/v1/kis/balance` — 잔고 (lumina 실계좌 기준 일손실 계산용)
-- [ ] API Key에 **권한 스코프** 추가: `kis:paper:order`, `kis:real:order`, `kis:read`. 실전 주문 스코프는 수동 발급만
-- [ ] 실전 주문은 `KIS_REAL_OWNER_EMAIL` 소유자 검증(`kis_real.py` 로직) 재사용
+- [x] `POST /openapi/v1/kis/order-approval` — 60초 1회용 승인 토큰 발급 (주문 의도 포함)
+- [x] `POST /openapi/v1/kis/orders` — 주문 (승인 토큰 필수. 기존 가상 `/orders`와 **분리**, 혼동 방지)
+- [x] `GET  /openapi/v1/kis/orders/{order_no}` — 체결 상태
+- [x] `GET  /openapi/v1/kis/orders?date=&status=` — 당일 주문/체결 목록
+- [x] `DELETE /openapi/v1/kis/orders/{order_no}` — 취소
+- [x] `GET  /openapi/v1/kis/balance` — 잔고 (lumina 실계좌 기준 일손실 계산용)
+- [x] API Key에 **권한 스코프** 추가: `kis:paper:order`, `kis:real:order`, `kis:read`. 실전 주문 스코프는 수동 발급만
+- [x] 실전 주문은 `KIS_REAL_OWNER_EMAIL` 소유자 검증(`kis_real.py` 로직) 재사용
 - [ ] 요청/응답 전부 `api_usage` 로그 + `_audit_kis_call` 감사로그 연결 확인
 
 ### 2-6. 테스트 (Phase 2·4)
-- [ ] `kis_request` 환경 분기 단위 테스트 (URL·헤더·tr_id)
-- [ ] 멱등키 중복 요청 테스트, `rt_cd != "0"` 응답 처리 테스트
+- [x] `kis_request` 환경 분기 단위 테스트 (URL·헤더·tr_id)
+- [x] 멱등키 중복 요청 테스트, `rt_cd != "0"` 응답 처리 테스트
 - [ ] Testbed 실호출 스모크 테스트 (환경변수 있을 때만 실행)
 - [ ] lumina-invest 게이트웨이 클라이언트와 계약 테스트 (스키마 고정 후)
 
@@ -223,3 +223,84 @@ domain-rag-lab LEAN 백테스트를 통과해 export된 전략 스펙만 노출�
 - lumina-invest는 기존 `KISClient` 직접 호출을 버리고 stock-coin-trade 경유로 바꾸는 작업이라, 자체 호출 유지로 결정하면 Phase 3에서 2~3d 줄어든다 (대신 stock-coin-trade의 감사 로그·승인 토큰 이점을 잃음)
 - KIS 실전 API 승인(계좌 소유자 인증, 모의→실전 전환 절차)은 외부 대기 시간이라 Phase 5 시작 2주 전에 미리 신청한다
 - Phase 4 관찰 중 장 휴장일이 끼면 그만큼 연장된다
+
+---
+
+## 6. 작업 보고 (AI 에이전트 인수인계용)
+
+> 이 섹션은 **작업을 이어받는 AI 에이전트가 가장 먼저 읽는 부분**이다. 작업을 끝낼 때마다 아래 형식으로 항목을 추가한다.
+> 규칙: ① 완료 항목은 2절 체크박스를 `[x]`로 바꾸고 여기엔 파일 경로·검증 방법을 적는다 ② 미완료는 "다음 작업"에 우선순위와 시작 지점(파일:함수)을 적는다
+> ③ 가정·결정은 "결정 사항"에 이유와 함께 적는다 ④ 커밋은 사용자가 한다(에이전트는 커밋하지 않음) ⑤ 테스트 실행 명령을 그대로 적어 재현 가능하게 한다.
+
+### 6-1. 2026-10-02 1차 작업 (Phase 0 + Phase 2 핵심 완료)
+
+**완료**
+| 항목 | 파일 | 비고 |
+|------|------|------|
+| API 계약 v0.2 | `docs/contracts/kis-autotrade-api.md` | 세 저장소 동일 사본. 변경 시 3곳 동시 갱신 |
+| 게이트웨이 환경 분리 | `python-stock-backend/app/services/brokers/kis.py` `kis_request(base_url=, headers_factory=)` | 기존 호출부는 무변경(기본값=Testbed). 실전은 아래 모듈이 주입 |
+| 자동매매 주문 서비스 | `python-stock-backend/app/services/brokers/kis_autotrade.py` | `TR_IDS` 매핑, `normalize_intent`, `issue_approval/consume_approval`, `place_order`(멱등·한도·사전 잔고·PENDING 선기록), `sync_order_status`, `list_today_orders`, `cancel_order`, `get_balance`, `require_scope`, `require_real_owner/allowed` |
+| 모델·DDL | `app/models.py` `KisOrderApproval`, `KisAutotradeOrder` / `database/db.sql`, `database/SCHEMA.md` | SQLite 테스트용 PK variant 포함. 기동 시 `ensure_kis_autotrade_tables()` (`app/startup.py`) |
+| Open API 라우터 | `python-stock-backend/app/api/routes/openapi_kis.py` (`/openapi/v1/kis/*`) | `router.py` 등록. `openapi.py`에 `ApiKeyContext`(api_key_id, member_id) 추가 |
+| 요청 스키마 | `app/api/schemas.py` `KisAutotradeOrderBody` | |
+| 환경변수 | `.env.example` `KIS_AUTOTRADE_API_KEY_IDS`, `KIS_REAL_ORDER_ENABLED`, `KIS_REAL_MAX_ORDER_*`, `KIS_REAL_ALLOWED_SYMBOLS` | |
+| 테스트 14개 | `python-stock-backend/tests/test_kis_autotrade.py` | 스코프 기본 거부, 승인 토큰 1회성·의도 바인딩, 멱등 중복, KIS 거부 기록, 실전 플래그/소유자, 한도, tr_id 매핑, 실전 URL/헤더, 상태 정규화, 체결 조회 갱신 |
+
+| README 안내 | `README.md` 끝 "KIS 자동매매" 절 | todo.md 6절·계약 문서 링크 |
+
+**검증**
+```bash
+cd /home/ubuntu/stock-coin-trade/python-stock-backend && .venv/bin/python -m pytest -q   # 68 passed
+```
+
+**결정 사항 (이유)**
+- 스코프는 DB 컬럼 대신 env 화이트리스트 `KIS_AUTOTRADE_API_KEY_IDS` (비우면 전부 거부). 이유: 운영 MariaDB `api_key` 테이블 ALTER 없이 당일 배포 가능. → 다음 작업에서 컬럼으로 승격 가능
+- 승인 토큰은 Redis 아닌 **DB 테이블** `kis_order_approval`. 이유: 멱등 주문 기록과 같은 트랜잭션 경계, 다중 프로세스 공유, 감사 추적
+- 멱등 중복 요청도 승인 토큰을 소비한다(계약서 2-2). 중복 응답에 `duplicate: true`
+- 주문 전 PENDING 행을 **별도 commit** 해 KIS 호출 중 장애에도 흔적을 남긴다. 연결 오류 시 상태 UNKNOWN (KIS 수신 여부 불명) → 호출자가 체결 조회로 확정
+- 실전 자격증명: env 우선, `CREDENTIAL_SOURCE=aws` 면 Secrets Manager `kis-real`(app_key/secret) + `kis-real/account` 폴백. 보안 암호 이름은 **운영팀과 확정 필요**
+- 기존 `place_kis_paper_order()`/`broker_test.py` 세션 기반 흐름은 그대로 두었다(웹 화면용). 자동매매는 `kis_autotrade` 만 사용
+
+**다음 작업 (우선순위순)**
+1. Testbed 스모크: `.env`에 `KIS_PAPER_*` + `KIS_AUTOTRADE_API_KEY_IDS` 설정 → API 키 발급(`POST /api/api-keys`) → 장중에 승인→주문→`GET /orders/{no}` 1사이클 실호출. 시작 지점: `tests/test_kis_autotrade.py` 의 `ORDER` 본문을 curl 로 재현
+2. `api_key` 테이블에 `scopes` 컬럼 추가 + `require_scope` 가 컬럼 우선·env 폴백 (`app/services/brokers/kis_autotrade.py:require_scope`)
+3. 당일 조회 페이지네이션(`CTX_AREA_FK100/NK100`) 처리 — `list_today_orders` 는 1페이지만 읽음 (주문 50건 초과 시 누락)
+4. `sync_order_status` 의 당일 범위 한계: 전일 미체결(익일 취소) 주문은 조회 불가 → `INQR_STRT_DT` 를 생성일 기준으로
+5. 실전 전환(Phase 5) 체크리스트: `KIS_REAL_ORDER_ENABLED=true`, `KIS_REAL_ALLOWED_SYMBOLS` 소수 종목, `KIS_REAL_MAX_ORDER_AMOUNT` 소액 → 운영자 승인 후
+
+**알려진 제약**
+- 라우트 등록 확인은 TestClient 경로로만 했다(최신 FastAPI `_IncludedRouter` 로 `app.routes` 순회 불가). 서버 기동 후 `/docs`에서 `openapi-kis` 태그 확인 권장
+- KIS 레이트리밋은 paper/real 이 **같은 전역 락**을 공유한다(보수적). 계정이 다르면 분리 가능
+
+### 6-2. 2026-10-02 2차 작업 (6-1 "다음 작업" 2·3·4·5 처리)
+
+**완료**
+| 6-1 번호 | 항목 | 파일 | 비고 |
+|------|------|------|------|
+| 2 | `api_key.scopes` 컬럼 + DB 우선 스코프 | `app/models.py` `ApiKey.scopes`, `kis_autotrade.key_scopes/require_scope(api_key_id, db)`, `openapi_kis.py` 전 라우트에 db 전달, `api_keys.py` 직렬화(읽기만), `database/db.sql` | `kis:order` 또는 `kis:*` 가 있으면 허용, 없으면 env `KIS_AUTOTRADE_API_KEY_IDS` 폴백. 기동 시 `ensure_kis_autotrade_tables()` 가 `ALTER TABLE api_key ADD COLUMN IF NOT EXISTS scopes` 실행(MariaDB) |
+| 3 | 연속조회 페이지네이션 | `kis_autotrade.list_orders(environment, start, end, ...)` | 응답 헤더 `tr_cont` F/M → 요청 헤더 `tr_cont=N` + `CTX_AREA_FK100/NK100` 반복, 최대 `CCLD_MAX_PAGES=10`. `list_today_orders` 는 래퍼 |
+| 4 | 조회 범위 = 주문 생성일~오늘 | `kis_autotrade.sync_order_status` | 기록이 있으면 `created_at` 부터 조회 → 전일 미체결(익일 취소)도 찾음 |
+| 5 | 실전 전환 체크리스트 | 아래 "Phase 5 체크리스트" | 문서 |
+| — | 테스트 3개 추가 (총 71) | `tests/test_kis_autotrade.py` | scopes 컬럼 우선, 2페이지 연속조회, 생성일 기준 조회 범위 |
+
+**검증**
+```bash
+cd /home/ubuntu/stock-coin-trade/python-stock-backend && .venv/bin/python -m pytest -q   # 71 passed
+```
+
+**결정 사항**
+- 스코프 이름은 todo 원안(`kis:paper:order`/`kis:real:order`)이 아닌 **`kis:order` 단일 + 환경 구분은 서버 플래그**로 단순화. 이유: real 허용은 이미 `KIS_REAL_ORDER_ENABLED` + 소유자 이메일로 2중 통제되므로 스코프 분리는 중복
+- 스코프 부여 API는 만들지 않음(셀프 발급 차단). 운영자가 DB에서 `UPDATE api_key SET scopes='kis:order' WHERE api_key_id=?`
+- 구 운영 DB에서 `scopes` 컬럼이 없을 때 `db.get(ApiKey)` 가 실패하면 빈 집합으로 처리해 env 폴백이 동작한다
+
+**Phase 5 실전 전환 체크리스트 (운영자용)**
+1. `.env`: `KIS_REAL_APP_KEY/SECRET/ACCOUNT_NO/OWNER_EMAIL` (또는 Secrets Manager `kis-real`), `KIS_REAL_ORDER_ENABLED=true`, `KIS_REAL_ALLOWED_SYMBOLS=005930`(소수 종목), `KIS_REAL_MAX_ORDER_AMOUNT=300000`, `KIS_REAL_MAX_ORDER_QUANTITY=5`
+2. lumina 호출용 API 키의 member 가 `KIS_REAL_OWNER_EMAIL` 회원인지 확인, `scopes='kis:order'` 부여
+3. 장 시작 전 `GET /openapi/v1/kis/balance?environment=real` 로 잔고 조회 성공 확인
+4. 첫 실전 주문은 1주 지정가(현재가 −5%) → `GET /orders/{no}?environment=real` 로 ACCEPTED 확인 → `DELETE` 로 취소까지 리허설
+5. lumina `STOCK_COIN_TRADE_KIS_ENVIRONMENT=real` 전환은 위 1~4 완료 후, 소액 운영 5영업일 관찰
+
+**다음 작업**
+1. (6-1의 1) Testbed 스모크 — 자격증명 필요, 미수행
+2. `list_orders` 의 `tr_cont` 처리는 KIS 문서 기준 구현이며 실호출 미검증 → 스모크 때 50건 초과 계좌로 확인
+3. `_kis_api_rate_lock` 를 환경별로 분리할지 (KIS 계정이 다르면 분리 가능)

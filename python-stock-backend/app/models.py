@@ -214,6 +214,8 @@ class ApiKey(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # 공백/쉼표 구분 권한. 예: "kis:order kis:read". 운영자가 DB에서만 부여한다(자기 발급 금지). 비어 있으면 env 화이트리스트 폴백.
+    scopes: Mapped[str] = mapped_column(String(200), nullable=False, default="", server_default="")
 
 
 class SystemErrorLog(Base):

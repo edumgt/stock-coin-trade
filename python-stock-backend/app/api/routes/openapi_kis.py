@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import time
+
 from fastapi import APIRouter, Body, Query
 
 from app.core.database import DbSession
@@ -40,9 +42,9 @@ def _environment(raw: str) -> str:
         raise _raise(exc)
 
 
-def _scope(ctx: tuple[int, int]) -> tuple[int, int]:
+def _scope(ctx: tuple[int, int], db=None) -> tuple[int, int]:
     try:
-        kis_autotrade.require_scope(ctx[0])
+        kis_autotrade.require_scope(ctx[0], db)
     except BrokerApiError as exc:
         raise _raise(exc)
     return ctx
@@ -52,14 +54,14 @@ def _guard_real(environment: str, symbol: str, member_id: int) -> None:
     if environment != "real":
         return
     try:
-        kis_autotrade.require_real_allowed(symbol, member_email(member_id))
+        kis_autotrade.require_real_allowed(symbol, lambda: member_email(member_id))
     except BrokerApiError as exc:
         raise _raise(exc)
 
 
 @router.post("/order-approval")
 def order_approval(ctx: ApiKeyContext, db: DbSession, payload: KisAutotradeOrderBody = Body(default_factory=KisAutotradeOrderBody)) -> dict:
-    api_key_id, member_id = _scope(ctx)
+    api_key_id, member_id = _scope(ctx, db)
     intent = _intent(payload)
     _guard_real(intent["environment"], intent["symbol"], member_id)
     return {"ok": True, **kis_autotrade.issue_approval(db, api_key_id=api_key_id, member_id=member_id, intent=intent)}
@@ -67,7 +69,7 @@ def order_approval(ctx: ApiKeyContext, db: DbSession, payload: KisAutotradeOrder
 
 @router.post("/orders")
 def place_order(ctx: ApiKeyContext, db: DbSession, payload: KisAutotradeOrderBody = Body(default_factory=KisAutotradeOrderBody)) -> dict:
-    api_key_id, member_id = _scope(ctx)
+    api_key_id, member_id = _scope(ctx, db)
     intent = _intent(payload)
     _guard_real(intent["environment"], intent["symbol"], member_id)
     try:
@@ -80,21 +82,19 @@ def place_order(ctx: ApiKeyContext, db: DbSession, payload: KisAutotradeOrderBod
 
 
 @router.get("/orders")
-def list_orders(ctx: ApiKeyContext, environment: str = Query("paper"), status: str = Query("ALL")) -> dict:
-    _scope(ctx)
+def list_orders(ctx: ApiKeyContext, db: DbSession, environment: str = Query("paper"), status: str = Query("ALL")) -> dict:
+    _scope(ctx, db)
     env = _environment(environment)
     try:
         orders = kis_autotrade.list_today_orders(env, open_only=status.strip().upper() == "OPEN")
     except BrokerApiError as exc:
         raise _raise(exc)
-    import time
-
     return {"ok": True, "environment": env, "date": time.strftime("%Y%m%d", time.localtime()), "orders": orders}
 
 
 @router.get("/orders/{order_no}")
 def order_status(ctx: ApiKeyContext, db: DbSession, order_no: str, environment: str = Query("paper")) -> dict:
-    _scope(ctx)
+    _scope(ctx, db)
     env = _environment(environment)
     try:
         return {"ok": True, "order": kis_autotrade.sync_order_status(db, env, order_no.strip())}
@@ -104,10 +104,13 @@ def order_status(ctx: ApiKeyContext, db: DbSession, order_no: str, environment: 
 
 @router.delete("/orders/{order_no}")
 def cancel_order(ctx: ApiKeyContext, db: DbSession, order_no: str, environment: str = Query("paper")) -> dict:
-    api_key_id, member_id = _scope(ctx)
+    api_key_id, member_id = _scope(ctx, db)
     env = _environment(environment)
     if env == "real":
-        _guard_real(env, "", member_id) if not kis_autotrade.real_order_enabled() else None
+        try:
+            kis_autotrade.require_real_owner(lambda: member_email(member_id))
+        except BrokerApiError as exc:
+            raise _raise(exc)
     try:
         return {"ok": True, "order": kis_autotrade.cancel_order(db, env, order_no.strip())}
     except BrokerApiError as exc:
@@ -115,8 +118,8 @@ def cancel_order(ctx: ApiKeyContext, db: DbSession, order_no: str, environment: 
 
 
 @router.get("/balance")
-def balance(ctx: ApiKeyContext, environment: str = Query("paper")) -> dict:
-    _scope(ctx)
+def balance(ctx: ApiKeyContext, db: DbSession, environment: str = Query("paper")) -> dict:
+    _scope(ctx, db)
     env = _environment(environment)
     try:
         return {"ok": True, "balance": kis_autotrade.get_balance(env)}

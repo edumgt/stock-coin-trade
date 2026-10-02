@@ -1,4 +1,4 @@
-# KIS 자동매매 연동 API 계약 (v0.1, 2026-10-02)
+# KIS 자동매매 연동 API 계약 (v0.3, 2026-10-02)
 
 > 이 문서는 domain-rag-lab / lumina-invest / stock-coin-trade 세 저장소에 **동일한 내용**으로 복사되어 있다.
 > 변경 시 세 저장소를 함께 갱신하고 버전을 올린다. 변경 이력은 문서 끝에 적는다.
@@ -27,6 +27,8 @@ Base: `https://<domain-rag-lab>/backtests`
 | GET | `/strategies` | 백테스트 합격 전략 목록 |
 | GET | `/strategies/{strategy_id}` | 최신 합격 버전 스펙 |
 | GET | `/strategies/{strategy_id}/versions/{version}` | 특정 버전 스펙 |
+| POST | `/strategies/{strategy_id}/revalidate` | 최신 합격 스펙의 규칙·파라미터로 백테스트 재실행(`{ticker?, start_date?, end_date?, criteria?}`) → 새 버전 저장. 201/422 |
+| POST | `/strategies` | 백테스트 실행 → 합격 판정 → 저장. 본문 `{strategy_id, name?, universe[], backtest: BacktestRequest, criteria?, signal_weights?, position_sizing?}`. 201=합격 스펙, 422=불합격(`detail.failed`) |
 
 ### StrategySpec (응답 본문)
 ```json
@@ -119,14 +121,30 @@ Base: `https://<stock-coin-trade>/openapi/v1/kis`  (기존 `/openapi/v1/orders`�
 | 400 | `INVALID_REQUEST` | 필드 검증 실패 (종목코드, 수량, 호가 단위 등) |
 | 401 | `UNAUTHORIZED` | API Key 없음/폐기 |
 | 403 | `APPROVAL_INVALID` | 승인 토큰 만료·불일치·재사용 |
-| 403 | `SCOPE_FORBIDDEN` | 이 API Key에 KIS 주문 권한 없음 (`KIS_AUTOTRADE_API_KEY_IDS` 미포함) |
+| 403 | `SCOPE_FORBIDDEN` | 이 API Key에 KIS 주문 권한 없음 (`api_key.scopes` 에 `kis:order` 없고 `KIS_AUTOTRADE_API_KEY_IDS` 에도 미포함) |
 | 403 | `REAL_ORDER_DISABLED` | `environment=real`인데 서버 플래그 꺼짐 또는 계좌 소유자 아님 |
 | 409 | `INSUFFICIENT_BALANCE` / `INSUFFICIENT_HOLDINGS` | 예수금/보유수량 부족 (사전 검증) |
 | 409 | `ORDER_IN_PROGRESS` | 동일 환경 주문 락 점유 중 |
+| 404 | `ORDER_NOT_FOUND` | 체결 조회/취소 대상 주문을 당일 내역에서 찾지 못함 |
 | 422 | `LIMIT_EXCEEDED` | 회당 금액/수량 한도 초과 |
 | 429 | `RATE_LIMITED` | API Key 분당 호출 제한 |
-| 502 | `KIS_<msg_cd>` | KIS가 거부 (메시지는 KIS msg1) |
+| 502 | `KIS_<msg_cd>` | KIS가 거부 (메시지는 KIS msg1). 응답에 `order`(REJECTED 기록) 포함 |
+| 502 | `KIS_QUOTE_UNAVAILABLE` | MARKET 주문 금액 추정용 현재가 조회 실패 |
 | 503 | `KIS_CONFIG_REQUIRED` / `KIS_CONNECTION_ERROR` | 자격증명 미설정 / KIS 연결 실패 |
 
-## 3. 변경 이력
+### lumina-invest 측 클라이언트 오류 코드 (게이트웨이 응답이 아닌 호출 실패)
+| code | 상황 | 호출자 처리 |
+|------|------|-------------|
+| `GATEWAY_NOT_CONFIGURED` | `STOCK_COIN_TRADE_BASE_URL/API_KEY` 미설정 | 레거시 직접 호출로 폴백 |
+| `GATEWAY_UNREACHABLE` | 연결/타임아웃 (주문 POST 는 재시도 없음) | `live_orders.status=UNKNOWN` → confirm_fills 가 당일 목록에서 매칭 |
+| `GATEWAY_INVALID_RESPONSE` | JSON 아님 | ERROR 기록 |
+
+## 3. 구현 현황 (2026-10-02)
+- stock-coin-trade: 2절 전부 구현 (`app/api/routes/openapi_kis.py`, `app/services/brokers/kis_autotrade.py`). 스코프는 `api_key.scopes`(`kis:order`) 우선, env `KIS_AUTOTRADE_API_KEY_IDS` 폴백. 당일/기간 조회는 KIS 연속조회 페이지네이션 적용
+- lumina-invest: 클라이언트 `app/services/brokers/stock_coin_trade_gateway.py`, 로더 `app/services/strategy_loader.py`
+- domain-rag-lab: 1절 전부 구현 (`app/api/routes/strategies.py`)
+
+## 4. 변경 이력
+- v0.3 (2026-10-02) `api_key.scopes` 스코프 우선, `revalidate`, 연속조회 페이지네이션 반영, `win_rate_pct` 채움
+- v0.2 (2026-10-02) `POST /strategies`(export) 추가, 오류 코드 `ORDER_NOT_FOUND`/`KIS_QUOTE_UNAVAILABLE`, lumina 클라이언트 코드 표, 구현 현황 절
 - v0.1 (2026-10-02) 최초 작성. 미결: 체결 webhook 여부(현재 폴링), API Key 스코프 컬럼(현재 env 화이트리스트).

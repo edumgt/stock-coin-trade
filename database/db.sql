@@ -333,6 +333,7 @@ CREATE TABLE IF NOT EXISTS `api_key` (
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `last_used_at` datetime DEFAULT NULL,
+  `scopes` varchar(200) NOT NULL DEFAULT '',
   PRIMARY KEY (`api_key_id`),
   UNIQUE KEY `uq_api_key_hash` (`key_hash`),
   CONSTRAINT `FK_api_key_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
@@ -342,3 +343,50 @@ CREATE TABLE IF NOT EXISTS `api_key` (
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+
+-- ── KIS 자동매매 Open API (/openapi/v1/kis) — 승인 토큰·주문 기록. 모델: app/models.py KisOrderApproval / KisAutotradeOrder
+-- 앱 기동 시 ensure_kis_autotrade_tables()가 같은 정의로 생성한다. 계약: docs/contracts/kis-autotrade-api.md
+CREATE TABLE IF NOT EXISTS `kis_order_approval` (
+  `kis_order_approval_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `api_key_id` bigint(20) NOT NULL,
+  `member_id` bigint(20) NOT NULL,
+  `token_digest` char(64) NOT NULL,
+  `intent_digest` char(64) NOT NULL,
+  `environment` varchar(10) NOT NULL,
+  `client_order_id` varchar(64) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `expires_at` datetime NOT NULL,
+  `used_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`kis_order_approval_id`),
+  UNIQUE KEY `uq_kis_order_approval_token` (`token_digest`),
+  KEY `ix_kis_order_approval_api_key` (`api_key_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `kis_autotrade_order` (
+  `kis_autotrade_order_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `api_key_id` bigint(20) NOT NULL,
+  `member_id` bigint(20) NOT NULL,
+  `environment` varchar(10) NOT NULL,
+  `client_order_id` varchar(64) NOT NULL,
+  `symbol` varchar(6) NOT NULL,
+  `side` varchar(4) NOT NULL,
+  `order_type` varchar(6) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `price` bigint(20) NOT NULL,
+  `estimated_amount` bigint(20) NOT NULL,
+  `status` varchar(20) NOT NULL DEFAULT 'PENDING',
+  `order_no` varchar(20) DEFAULT NULL,
+  `org_no` varchar(10) DEFAULT NULL,
+  `filled_quantity` int(11) NOT NULL DEFAULT 0,
+  `avg_filled_price` bigint(20) NOT NULL DEFAULT 0,
+  `kis_msg_cd` varchar(20) DEFAULT NULL,
+  `kis_msg` varchar(300) DEFAULT NULL,
+  `request_json` text DEFAULT NULL,
+  `response_json` text DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`kis_autotrade_order_id`),
+  UNIQUE KEY `uq_kis_autotrade_order_env_client` (`environment`, `client_order_id`),
+  KEY `ix_kis_autotrade_order_api_key` (`api_key_id`),
+  KEY `ix_kis_autotrade_order_order_no` (`order_no`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

@@ -20,6 +20,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import threading
 import time
@@ -29,7 +30,7 @@ from typing import Any, Literal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import KisAutotradeOrder, KisOrderApproval
+from app.models import ApiKey, KisAutotradeOrder, KisOrderApproval
 from app.services.brokers import kis as paper_gateway
 from app.services.brokers import kis_real
 from app.services.brokers.common import BrokerApiError, credential_source
@@ -164,9 +165,29 @@ def allowed_api_key_ids() -> set[int]:
     return ids
 
 
-def require_scope(api_key_id: int) -> None:
+SCOPE_ORDER = "kis:order"
+SCOPE_ALL = "kis:*"
+_SCOPE_SPLIT = re.compile(r"[\s,]+")
+
+
+def key_scopes(db: Session | None, api_key_id: int) -> set[str]:
+    """api_key.scopes 컬럼(공백/쉼표 구분). DB 미제공·컬럼 미존재(구 DB)면 빈 집합."""
+    if db is None:
+        return set()
+    try:
+        row = db.get(ApiKey, api_key_id)
+    except Exception:  # 구 운영 DB에 scopes 컬럼이 아직 없을 때 등
+        return set()
+    raw = getattr(row, "scopes", "") or ""
+    return {s.strip().lower() for s in _SCOPE_SPLIT.split(raw) if s.strip()}
+
+
+def require_scope(api_key_id: int, db: Session | None = None) -> None:
+    """KIS 자동매매 권한: api_key.scopes 에 kis:order(또는 kis:*)가 있으면 허용, 없으면 env KIS_AUTOTRADE_API_KEY_IDS 폴백."""
+    if {SCOPE_ORDER, SCOPE_ALL} & key_scopes(db, api_key_id):
+        return
     if api_key_id not in allowed_api_key_ids():
-        raise AutotradeError("이 API 키에는 KIS 자동매매 주문 권한이 없습니다. KIS_AUTOTRADE_API_KEY_IDS에 등록하세요.", 403, "SCOPE_FORBIDDEN")
+        raise AutotradeError("이 API 키에는 KIS 자동매매 주문 권한이 없습니다. api_key.scopes 에 kis:order 를 부여하거나 KIS_AUTOTRADE_API_KEY_IDS에 등록하세요.", 403, "SCOPE_FORBIDDEN")
 
 
 def real_order_enabled() -> bool:
@@ -177,13 +198,22 @@ def real_owner_email() -> str:
     return os.environ.get("KIS_REAL_OWNER_EMAIL", "").strip().lower()
 
 
-def require_real_allowed(symbol: str, member_email: str | None) -> None:
-    """실전 주문 3중 가드: 서버 플래그 + 계좌 소유자 이메일 + (선택) 종목 화이트리스트."""
+def require_real_owner(member_email) -> None:
+    """실전 환경 접근 2중 가드: 서버 플래그 + 계좌 소유자 이메일. 취소·조회·주문 공통.
+
+    ``member_email``은 문자열 또는 지연 호출(callable). 플래그가 꺼져 있으면 DB 조회(이메일) 없이 바로 거부한다.
+    """
     if not real_order_enabled():
         raise AutotradeError("실전 주문이 비활성화되어 있습니다 (KIS_REAL_ORDER_ENABLED).", 403, "REAL_ORDER_DISABLED")
     owner = real_owner_email()
-    if not owner or (member_email or "").strip().lower() != owner:
+    email = member_email() if callable(member_email) else member_email
+    if not owner or (email or "").strip().lower() != owner:
         raise AutotradeError("실전 계좌 소유자 API 키로만 실전 주문을 낼 수 있습니다.", 403, "REAL_ORDER_DISABLED")
+
+
+def require_real_allowed(symbol: str, member_email: str | None) -> None:
+    """실전 주문 3중 가드: require_real_owner + (선택) 종목 화이트리스트."""
+    require_real_owner(member_email)
     allowed = {s.strip() for s in os.environ.get("KIS_REAL_ALLOWED_SYMBOLS", "").split(",") if s.strip()}
     if allowed and symbol not in allowed:
         raise AutotradeError(f"실전 허용 종목이 아닙니다: {symbol}", 403, "REAL_ORDER_DISABLED")
@@ -470,26 +500,49 @@ def _normalize_ccld(environment: str, ccld: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def list_today_orders(environment: str, *, symbol: str = "", open_only: bool = False) -> list[dict[str, Any]]:
+CCLD_MAX_PAGES = 10  # 연속 조회 상한 (페이지당 KIS 기본 50건 안팎)
+
+
+def list_orders(environment: str, start_yyyymmdd: str, end_yyyymmdd: str, *, symbol: str = "", open_only: bool = False) -> list[dict[str, Any]]:
+    """기간 주문·체결 조회. KIS 연속조회(tr_cont F/M → 요청 헤더 tr_cont=N + CTX_AREA_FK100/NK100)를 끝까지 따라간다."""
     cano, product = _account(environment)
+    fk, nk, tr_cont = "", "", ""
+    rows: list[dict[str, Any]] = []
+    for _page in range(CCLD_MAX_PAGES):
+        response, body = request(
+            environment, "GET", "/uapi/domestic-stock/v1/trading/inquire-daily-ccld", "daily_ccld",
+            params={
+                "CANO": cano, "ACNT_PRDT_CD": product, "INQR_STRT_DT": start_yyyymmdd, "INQR_END_DT": end_yyyymmdd,
+                "SLL_BUY_DVSN_CD": "00", "INQR_DVSN": "00", "PDNO": symbol, "CCLD_DVSN": "02" if open_only else "00",
+                "ORD_GNO_BRNO": "", "ODNO": "", "INQR_DVSN_3": "00", "INQR_DVSN_1": "",
+                "CTX_AREA_FK100": fk, "CTX_AREA_NK100": nk,
+            },
+            label="주문·체결 조회", extra_headers={"custtype": "P", "tr_cont": tr_cont},
+        )
+        rows.extend(_normalize_ccld(environment, row) for row in (body.get("output1") or []) if row.get("odno"))
+        headers = getattr(response, "headers", None) or {}
+        cont = headers.get("tr_cont") if hasattr(headers, "get") else None
+        if str(cont or "").upper() not in ("F", "M"):
+            break
+        fk, nk, tr_cont = str(body.get("ctx_area_fk100") or ""), str(body.get("ctx_area_nk100") or ""), "N"
+        if not (fk or nk):
+            break
+    return rows
+
+
+def list_today_orders(environment: str, *, symbol: str = "", open_only: bool = False) -> list[dict[str, Any]]:
     today = time.strftime("%Y%m%d", time.localtime())
-    _, body = request(
-        environment, "GET", "/uapi/domestic-stock/v1/trading/inquire-daily-ccld", "daily_ccld",
-        params={
-            "CANO": cano, "ACNT_PRDT_CD": product, "INQR_STRT_DT": today, "INQR_END_DT": today,
-            "SLL_BUY_DVSN_CD": "00", "INQR_DVSN": "00", "PDNO": symbol, "CCLD_DVSN": "02" if open_only else "00",
-            "ORD_GNO_BRNO": "", "ODNO": "", "INQR_DVSN_3": "00", "INQR_DVSN_1": "",
-            "CTX_AREA_FK100": "", "CTX_AREA_NK100": "",
-        },
-        label="당일 주문·체결 조회", extra_headers={"custtype": "P"},
-    )
-    return [_normalize_ccld(environment, row) for row in (body.get("output1") or []) if row.get("odno")]
+    return list_orders(environment, today, today, symbol=symbol, open_only=open_only)
 
 
 def sync_order_status(db: Session, environment: str, order_no: str) -> dict[str, Any]:
     """체결 조회로 상태를 확인하고 kis_autotrade_order 기록이 있으면 함께 갱신한다."""
     row = find_order_by_no(db, environment, order_no)
-    matches = [o for o in list_today_orders(environment, symbol=row.symbol if row else "") if str(o["orderNo"]).lstrip("0") == str(order_no).lstrip("0")]
+    today = time.strftime("%Y%m%d", time.localtime())
+    # 기록이 있으면 주문 생성일부터 조회해 전일 미체결(익일 취소 포함)도 찾는다.
+    start = row.created_at.strftime("%Y%m%d") if row is not None and row.created_at else today
+    matches = [o for o in list_orders(environment, min(start, today), today, symbol=row.symbol if row else "")
+               if str(o["orderNo"]).lstrip("0") == str(order_no).lstrip("0")]
     if not matches:
         if row is None:
             raise AutotradeError("해당 주문번호를 당일 주문에서 찾을 수 없습니다.", 404, "ORDER_NOT_FOUND")
@@ -542,3 +595,11 @@ def ensure_kis_autotrade_tables() -> None:
     from app.models import Base
 
     Base.metadata.create_all(bind=engine, tables=[KisOrderApproval.__table__, KisAutotradeOrder.__table__], checkfirst=True)
+    # 기존 운영 DB(MariaDB)의 api_key 에 scopes 컬럼 보정. SQLite 등 미지원 방언은 무시한다.
+    try:
+        from sqlalchemy import text
+
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE api_key ADD COLUMN IF NOT EXISTS scopes VARCHAR(200) NOT NULL DEFAULT ''"))
+    except Exception:
+        pass
