@@ -408,3 +408,52 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 | S4·S5 | 보유수량 추정으로 Phase 4 진행, 종목당 1건(쿨다운 30분) |
 | — | 재배포 후 lumina 사이클이 낸 첫 자동 주문 **0000030540 (삼성전자 1주 LIMIT 275,000) ACCEPTED** 가 `kis_autotrade_order` 에 기록됨 |
 | — | 테스트 총 79 통과 |
+
+---
+
+## 8. 운영 배포 (2026-10-02)
+
+**대상 서버**
+| 도메인 | 저장소 | EC2 | 배포 방식 |
+|--------|--------|-----|-----------|
+| fd.edumgt.co.kr | lumina-invest | 43.201.229.188 (`/home/ubuntu/lumina-invest`, compose `docker-compose.yml:compose.fd.yml`) | GitHub Actions `deploy.yml`(push main) 또는 수동 rsync+compose |
+| pr.edumgt.co.kr | domain-rag-lab | 같은 서버 (`/home/ubuntu/domain-rag-lab`, `deploy/pr-edumgt/compose.yml`, Caddy alias `pr-api`) | 수동 rsync+compose. `cd.yml` 을 이 compose 로 고쳤으나 시크릿(EC2_HOST 등)은 구서버 값 → 갱신 필요 |
+| st.edumgt.co.kr | stock-coin-trade | 43.202.161.134 (`/opt/stock-coin-trade`, ssl+pg-stock 오버레이) | GitHub Actions `deploy-ec2.yml`(push main) 만. 에이전트는 이 서버 SSH 키 탐색이 보안 정책으로 차단돼 직접 접속하지 않음 |
+
+**에이전트가 수행한 것**
+- fd 서버 `lumina-invest/.env` 에 추가: `STOCK_COIN_TRADE_BASE_URL=https://st.edumgt.co.kr`, `STOCK_COIN_TRADE_API_KEY=`(**비어 있음 — st 서버에서 발급 후 기입**), `STOCK_COIN_TRADE_KIS_ENVIRONMENT=paper`, `..._ORDER_TYPE=LIMIT`, `..._ENFORCE_MARKET_HOURS=true`, `..._CANCEL_OPEN_AFTER_MIN=0`, `DOMAIN_RAG_LAB_BASE_URL=http://pr-api:8000`, `DOMAIN_RAG_LAB_API_KEY=<키>`
+- fd 서버 `domain-rag-lab/.env.prod` 에 `STRATEGY_API_KEY=<같은 키>` 추가, `data/strategies`·`data/lean-workflows` 생성
+- domain-rag-lab · lumina-invest 를 fd 서버에 rsync 후 compose 재빌드 (결과는 아래 "배포 결과")
+- stock-coin-trade: `docker-compose.yml` 에서 shared-net 참여를 로컬 전용 `docker-compose.override.yml` 로 분리해 운영 서버 compose(-f 지정)가 외부 네트워크를 요구하지 않게 함
+
+**에이전트가 할 수 없어 사용자가 수행할 것**
+1. **GitHub 푸시** (분류기가 "외부 게시"로 차단). 세 저장소 모두 로컬 main 이 origin 보다 앞서 있음:
+   ```bash
+   for r in domain-rag-lab lumina-invest stock-coin-trade; do (cd /home/ubuntu/$r && git push origin main); done
+   ```
+   - 푸시하면 lumina `deploy.yml`(fd 재배포, 이미 수동 배포돼 동일 결과)과 stock-coin-trade `deploy-ec2.yml`(**st 서버 실제 배포**)이 자동 실행된다. `gh run watch -R edumgt/stock-coin-trade` 로 확인
+   - domain-rag-lab `cd.yml`/`cd-ecr.yml` 은 시크릿이 구서버 기준이라 실패할 수 있음(무해). 고치려면 `gh secret set EC2_HOST --body 43.201.229.188 -R edumgt/domain-rag-lab`, `EC2_USER=ubuntu`, `EC2_APP_DIR=/home/ubuntu/domain-rag-lab`, `EC2_SSH_PRIVATE_KEY < lumina-invest/fd.edumgt.co.kr.pem`
+2. **st 서버에서 lumina 전용 API 키 발급** (deploy-ec2 완료 후, 기동 시 `api_key.scopes` 컬럼·KIS 테이블이 자동 생성됨):
+   ```bash
+   # st 서버에서 (ssh ubuntu@43.202.161.134)
+   cd /opt/stock-coin-trade
+   RAW="eduapi_live_$(python3 -c 'import secrets;print(secrets.token_urlsafe(32))')"; HASH=$(printf %s "$RAW" | sha256sum | cut -d' ' -f1)
+   sudo docker exec crypto-mock-mariadb sh -c "mariadb -u\"\$MARIADB_USER\" -p\"\$MARIADB_PASSWORD\" \"\$MARIADB_DATABASE\" -e \"INSERT INTO api_key (member_id,label,key_prefix,key_hash,is_active,scopes) VALUES (1,'lumina-autotrade','${RAW:0:16}','$HASH',1,'kis:order'); SELECT api_key_id,label,scopes FROM api_key;\""
+   echo "$RAW"   # 이 값을 fd 서버 lumina .env 의 STOCK_COIN_TRADE_API_KEY 에 기입
+   ```
+   - `.env` 에 `KIS_PAPER_APP_KEY/SECRET/ACCOUNT_NO` 가 있어야 하고, `KIS_REAL_ORDER_ENABLED` 는 비워 둔다(false)
+   - 확인: `curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $RAW" https://st.edumgt.co.kr/openapi/v1/kis/balance` → 200
+3. **fd 서버 lumina `.env` 에 키 기입 후 app·celery 재기동**:
+   ```bash
+   ssh -i lumina-invest/fd.edumgt.co.kr.pem ubuntu@43.201.229.188 "cd /home/ubuntu/lumina-invest && sed -i 's|^STOCK_COIN_TRADE_API_KEY=.*|STOCK_COIN_TRADE_API_KEY=<RAW>|' .env && sudo env COMPOSE_FILE='docker-compose.yml:compose.fd.yml' docker compose up -d app celery-worker celery-beat"
+   ```
+   - 키가 비어 있는 동안 fd 의 live 모드는 레거시 직접 호출로 폴백한다(게이트웨이 미사용). 운영 계정은 아직 paper/mock 이므로 실주문은 나가지 않음
+4. 운영에서 자동매매를 켤 계정의 종목 선정 화면 설정(live + KIS)은 Testbed 1주 관찰 결정(7절 L1)에 따라 진행
+
+**배포 결과 (15:5x KST)**
+| 서버 | 결과 |
+|------|------|
+| fd.edumgt.co.kr (lumina) | rsync + `compose up -d --build` 완료. 컨테이너 내부 `/api/health` 200, **alembic 0009 (head)** 적용, 공개 `https://fd.edumgt.co.kr/api/health` 200. 게이트웨이는 `STOCK_COIN_TRADE_API_KEY` 가 비어 미설정 상태(레거시 폴백) — st 서버 키 발급 후 기입 |
+| pr.edumgt.co.kr (domain-rag-lab) | rsync + `deploy/pr-edumgt/compose.yml up --build -d`. 첫 up 에서 api 가 Created 에 머물러(postgres 재생성 대기) `up -d api` 재실행 → healthy. `/health` 200, `/backtests/strategies` 키 없음 401 / 키 있음 200, lumina 컨테이너에서 `pr-api` 조회 성공(전략 0건). 공개 `https://pr.edumgt.co.kr/health` 200 |
+| st.edumgt.co.kr (stock-coin-trade) | **미배포** — 사용자 푸시 → `deploy-ec2.yml` 자동 배포 필요 (위 1·2·3 절차) |
+
