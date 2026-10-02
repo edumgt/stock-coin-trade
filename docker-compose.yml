@@ -5,9 +5,6 @@ networks:
   ohlcv-db:
     external: true
     name: postgresql_default
-  # lumina-invest(fin-ai-*)와 같은 네트워크. 자동매매 사이클이 http://crypto-mock-python:8200 으로 KIS 주문 Open API를 호출한다.
-  shared-net:
-    external: true
 
 services:
 
@@ -100,7 +97,6 @@ services:
     networks:
       - internal
       - ohlcv-db
-      - shared-net
     expose:
       - "8200"
     depends_on:

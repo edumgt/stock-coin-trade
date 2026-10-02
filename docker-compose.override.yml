@@ -1,0 +1,12 @@
+# 로컬 개발 전용 오버라이드(docker compose 가 -f 없이 실행될 때 자동 적용).
+# 같은 PC의 lumina-invest(fin-ai-*)와 shared-net 을 공유해 자동매매 사이클이 http://crypto-mock-python:8200 으로
+# KIS 주문 Open API를 호출할 수 있게 한다. 운영 EC2(st.edumgt.co.kr)는 lumina 가 다른 서버에 있어 https 로 호출하므로
+# 이 파일을 쓰지 않는다(배포 워크플로는 -f 로 docker-compose.yml + ssl + pg-stock 만 지정).
+services:
+  python-backend:
+    networks:
+      - shared-net
+
+networks:
+  shared-net:
+    external: true
