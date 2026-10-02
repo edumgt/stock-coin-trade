@@ -148,6 +148,19 @@ class OpenApiOrderBody(BaseModel):
     quantity: Any = 0
 
 
+class KisAutotradeOrderBody(BaseModel):
+    """KIS 자동매매 Open API 주문/승인 본문. 검증 메시지는 kis_autotrade.normalize_intent 가 만든다."""
+
+    environment: Any = "paper"
+    symbol: Any = ""
+    side: Any = ""
+    orderType: Any = "MARKET"
+    quantity: Any = None
+    price: Any = 0
+    clientOrderId: Any = ""
+    approvalToken: Any = ""
+
+
 class ClientErrorBody(BaseModel):
     message: Any = ""
     type: Any = "JavaScriptError"

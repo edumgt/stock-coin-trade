@@ -29,7 +29,8 @@ router = APIRouter(prefix="/openapi/v1", tags=["openapi"])
 _TICKER_CODE = re.compile(r"^[0-9A-Za-z._-]{1,20}$")
 
 
-def require_api_key(request: Request) -> int:
+def authenticate_api_key(request: Request) -> tuple[int, int]:
+    """Bearer API 키를 검증해 (api_key_id, member_id)를 돌려준다. 분당 호출 제한 포함."""
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         raise ApiError(401, error="UNAUTHORIZED", message="Authorization: Bearer <api_key> 헤더가 필요합니다.")
@@ -42,10 +43,15 @@ def require_api_key(request: Request) -> int:
     api_key_id, member_id = resolved
     if not check_rate_limit(api_key_id):
         raise ApiError(429, error="RATE_LIMITED", message=f"분당 {RATE_LIMIT_MAX}회 호출 제한을 초과했습니다.")
-    return member_id
+    return api_key_id, member_id
+
+
+def require_api_key(request: Request) -> int:
+    return authenticate_api_key(request)[1]
 
 
 ApiKeyMember = Annotated[int, Depends(require_api_key)]
+ApiKeyContext = Annotated[tuple[int, int], Depends(authenticate_api_key)]
 
 
 def _client_ip(request: Request) -> str:

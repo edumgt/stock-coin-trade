@@ -26,6 +26,7 @@ from app.api.routes import (
     members,
     ohlcv_db,
     openapi,
+    openapi_kis,
     quant,
     stocks,
 )
@@ -53,6 +54,7 @@ for module_router in (
     kis_practice.router,
     kis_real.router,
     openapi.router,
+    openapi_kis.router,
     ohlcv_db.router,
     quant.router,
     alternatives.router,

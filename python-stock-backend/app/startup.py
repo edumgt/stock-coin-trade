@@ -10,6 +10,7 @@ from app.services.api_usage import ensure_api_usage_table
 from app.services.crypto import ensure_crypto_tables
 from app.services.demo_seed import seed_bababa_dataset, seed_demo_investors, seed_ganada_dataset
 from app.services.error_analysis import ensure_error_analysis_table
+from app.services.brokers.kis_autotrade import ensure_kis_autotrade_tables
 from app.services.kis_practice import ensure_kis_practice_tables
 from app.services.members import ensure_member_tables
 
@@ -21,6 +22,7 @@ def run_startup_tasks() -> None:
     ensure_alternative_tables()
     ensure_member_tables()
     ensure_kis_practice_tables()
+    ensure_kis_autotrade_tables()
     ensure_crypto_tables()
     seed_demo_investors()
     seed_ganada_dataset()
