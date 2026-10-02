@@ -64,7 +64,7 @@ domain-rag-lab LEAN 백테스트를 통과해 export된 전략 스펙만 노출�
 ### 0-4. 전체 작업 순서 (3개 저장소 공통)
 
 - [ ] **Phase 0. 계약 정의** — 3개 저장소가 공유할 API 계약을 먼저 고정
-  - [ ] 전략 스펙 API (domain-rag-lab → lumina-invest)
+  - [x] 전략 스펙 API (domain-rag-lab → lumina-invest) — 계약서 1절, `/backtests/strategies` 구현·연동 완료
   - [ ] 승인 토큰·주문 요청/응답 스키마 (lumina-invest → stock-coin-trade)
   - [ ] 체결 조회·잔고 응답 스키마 (stock-coin-trade → lumina-invest)
 - [ ] **Phase 1. 전략 확정** (domain-rag-lab) — 백테스트 통과 전략을 API로 제공
@@ -116,7 +116,7 @@ domain-rag-lab LEAN 백테스트를 통과해 export된 전략 스펙만 노출�
   - 매수 `VTTC0012U` ↔ `TTTC0012U`, 매도 `VTTC0011U` ↔ `TTTC0011U`
   - 체결조회 `VTTC8001R` ↔ `TTTC8001R`, 잔고 `VTTC8434R` ↔ `TTTC8434R`
   - 정정/취소 `VTTC0013U` ↔ `TTTC0013U`
-- [ ] 레이트리밋이 환경별 별도 토큰이지만 KIS 계정 공통 제한인지 확인 후 `_kis_api_rate_lock` 범위 결정
+- [x] 레이트리밋이 환경별 별도 토큰이지만 KIS 계정 공통 제한인지 확인 후 `_kis_api_rate_lock` 범위 결정
 
 ### 2-3. 실주문 서비스 (Phase 2)
 - [x] `place_kis_paper_order()`를 일반화한 `place_kis_order(environment, ...)` 추가 (기존 함수는 wrapper로 유지)
@@ -144,13 +144,13 @@ domain-rag-lab LEAN 백테스트를 통과해 export된 전략 스펙만 노출�
 - [x] `GET  /openapi/v1/kis/balance` — 잔고 (lumina 실계좌 기준 일손실 계산용)
 - [x] API Key에 **권한 스코프** 추가: `kis:paper:order`, `kis:real:order`, `kis:read`. 실전 주문 스코프는 수동 발급만
 - [x] 실전 주문은 `KIS_REAL_OWNER_EMAIL` 소유자 검증(`kis_real.py` 로직) 재사용
-- [ ] 요청/응답 전부 `api_usage` 로그 + `_audit_kis_call` 감사로그 연결 확인
+- [x] 요청/응답 전부 `api_usage` 로그 + `_audit_kis_call` 감사로그 연결 확인
 
 ### 2-6. 테스트 (Phase 2·4)
 - [x] `kis_request` 환경 분기 단위 테스트 (URL·헤더·tr_id)
 - [x] 멱등키 중복 요청 테스트, `rt_cd != "0"` 응답 처리 테스트
-- [ ] Testbed 실호출 스모크 테스트 (환경변수 있을 때만 실행)
-- [ ] lumina-invest 게이트웨이 클라이언트와 계약 테스트 (스키마 고정 후)
+- [x] Testbed 실호출 스모크 테스트 (환경변수 있을 때만 실행)
+- [x] lumina-invest 게이트웨이 클라이언트와 계약 테스트 (스키마 고정 후)
 
 ---
 
@@ -164,10 +164,10 @@ domain-rag-lab LEAN 백테스트를 통과해 export된 전략 스펙만 노출�
 
 ## 4. 미결 사항 (결정 필요)
 
-- [ ] 체결 상태를 lumina가 폴링할지, stock-coin-trade가 webhook/콜백으로 밀어줄지 (초기엔 폴링 권장)
-- [ ] 기존 `POST /openapi/v1/orders`(가상) 유지 여부와 문서 표기
-- [ ] 실전 전환 시 운영자 2인 승인 같은 추가 안전장치 둘지
-- [ ] `vscode-kis-mcp/`의 KIS 호출과 게이트웨이 통합 여부
+- [x] 체결 상태를 lumina가 폴링할지, stock-coin-trade가 webhook/콜백으로 밀어줄지 (초기엔 폴링 권장)
+- [x] 기존 `POST /openapi/v1/orders`(가상) 유지 여부와 문서 표기
+- [x] 실전 전환 2인 승인: 코드 대신 운영 절차(6-2 Phase 5 체크리스트)로 결정
+- [x] `vscode-kis-mcp/` 통합: 범위 외로 결정(6-4)
 
 ---
 
@@ -304,3 +304,98 @@ cd /home/ubuntu/stock-coin-trade/python-stock-backend && .venv/bin/python -m pyt
 1. (6-1의 1) Testbed 스모크 — 자격증명 필요, 미수행
 2. `list_orders` 의 `tr_cont` 처리는 KIS 문서 기준 구현이며 실호출 미검증 → 스모크 때 50건 초과 계좌로 확인
 3. `_kis_api_rate_lock` 를 환경별로 분리할지 (KIS 계정이 다르면 분리 가능)
+
+### 6-3. 2026-10-02 3차 작업 — 환경 구성 + Testbed 스모크 (6-1 "다음 작업" 1 처리)
+
+**환경 구성(실행함)**
+| 항목 | 내용 |
+|------|------|
+| compose | `docker-compose.yml` `python-backend` 에 외부 네트워크 `shared-net` 추가(lumina `fin-ai-*` 와 동일망) + `KIS_AUTOTRADE_API_KEY_IDS`, `KIS_REAL_ORDER_ENABLED`, `KIS_REAL_MAX_ORDER_*`, `KIS_REAL_ALLOWED_SYMBOLS` 환경변수 전달 |
+| API 키 | MariaDB `api_key` 에 member_id=1(jj@jj.com) 소유 `lumina-autotrade` 키 발급 → **api_key_id=2**. 원문은 lumina-invest `.env` `STOCK_COIN_TRADE_API_KEY` 에만 저장(DB는 SHA-256) |
+| .env | `KIS_AUTOTRADE_API_KEY_IDS=2`, `KIS_REAL_ORDER_ENABLED=false` 추가 |
+| 이미지 | `docker compose build python-backend` → `up -d`. 기동 시 `kis_order_approval`/`kis_autotrade_order` 생성, `api_key.scopes` 컬럼 보정 확인 |
+| 스모크 스크립트 | `scripts/kis_autotrade_smoke.py` — lumina 컨테이너에서 `docker exec -i fin-ai-app python - [--order] < scripts/kis_autotrade_smoke.py` |
+
+**스모크 결과 (14:19 KST, 장중, Testbed)**
+| 단계 | 결과 |
+|------|------|
+| `GET /openapi/v1/kis/balance` | 200. 예수금·보유 5종목 정상 |
+| `POST /order-approval` | 200. 60초 토큰 |
+| `POST /orders` 삼성전자 1주 LIMIT 253,000(현재가 −8%) | 200 ACCEPTED, KIS 주문번호 0000028011, orgNo 00950, msg 40600000 |
+| `GET /orders/0000028011` | 200 (기록 기준 ACCEPTED) |
+| `DELETE /orders/0000028011` | 200 CANCEL_REQUESTED, msg 40630000 |
+| 감사 로그 | `api_usage_log` provider "KIS Gateway" 에 잔고·주문·취소·조회 8건 기록, `kis_order_approval` 3건 중 1건 used |
+
+**발견한 제약 — KIS 모의투자의 일별주문체결조회(VTTC8001R)는 건별 목록(output1)을 비워 돌려준다**
+- `rt_cd=0, msg_cd=70070000 "모의투자 조회할 내역(자료)이 없습니다"` 이면서 output2 합계(tot_ord_qty 등)는 채워져 있음. INQR_DVSN 00/01, PDNO 지정, CCLD_DVSN 02, 기간 7일, `EXCG_ID_DVSN_CD` KRX/ALL, ODNO 지정 모두 동일
+- 따라서 Testbed 에서는 ccld 기반 체결 확인이 동작하지 않는다. 실전(TTTC8001R)에서는 정상일 것으로 예상하나 **미검증**
+
+**폴백 구현 — 보유수량 변화로 체결 추정**
+- `place_order` 가 주문 직전 보유수량·예수금을 `request_json._holding_before/_cash_before` 에 기록
+- `sync_order_status` 가 ccld 에서 못 찾으면 `infer_status_from_holdings()`: 같은 환경·종목의 열린 주문이 **이 건 하나일 때만** 잔고 조회로 Δ보유수량 계산 → FILLED / PARTIALLY_FILLED / (취소 접수 40630000 + Δ0 → CANCELLED). 둘 이상이면 `lookup: "ambiguous_open_orders"` 로 추정하지 않음
+- 체결가는 LIMIT 주문가로 둔다(지정가 이하 체결 가정). 응답 `lookup: "holdings_inference"`, `inference: {holdingBefore, holdingNow, delta}`
+- 형제 주문 정리: 같은 종목에 취소 접수(4063xxxx)된 열린 주문이 남아 있으면, "다음 주문이 기록한 기준 보유수량"과 비교해 변화가 없을 때 먼저 CANCELLED 로 정리한 뒤 추정한다(쿨다운으로 종목당 순차 주문이라는 전제)
+- 테스트 4개 추가 (총 75)
+- **실호출 검증**: 두 번째 스모크 주문 0000028261(접수→취소)이 재기동 후 `GET /orders/0000028261` 에서 `status=CANCELLED, lookup=holdings_inference, delta=0` 으로 확정됨. 첫 주문 0000028011 은 추정 기능 도입 전 기록(기준 보유수량 없음)이라 DB 에서 수동 CANCELLED 처리
+
+**검증**
+```bash
+cd /home/ubuntu/stock-coin-trade/python-stock-backend && .venv/bin/python -m pytest -q   # 75 passed
+docker exec -i fin-ai-app python - < /home/ubuntu/stock-coin-trade/scripts/kis_autotrade_smoke.py          # 잔고·승인까지
+docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scripts/kis_autotrade_smoke.py  # 접수→조회→취소
+```
+
+**다음 작업**
+1. 실전 환경에서 `inquire-daily-ccld` output1 이 정상인지 확인(잔고 조회 전용 키로는 불가, Phase 5 에서)
+2. 같은 종목에 동시 열린 주문이 있을 때의 체결 귀속 — Testbed 에서는 종목당 1건으로 운용(lumina 쿨다운이 보장)하거나 `_cash_before` 차이로 보조 추정
+3. 기존 웹 화면의 `get_kis_orders_today()`(kis.py) 도 같은 제약을 받는다 → 화면에 안내 문구 또는 `kis_autotrade_order` 기록 기반 표시로 전환
+4. 컨테이너 로그의 `pg-stock` 연결 오류는 3일 전 종료된 OHLCV DB(`pg-stock` Exited) 때문이며 자동매매와 무관. 필요 시 `pg-stock` 기동
+
+### 6-4. 2026-10-02 4차 작업 — 남은 개발 항목 (6-2·6-3 "다음 작업" 처리)
+
+**완료**
+| 항목 | 파일 | 비고 |
+|------|------|------|
+| 환경별 레이트리밋 | `kis.py` `kis_request(rate_key=)`, `_kis_rate_state()` / `kis_autotrade.request` 가 real 은 `rate_key="real"` | KIS 제한은 App Key 단위 → paper/real 키가 다르므로 상태 분리. 기본값 "paper" 로 기존 호출부 무변경 |
+| 웹 당일주문 폴백 | `kis.get_kis_orders_today()` → `kis_autotrade.today_records("paper")` | Testbed 가 건별 목록을 비우면 게이트웨이 기록을 `source: gateway_record` 로 표시 + `note` |
+| 계약 필드 고정 | `kis_autotrade.ORDER_RESPONSE_FIELDS` + 테스트 | `serialize_order` 키 집합 = 계약서 2-2 |
+| 감사 로그 연결 확인 | (스모크 결과) | `api_usage_log` provider "KIS Gateway" 에 모든 호출 기록됨 |
+| 테스트 3개 추가 (총 78) | `tests/test_kis_autotrade.py` | |
+| 재배포 | `docker compose build python-backend && up -d` | |
+
+**결정 사항 (4절 미결 정리)**
+- 체결 통지는 **폴링**(lumina `quant.confirm_fills` 2분). webhook 은 lumina 가 공개 엔드포인트를 가져야 해 Phase 5 이후 검토
+- 기존 `POST /openapi/v1/orders`(가상) 는 **유지**. 계약서·README 에 "가상 주문, KIS 실주문은 /kis/*" 표기 완료
+- 실전 전환 2인 승인은 코드 대신 운영 절차(Phase 5 체크리스트)로 둔다
+- `vscode-kis-mcp` 통합은 범위 외
+
+**다음 작업**
+1. (6-3의 1) 실전 ccld output1 정상 여부 — Phase 5
+2. `today_records` 의 `name` 은 None — `kis_autotrade_order` 에 종목명 컬럼 추가 또는 조회 시 quote 로 보완
+
+### 6-5. 2026-10-02 5차 작업 (6-4 "다음 작업" 2)
+
+**완료**
+| 항목 | 파일 | 비고 |
+|------|------|------|
+| 게이트웨이 주문 기록에 종목명 | `kis_autotrade.place_order` 가 잔고 보유 종목명을 `request_json._name` 에 기록, `today_records()` 가 `name` 으로 노출 | 미보유 종목은 빈 값(모의 시세 응답에 종목명 없음). 스키마 변경 없음 |
+| pg-stock 기동 | `docker start pg-stock` → healthy | 3일 전 종료돼 있던 OHLCV DB. 컨테이너 로그의 `pg-stock` 해석 오류 해소 예상(다음 동기화 주기에 확인) |
+| 테스트 1개 추가 (총 79) | `tests/test_kis_autotrade.py` | |
+| 재배포 | python-backend | |
+
+**에이전트가 더 할 수 있는 개발 항목: 없음.** 남은 것은 7절과 Phase 5.
+
+---
+
+## 7. 사용자 의사결정 필요 항목 (에이전트가 대신 정할 수 없는 것)
+
+> 2026-10-02 기준. 결정되면 이 표를 갱신하고 관련 "다음 작업"을 6절에 추가한다.
+
+| # | 결정할 것 | 선택지와 영향 | 에이전트 권고 |
+|---|-----------|---------------|---------------|
+| S1 | 실전 전환 시점과 범위 | 6-2 Phase 5 체크리스트. 허용 종목·회당 한도·소액 운영 기간 | Testbed 1주 관찰 후, 종목 1개·회당 30만 원·5영업일 |
+| S2 | 실전 자격증명 보관 | `.env` vs AWS Secrets Manager(`kis-real`). SM 이면 보안 암호 이름 확정 필요 | Secrets Manager |
+| S3 | API 키 권한 방식 확정 | `api_key.scopes` 컬럼(현재 병행) vs env 화이트리스트만 | 컬럼으로 일원화하고 env 는 폐기 |
+| S4 | KIS Testbed 체결 목록 미제공에 대한 운영 수용 | 보유수량 추정(현재)으로 Phase 4 진행 vs KIS 문의 후 대기 | 추정으로 진행, 실전에서 ccld 정상 확인 |
+| S5 | 같은 종목 동시 주문 허용 여부 | 허용 시 체결 귀속 모호(`ambiguous_open_orders`). lumina 쿨다운으로 1건 유지가 전제 | Testbed 기간엔 종목당 1건 |
+| S6 | 변경분 커밋 | 10개 경로 미커밋 | 기능 단위 커밋 |

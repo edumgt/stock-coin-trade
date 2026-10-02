@@ -137,7 +137,7 @@ def request(environment: str, method: str, path: str, operation: str, *, params=
         raise AutotradeError("KIS_REAL_APP_KEY / KIS_REAL_APP_SECRET 이 설정되지 않았습니다.", 503, "KIS_CONFIG_REQUIRED")
     return paper_gateway.kis_request(method, path, tr, params=params, payload=payload, label=f"[real] {label}",
                                      extra_headers=extra_headers, raise_for_api_error=raise_for_api_error,
-                                     base_url=KIS_REAL_BASE_URL, headers_factory=_real_headers_factory(settings))
+                                     base_url=KIS_REAL_BASE_URL, headers_factory=_real_headers_factory(settings), rate_key="real")
 
 
 # ── 설정값 ───────────────────────────────────────────────────────────────────
@@ -373,6 +373,37 @@ def find_order_by_no(db: Session, environment: str, order_no: str) -> KisAutotra
     ).order_by(KisAutotradeOrder.kis_autotrade_order_id.desc())).first()
 
 
+# 계약서(docs/contracts/kis-autotrade-api.md 2-2) 주문 응답 필드. lumina-invest 클라이언트 테스트가 같은 집합을 참조한다.
+ORDER_RESPONSE_FIELDS = frozenset({
+    "clientOrderId", "orderNo", "orgNo", "environment", "symbol", "side", "orderType", "quantity", "price",
+    "estimatedAmount", "status", "filledQuantity", "avgFilledPrice", "kisMsgCd", "message", "orderTime", "updatedAt",
+})
+
+
+def today_records(environment: str, limit: int = 100) -> list[dict[str, Any]]:
+    """오늘 게이트웨이로 낸 주문 기록(kis_autotrade_order)을 웹 화면의 당일 주문 목록 형식으로 돌려준다."""
+    from datetime import date
+
+    from app.core.database import session_scope
+
+    with session_scope() as db:
+        rows = db.scalars(select(KisAutotradeOrder).where(
+            KisAutotradeOrder.environment == environment, KisAutotradeOrder.created_at >= datetime.combine(date.today(), datetime.min.time()),
+        ).order_by(KisAutotradeOrder.kis_autotrade_order_id.desc()).limit(limit)).all()
+        def _name(r):
+            try:
+                return json.loads(r.request_json or "{}").get("_name") or None
+            except ValueError:
+                return None
+
+        return [{
+            "orderNo": r.order_no, "symbol": r.symbol, "name": _name(r), "side": r.side,
+            "orderQuantity": str(r.quantity), "filledQuantity": str(r.filled_quantity), "remainingQuantity": str(max(0, r.quantity - r.filled_quantity)),
+            "orderPrice": str(r.price), "filledPrice": str(r.avg_filled_price), "orderTime": r.created_at.strftime("%H%M%S") if r.created_at else None,
+            "status": r.status, "clientOrderId": r.client_order_id, "source": "gateway_record",
+        } for r in rows]
+
+
 def serialize_order(row: KisAutotradeOrder) -> dict[str, Any]:
     return {
         "clientOrderId": row.client_order_id, "orderNo": row.order_no, "orgNo": row.org_no,
@@ -423,11 +454,15 @@ def place_order(db: Session, *, api_key_id: int, member_id: int, intent: dict[st
         "ORD_DVSN": "01" if order_type == "MARKET" else "00",
         "ORD_QTY": str(quantity), "ORD_UNPR": str(price), "EXCG_ID_DVSN_CD": "KRX",
     }
+    holding_before = int(next((h.get("quantity", 0) for h in balance["holdings"] if h["symbol"] == symbol), 0))
+    # 종목명: 보유 중이면 잔고 응답에서, 아니면 기존 모의 시세(get_kis_quote)로는 알 수 없어 빈 값. 웹 당일주문 폴백 표시용.
+    symbol_name = str(next((h.get("name") for h in balance["holdings"] if h["symbol"] == symbol), "") or "")
     row = KisAutotradeOrder(
         api_key_id=api_key_id, member_id=member_id, environment=environment, client_order_id=intent["clientOrderId"],
         symbol=symbol, side=side, order_type=order_type, quantity=quantity, price=price,
         estimated_amount=estimated_amount, status="PENDING",
-        request_json=json.dumps({**kis_payload, "CANO": cano[:4] + "****"}, ensure_ascii=False),
+        # _holding_before: Testbed 처럼 체결 목록을 못 받을 때 보유수량 변화로 체결을 추정하기 위한 기준값
+        request_json=json.dumps({**kis_payload, "CANO": cano[:4] + "****", "_holding_before": holding_before, "_cash_before": balance["cashBalance"], "_name": symbol_name}, ensure_ascii=False),
     )
     db.add(row)
     db.commit()  # KIS 호출 전에 PENDING을 확정해 호출 중 장애가 나도 흔적을 남긴다.
@@ -546,6 +581,9 @@ def sync_order_status(db: Session, environment: str, order_no: str) -> dict[str,
     if not matches:
         if row is None:
             raise AutotradeError("해당 주문번호를 당일 주문에서 찾을 수 없습니다.", 404, "ORDER_NOT_FOUND")
+        inferred = infer_status_from_holdings(db, row)
+        if inferred is not None:
+            return inferred
         return {**serialize_order(row), "status": row.status if row.status != "PENDING" else "UNKNOWN", "lookup": "not_in_daily_ccld"}
     latest = matches[0]
     if row is not None:
@@ -556,6 +594,85 @@ def sync_order_status(db: Session, environment: str, order_no: str) -> dict[str,
         db.commit()
         latest["clientOrderId"] = row.client_order_id
     return latest
+
+
+OPEN_STATUSES = ("PENDING", "ACCEPTED", "PARTIALLY_FILLED", "CANCEL_REQUESTED", "UNKNOWN")
+
+
+def infer_status_from_holdings(db: Session, row: KisAutotradeOrder) -> dict[str, Any] | None:
+    """체결 목록(inquire-daily-ccld output1)을 못 받을 때(KIS 모의투자 제약) 보유수량 변화로 상태를 추정한다.
+
+    조건: 주문 시점 보유수량(_holding_before)이 기록돼 있고, 같은 환경·종목의 열린 주문이 이 건 하나뿐일 때만.
+    둘 이상이면 수량 변화를 어느 주문에 귀속할지 알 수 없어 추정하지 않는다(None).
+    결과에는 ``lookup: "holdings_inference"`` 와 추정 근거를 넣는다. 체결가는 LIMIT 주문가(지정가 이하 체결 가정)로 둔다.
+    """
+    if row.status not in OPEN_STATUSES:
+        return None
+    try:
+        before = json.loads(row.request_json or "{}").get("_holding_before")
+    except ValueError:
+        before = None
+    if before is None:
+        return None
+    def _open_siblings():
+        return db.scalars(select(KisAutotradeOrder).where(
+            KisAutotradeOrder.environment == row.environment, KisAutotradeOrder.symbol == row.symbol,
+            KisAutotradeOrder.status.in_(OPEN_STATUSES), KisAutotradeOrder.kis_autotrade_order_id != row.kis_autotrade_order_id,
+        ).order_by(KisAutotradeOrder.kis_autotrade_order_id)).all()
+
+    siblings = _open_siblings()
+    balance = holding = None
+    now_qty = 0
+    if siblings:
+        # 취소가 접수(4063xxxx)된 형제 주문은 자기 기준 보유수량 변화가 없으면 CANCELLED 로 먼저 정리해 막힘을 푼다.
+        balance = get_balance(row.environment)
+        holding = next((h for h in balance["holdings"] if h["symbol"] == row.symbol), None)
+        now_qty = int((holding or {}).get("quantity", 0))
+        # 형제의 체결 여부는 "다음 주문이 기록한 기준 보유수량"과 비교한다(다음 주문이 없으면 현재 보유수량).
+        # 자동매매는 쿨다운으로 종목당 순차 주문이므로, 다음 주문 시점에 변화가 없었으면 그 형제는 체결 없이 취소된 것이다.
+        def _before(o):
+            try:
+                return json.loads(o.request_json or "{}").get("_holding_before")
+            except ValueError:
+                return None
+
+        chain = sorted([*siblings, row], key=lambda o: o.kis_autotrade_order_id)
+        resolved = False
+        for i, sib in enumerate(chain):
+            if sib is row or sib.status != "CANCEL_REQUESTED" or not (sib.kis_msg_cd or "").startswith("4063"):
+                continue
+            sib_before = _before(sib)
+            if sib_before is None:
+                continue
+            nxt = next((_before(o) for o in chain[i + 1:] if _before(o) is not None), None)
+            baseline = int(nxt) if nxt is not None else now_qty
+            sib_delta = (baseline - int(sib_before)) if sib.side == "BUY" else (int(sib_before) - baseline)
+            if sib_delta <= 0:
+                sib.status = "CANCELLED"
+                resolved = True
+        if resolved:
+            db.commit()
+            siblings = _open_siblings()
+    if siblings:
+        return {**serialize_order(row), "lookup": "ambiguous_open_orders", "openOrdersSameSymbol": len(siblings) + 1}
+    if balance is None:
+        balance = get_balance(row.environment)
+        holding = next((h for h in balance["holdings"] if h["symbol"] == row.symbol), None)
+        now_qty = int((holding or {}).get("quantity", 0))
+    delta = (now_qty - int(before)) if row.side == "BUY" else (int(before) - now_qty)
+    previous = row.status
+    if delta >= row.quantity:
+        row.status, row.filled_quantity = "FILLED", row.quantity
+        row.avg_filled_price = row.price if row.order_type == "LIMIT" and row.price else int((holding or {}).get("currentPrice", 0))
+    elif delta > 0:
+        row.status, row.filled_quantity = "PARTIALLY_FILLED", delta
+        row.avg_filled_price = row.price if row.order_type == "LIMIT" and row.price else int((holding or {}).get("currentPrice", 0))
+    elif previous == "CANCEL_REQUESTED" and (row.kis_msg_cd or "").startswith("4063"):
+        row.status = "CANCELLED"   # 취소가 접수(40630000)됐고 보유수량 변화가 없다 → 취소 완료로 본다
+    if row.status != previous:
+        db.commit()
+    return {**serialize_order(row), "lookup": "holdings_inference",
+            "inference": {"holdingBefore": int(before), "holdingNow": now_qty, "delta": delta, "basis": "inquire-balance"}}
 
 
 def cancel_order(db: Session, environment: str, order_no: str) -> dict[str, Any]:

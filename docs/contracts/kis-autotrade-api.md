@@ -1,4 +1,4 @@
-# KIS 자동매매 연동 API 계약 (v0.3, 2026-10-02)
+# KIS 자동매매 연동 API 계약 (v0.4, 2026-10-02)
 
 > 이 문서는 domain-rag-lab / lumina-invest / stock-coin-trade 세 저장소에 **동일한 내용**으로 복사되어 있다.
 > 변경 시 세 저장소를 함께 갱신하고 버전을 올린다. 변경 이력은 문서 끝에 적는다.
@@ -104,6 +104,14 @@ Base: `https://<stock-coin-trade>/openapi/v1/kis`  (기존 `/openapi/v1/orders`�
   "holdings": [{"symbol": "005930", "name": "삼성전자", "quantity": 3, "avgPrice": 70900, "currentPrice": 71500, "evalAmount": 214500, "profitLoss": 1800, "profitLossRate": 0.85}]}}
 ```
 
+#### `lookup` 필드 (2-3 응답, 상태의 근거)
+| lookup | 의미 |
+|--------|------|
+| (없음) | 당일/기간 체결 목록(inquire-daily-ccld)에서 찾아 정규화 |
+| `holdings_inference` | 체결 목록이 비어 있어 주문 전후 보유수량 변화로 추정 (`inference` 객체 동봉). **KIS 모의투자는 체결 목록 output1 을 항상 비워 돌려준다** |
+| `ambiguous_open_orders` | 같은 종목에 열린 주문이 둘 이상이라 추정 불가. 저장된 상태 그대로 |
+| `not_in_daily_ccld` | 목록에도 없고 추정 근거도 없음. 저장된 상태 그대로(PENDING 이면 UNKNOWN) |
+
 ### 주문 상태 정규화
 | status | 의미 | KIS 근거 |
 |--------|------|----------|
@@ -145,6 +153,7 @@ Base: `https://<stock-coin-trade>/openapi/v1/kis`  (기존 `/openapi/v1/orders`�
 - domain-rag-lab: 1절 전부 구현 (`app/api/routes/strategies.py`)
 
 ## 4. 변경 이력
+- v0.4 (2026-10-02) 체결 조회 `lookup`/`inference` 필드, 모의투자 체결 목록 제약 명시
 - v0.3 (2026-10-02) `api_key.scopes` 스코프 우선, `revalidate`, 연속조회 페이지네이션 반영, `win_rate_pct` 채움
 - v0.2 (2026-10-02) `POST /strategies`(export) 추가, 오류 코드 `ORDER_NOT_FOUND`/`KIS_QUOTE_UNAVAILABLE`, lumina 클라이언트 코드 표, 구현 현황 절
 - v0.1 (2026-10-02) 최초 작성. 미결: 체결 webhook 여부(현재 폴링), API Key 스코프 컬럼(현재 env 화이트리스트).

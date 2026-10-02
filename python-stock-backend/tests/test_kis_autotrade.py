@@ -252,7 +252,101 @@ def test_sync_order_status_queries_from_order_creation_date(api):
     api.kis_request.return_value = (Mock(status_code=200, headers={}), {"rt_cd": "0", "output1": []})
     response = api.get("/openapi/v1/kis/orders/0000001234?environment=paper", headers=AUTH)
     assert response.status_code == 200
-    assert response.json()["order"]["lookup"] == "not_in_daily_ccld"
+    assert response.json()["order"]["lookup"] == "holdings_inference"   # ccld 비어 있고 보유수량 변화 없음(10→10) → ACCEPTED 유지
+    assert response.json()["order"]["status"] == "ACCEPTED"
     params = api.kis_request.call_args.kwargs["params"]
     assert params["INQR_STRT_DT"] == (datetime.now() - timedelta(days=2)).strftime("%Y%m%d")
     assert params["INQR_END_DT"] == datetime.now().strftime("%Y%m%d")
+
+
+
+# ── 3차 작업: Testbed 가 체결 목록을 비워 돌려줄 때 보유수량 변화로 추정 ────────────────────────
+def _empty_ccld():
+    return (Mock(status_code=200, headers={"tr_cont": "E"}), {"rt_cd": "0", "msg_cd": "70070000", "output1": [], "output2": [{}]})
+
+
+def test_status_inferred_from_holdings_when_ccld_is_empty(api):
+    api.post("/openapi/v1/kis/orders", json={**ORDER, "approvalToken": _approve(api)}, headers=AUTH)   # 주문 시 보유 10주 기록
+    api.kis_request.return_value = _empty_ccld()
+    with patch.object(svc, "get_balance", return_value={"cashBalance": 1, "holdings": [{"symbol": "005930", "quantity": 12, "currentPrice": 70500}]}):
+        response = api.get("/openapi/v1/kis/orders/0000001234?environment=paper", headers=AUTH)
+    order = response.json()["order"]
+    assert order["lookup"] == "holdings_inference" and order["status"] == "FILLED"
+    assert order["filledQuantity"] == 2 and order["avgFilledPrice"] == 70000 and order["inference"]["delta"] == 2
+    with api.db() as db:
+        assert db.query(KisAutotradeOrder).one().status == "FILLED"
+
+
+def test_partial_fill_and_cancelled_inference(api):
+    api.post("/openapi/v1/kis/orders", json={**ORDER, "approvalToken": _approve(api)}, headers=AUTH)
+    api.kis_request.return_value = _empty_ccld()
+    with patch.object(svc, "get_balance", return_value={"cashBalance": 1, "holdings": [{"symbol": "005930", "quantity": 11}]}):
+        partial = api.get("/openapi/v1/kis/orders/0000001234?environment=paper", headers=AUTH).json()["order"]
+    assert partial["status"] == "PARTIALLY_FILLED" and partial["filledQuantity"] == 1
+
+    with api.db() as db:
+        rec = db.query(KisAutotradeOrder).one(); rec.status = "CANCEL_REQUESTED"; rec.kis_msg_cd = "40630000"; db.commit()
+    with patch.object(svc, "get_balance", return_value={"cashBalance": 1, "holdings": [{"symbol": "005930", "quantity": 10}]}):
+        cancelled = api.get("/openapi/v1/kis/orders/0000001234?environment=paper", headers=AUTH).json()["order"]
+    assert cancelled["status"] == "CANCELLED"
+
+
+def test_inference_refuses_when_two_open_orders_share_symbol(api):
+    api.post("/openapi/v1/kis/orders", json={**ORDER, "approvalToken": _approve(api)}, headers=AUTH)
+    second = {**ORDER, "clientOrderId": "u1:005930:BUY:2"}
+    api.kis_request.return_value = (Mock(status_code=200), {**KIS_OK, "output": {**KIS_OK["output"], "ODNO": "0000005678"}})
+    api.post("/openapi/v1/kis/orders", json={**second, "approvalToken": _approve(api, second)}, headers=AUTH)
+    api.kis_request.return_value = _empty_ccld()
+    with patch.object(svc, "get_balance", return_value={"cashBalance": 1, "holdings": [{"symbol": "005930", "quantity": 14}]}):
+        order = api.get("/openapi/v1/kis/orders/0000001234?environment=paper", headers=AUTH).json()["order"]
+    assert order["lookup"] == "ambiguous_open_orders" and order["status"] == "ACCEPTED" and order["openOrdersSameSymbol"] == 2
+
+
+def test_cancelled_sibling_is_resolved_before_inference(api):
+    api.post("/openapi/v1/kis/orders", json={**ORDER, "approvalToken": _approve(api)}, headers=AUTH)        # 1234
+    with api.db() as db:
+        rec = db.query(KisAutotradeOrder).one(); rec.status = "CANCEL_REQUESTED"; rec.kis_msg_cd = "40630000"; db.commit()
+    second = {**ORDER, "clientOrderId": "u1:005930:BUY:2"}
+    api.kis_request.return_value = (Mock(status_code=200), {**KIS_OK, "output": {**KIS_OK["output"], "ODNO": "0000005678"}})
+    api.post("/openapi/v1/kis/orders", json={**second, "approvalToken": _approve(api, second)}, headers=AUTH)   # 5678
+    api.kis_request.return_value = _empty_ccld()
+    with patch.object(svc, "get_balance", return_value={"cashBalance": 1, "holdings": [{"symbol": "005930", "quantity": 12, "currentPrice": 70500}]}):
+        order = api.get("/openapi/v1/kis/orders/0000005678?environment=paper", headers=AUTH).json()["order"]
+    assert order["lookup"] == "holdings_inference" and order["status"] == "FILLED"
+    with api.db() as db:
+        statuses = {r.order_no: r.status for r in db.query(KisAutotradeOrder).all()}
+    assert statuses == {"0000001234": "CANCELLED", "0000005678": "FILLED"}
+
+
+
+# ── 4차 작업: 계약 필드 고정, 환경별 레이트리밋, 웹 당일주문 폴백 ──────────────────────────────
+def test_order_response_fields_match_contract(api):
+    api.post("/openapi/v1/kis/orders", json={**ORDER, "approvalToken": _approve(api)}, headers=AUTH)
+    with api.db() as db:
+        assert set(svc.serialize_order(db.query(KisAutotradeOrder).one())) == set(svc.ORDER_RESPONSE_FIELDS)
+
+
+def test_real_requests_use_separate_rate_limiter(monkeypatch):
+    monkeypatch.setenv("KIS_REAL_APP_KEY", "k"); monkeypatch.setenv("KIS_REAL_APP_SECRET", "s"); monkeypatch.setenv("KIS_REAL_ACCOUNT_NO", "12345678-01")
+    with patch.object(paper_gateway, "kis_request", return_value=(Mock(), {"rt_cd": "0"})) as gateway:
+        svc.request("real", "GET", "/x", "balance", label="t")
+        assert gateway.call_args.kwargs["rate_key"] == "real"
+        svc.request("paper", "GET", "/x", "balance", label="t")
+        assert "rate_key" not in gateway.call_args.kwargs
+    assert paper_gateway._kis_rate_state("real") is not paper_gateway._kis_rate_state("paper")
+
+
+def test_web_orders_today_falls_back_to_gateway_records():
+    with patch.object(paper_gateway, "_kis_account", return_value=("12345678", "01")), \
+         patch.object(paper_gateway, "kis_request", return_value=(Mock(), {"rt_cd": "0", "output1": []})), \
+         patch("app.services.brokers.kis_autotrade.today_records", return_value=[{"orderNo": "1", "status": "ACCEPTED", "source": "gateway_record"}]):
+        result = paper_gateway.get_kis_orders_today()
+    assert result["orders"][0]["source"] == "gateway_record" and "note" in result
+
+
+def test_order_records_symbol_name_from_holdings(api):
+    with patch.object(svc, "get_balance", return_value={"cashBalance": 10_000_000, "holdings": [{"symbol": "005930", "name": "삼성전자", "quantity": 10}]}):
+        api.post("/openapi/v1/kis/orders", json={**ORDER, "approvalToken": _approve(api)}, headers=AUTH)
+    with api.db() as db:
+        import json as _json
+        assert _json.loads(db.query(KisAutotradeOrder).one().request_json)["_name"] == "삼성전자"

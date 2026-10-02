@@ -28,6 +28,14 @@ _kis_order_flow_lock = threading.Lock()
 _kis_paper_order_lock = threading.Lock()
 _kis_api_rate_lock = threading.Lock()
 _kis_last_api_call_at = 0.0
+# 레이트리밋 상태를 호출 키(기본 "paper", 실전은 "real")별로 분리한다. KIS 제한은 App Key 단위이므로 환경별 키가 다르면 독립이다.
+_kis_rate_states: dict[str, dict[str, Any]] = {}
+_kis_rate_states_lock = threading.Lock()
+
+
+def _kis_rate_state(rate_key: str) -> dict[str, Any]:
+    with _kis_rate_states_lock:
+        return _kis_rate_states.setdefault(rate_key, {"lock": threading.Lock(), "last": 0.0})
 _KIS_API_CALL_GAP_SECONDS = 1.05
 _KIS_RATE_LIMIT_CODE = "EGW00201"
 _KIS_QUOTE_CACHE_MAX = 256
@@ -150,23 +158,24 @@ def kis_request(
     raise_for_api_error: bool = True,
     base_url: str | None = None,
     headers_factory: Callable[[str], dict[str, str]] | None = None,
+    rate_key: str = "paper",
 ) -> tuple[requests.Response, dict[str, Any]]:
     """인증이 필요한 모든 KIS 호출을 프로세스 전역 제한기 하나로 보낸다.
 
     기본은 모의투자 Testbed(``KIS_TESTBED_URL`` + ``_kis_headers``)다. 자동매매 게이트웨이
     (``kis_autotrade``)는 ``base_url``/``headers_factory``로 실전 환경을 같은 제한기·감사로그로 보낸다.
     """
-    global _kis_last_api_call_at
     target_base_url = base_url or KIS_TESTBED_URL
     make_headers = headers_factory or _kis_headers
+    rate_state = _kis_rate_state(rate_key)
     response = None
     body: dict[str, Any] = {}
     for attempt in range(retries + 1):
-        with _kis_api_rate_lock:
-            wait = _KIS_API_CALL_GAP_SECONDS - (time.monotonic() - _kis_last_api_call_at)
+        with rate_state["lock"]:
+            wait = _KIS_API_CALL_GAP_SECONDS - (time.monotonic() - rate_state["last"])
             if wait > 0:
                 time.sleep(wait)
-            _kis_last_api_call_at = time.monotonic()
+            rate_state["last"] = time.monotonic()
         if attempt:
             time.sleep(0.8 * attempt)
         started = time.perf_counter()
@@ -326,7 +335,18 @@ def get_kis_orders_today(limit: int = 50) -> dict[str, Any]:
             "filledPrice": row.get("avg_prvs"), "orderTime": row.get("ord_tmd"),
             "status": row.get("ord_dvsn_name") or ("체결" if str(row.get("rmn_qty") or "0") == "0" else "미체결"),
         })
-    return {"broker": "한국투자증권 Testbed", "date": today, "orders": orders}
+    note = None
+    if not orders:
+        # KIS 모의투자는 일별주문체결조회 건별 목록(output1)을 비워 돌려준다(2026-10 확인). 자동매매 게이트웨이 기록으로 보완한다.
+        try:
+            from app.services.brokers.kis_autotrade import today_records
+
+            orders = today_records("paper")[:limit]
+            if orders:
+                note = "KIS 모의투자는 당일 주문 목록을 제공하지 않아 자동매매 게이트웨이 기록(kis_autotrade_order)을 표시합니다."
+        except Exception:
+            orders = []
+    return {"broker": "한국투자증권 Testbed", "date": today, "orders": orders, **({"note": note} if note else {})}
 
 
 def get_kis_daily_chart(symbol: str, days: int = 20) -> dict[str, Any]:
