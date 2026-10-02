@@ -7,6 +7,7 @@
                      모든 호출은 kis.kis_request(base_url=..., headers_factory=...)를 거쳐 기존 레이트리밋·감사로그를 공유한다.
   - 승인 토큰      : 60초 1회용. API Key + 주문 의도(intent) 다이제스트에 묶어 DB(kis_order_approval)에 저장한다.
   - 멱등성         : (environment, client_order_id) 유니크. 같은 키 재요청은 새 주문 없이 저장 결과를 돌려준다.
+  - 권한          : api_key.scopes 에 kis:order (운영자가 DB에서 부여)
   - 실전 가드      : KIS_REAL_ORDER_ENABLED=true + 계좌 소유자(KIS_REAL_OWNER_EMAIL) 일치 + 허용 종목(KIS_REAL_ALLOWED_SYMBOLS, 선택)
   - 회당 한도      : KIS_{PAPER,REAL}_MAX_ORDER_AMOUNT / _QUANTITY
   - 체결 기록      : kis_autotrade_order 에 요청/응답/상태를 남기고, 체결 조회 시 상태를 갱신한다.
@@ -154,17 +155,6 @@ def _env_flag(name: str) -> bool:
     return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
-def allowed_api_key_ids() -> set[int]:
-    """KIS 자동매매 Open API를 쓸 수 있는 api_key_id 화이트리스트. 비어 있으면 전부 거부(기본 안전)."""
-    raw = os.environ.get("KIS_AUTOTRADE_API_KEY_IDS", "")
-    ids: set[int] = set()
-    for part in raw.split(","):
-        part = part.strip()
-        if part.isdigit():
-            ids.add(int(part))
-    return ids
-
-
 SCOPE_ORDER = "kis:order"
 SCOPE_ALL = "kis:*"
 _SCOPE_SPLIT = re.compile(r"[\s,]+")
@@ -183,11 +173,13 @@ def key_scopes(db: Session | None, api_key_id: int) -> set[str]:
 
 
 def require_scope(api_key_id: int, db: Session | None = None) -> None:
-    """KIS 자동매매 권한: api_key.scopes 에 kis:order(또는 kis:*)가 있으면 허용, 없으면 env KIS_AUTOTRADE_API_KEY_IDS 폴백."""
+    """KIS 자동매매 권한은 **api_key.scopes 컬럼만** 본다(`kis:order` 또는 `kis:*`). env 화이트리스트는 2026-10-02 폐기.
+
+    부여: 운영자가 DB에서 `UPDATE api_key SET scopes='kis:order' WHERE api_key_id=?`. 셀프 서비스 API 없음.
+    """
     if {SCOPE_ORDER, SCOPE_ALL} & key_scopes(db, api_key_id):
         return
-    if api_key_id not in allowed_api_key_ids():
-        raise AutotradeError("이 API 키에는 KIS 자동매매 주문 권한이 없습니다. api_key.scopes 에 kis:order 를 부여하거나 KIS_AUTOTRADE_API_KEY_IDS에 등록하세요.", 403, "SCOPE_FORBIDDEN")
+    raise AutotradeError("이 API 키에는 KIS 자동매매 주문 권한이 없습니다. 운영자가 api_key.scopes 에 kis:order 를 부여해야 합니다.", 403, "SCOPE_FORBIDDEN")
 
 
 def real_order_enabled() -> bool:

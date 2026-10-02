@@ -716,5 +716,5 @@ curl -fsSL https://st.edumgt.co.kr/index.html
 lumina-invest 의 자동매매 사이클이 호출하는 **KIS 실주문 게이트웨이** `/openapi/v1/kis/*` (승인 토큰 → 주문 → 체결 조회, 멱등키, paper/real 환경 분리)를 제공한다. 기존 `/openapi/v1/orders` 는 가상 주문이다.
 - 진행 상태·인수인계: [todo.md](todo.md) — 특히 6절 "작업 보고(AI 에이전트 인수인계용)"
 - 저장소 간 API 계약: [docs/contracts/kis-autotrade-api.md](docs/contracts/kis-autotrade-api.md) (세 저장소 동일 사본)
-- 설정: `.env.example` 의 `KIS_AUTOTRADE_API_KEY_IDS`, `KIS_REAL_ORDER_ENABLED` 등
+- 설정: `.env.example` 의 `KIS_REAL_ORDER_ENABLED` 등. 주문 권한은 DB `api_key.scopes='kis:order'` 로 부여(운영자)
 - 테스트: `cd python-stock-backend && .venv/bin/python -m pytest -q`

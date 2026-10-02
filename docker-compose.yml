@@ -143,8 +143,7 @@ services:
       KIS_REAL_APP_SECRET: ${KIS_REAL_APP_SECRET:-}
       KIS_REAL_ACCOUNT_NO: ${KIS_REAL_ACCOUNT_NO:-}
       KIS_REAL_OWNER_EMAIL: ${KIS_REAL_OWNER_EMAIL:-}
-      # KIS 자동매매 Open API(/openapi/v1/kis). 계약: docs/contracts/kis-autotrade-api.md
-      KIS_AUTOTRADE_API_KEY_IDS: ${KIS_AUTOTRADE_API_KEY_IDS:-}
+      # KIS 자동매매 Open API(/openapi/v1/kis). 권한은 api_key.scopes(kis:order) 로 부여. 계약: docs/contracts/kis-autotrade-api.md
       KIS_REAL_ORDER_ENABLED: ${KIS_REAL_ORDER_ENABLED:-false}
       KIS_REAL_MAX_ORDER_AMOUNT: ${KIS_REAL_MAX_ORDER_AMOUNT:-1000000}
       KIS_REAL_MAX_ORDER_QUANTITY: ${KIS_REAL_MAX_ORDER_QUANTITY:-100}

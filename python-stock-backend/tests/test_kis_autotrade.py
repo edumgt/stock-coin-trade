@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.database import get_db
-from app.models import Base, KisAutotradeOrder, KisOrderApproval
+from app.models import ApiKey, Base, KisAutotradeOrder, KisOrderApproval
 from app.services.brokers import kis as paper_gateway
 from app.services.brokers import kis_autotrade as svc
 
@@ -40,8 +40,12 @@ def api(app, client, db_session_factory, monkeypatch):
             db.close()
 
     app.dependency_overrides[get_db] = _get_db
-    monkeypatch.setenv("KIS_AUTOTRADE_API_KEY_IDS", "5")
     monkeypatch.delenv("KIS_REAL_ORDER_ENABLED", raising=False)
+    # 권한은 api_key.scopes 컬럼으로만 판단한다 → 테스트 키(id=5)에 kis:order 부여
+    Base.metadata.create_all(db_session_factory.kw["bind"], tables=[ApiKey.__table__])
+    with db_session_factory() as db:
+        db.add(ApiKey(api_key_id=5, member_id=7, label="bot", key_prefix="eduapi_live_test", key_hash="h" * 64, scopes="kis:order"))
+        db.commit()
     with patch("app.api.routes.openapi.resolve_api_key", return_value=(5, 7)), \
          patch.object(svc, "_account", return_value=("12345678", "01")), \
          patch.object(svc, "get_balance", return_value={"cashBalance": 10_000_000, "holdings": [{"symbol": "005930", "quantity": 10}]}), \
@@ -57,8 +61,10 @@ def _approve(api, body=ORDER):
     return response.json()["approvalToken"]
 
 
-def test_scope_is_deny_by_default(api, monkeypatch):
-    monkeypatch.setenv("KIS_AUTOTRADE_API_KEY_IDS", "")
+def test_scope_is_deny_without_column_grant(api):
+    with api.db() as db:
+        db.get(ApiKey, 5).scopes = "kis:read"
+        db.commit()
     response = api.post("/openapi/v1/kis/order-approval", json=ORDER, headers=AUTH)
     assert response.status_code == 403
     assert response.json()["error"] == "SCOPE_FORBIDDEN"
@@ -208,22 +214,13 @@ def test_order_status_endpoint_updates_record(api):
 # ── 2차 작업: api_key.scopes 우선, 연속조회 페이지네이션, 생성일 기준 조회 범위 ──────────────
 from datetime import datetime, timedelta  # noqa: E402
 
-from app.models import ApiKey  # noqa: E402
 
 
-def test_scopes_column_grants_access_without_env_whitelist(api, monkeypatch):
-    monkeypatch.setenv("KIS_AUTOTRADE_API_KEY_IDS", "")
-    Base.metadata.create_all(api.db.kw["bind"], tables=[ApiKey.__table__])
+def test_scopes_wildcard_grants_access(api):
     with api.db() as db:
-        db.add(ApiKey(api_key_id=5, member_id=7, label="bot", key_prefix="eduapi_live_abcd", key_hash="h" * 64, scopes="kis:read, kis:order"))
+        db.get(ApiKey, 5).scopes = "kis:*"
         db.commit()
-    response = api.post("/openapi/v1/kis/order-approval", json=ORDER, headers=AUTH)
-    assert response.status_code == 200, response.text
-    with api.db() as db:
-        db.get(ApiKey, 5).scopes = "kis:read"
-        db.commit()
-    denied = api.post("/openapi/v1/kis/order-approval", json=ORDER, headers=AUTH)
-    assert denied.status_code == 403 and denied.json()["error"] == "SCOPE_FORBIDDEN"
+    assert api.post("/openapi/v1/kis/order-approval", json=ORDER, headers=AUTH).status_code == 200
 
 
 def test_list_orders_follows_kis_continuation_pages(api):
