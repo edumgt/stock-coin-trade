@@ -498,3 +498,23 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 
 **유지**: 상세/피벗 전환, 플로팅 필터, 페이지네이션(25/50/100/200), 핀 고정 열, 하단 합계 행, CSV 내보내기, 행 클릭 상세 모달 — 모두 Community 기능.
 **검증**: 번들에 `themeQuartz` 포함 확인. 배포 후 페이지에서 헤더 배경·행 구분선·페이지네이션 바가 보여야 정상.
+
+### 6-9. 2026-10-06 st python-backend 응답 정지(03:51Z~07:06Z) 진단·재기동 (사용자 요청: lumina todo 6-19 권고 1)
+
+**증상**: `https://st.edumgt.co.kr/api/*`·`/openapi/*` 전부 20초 이상 무응답(정적 `/`·`/docs` 만 200). nginx 로그 `upstream timed out … reading response header`(504) + 클라이언트 포기 499 **1,500건 이상**(03:51Z 첫 발생, lumina 시세 KIS 연계 배포 직후). fd 의 `/api/stocks/signals`·현재가·분봉이 모두 10초 타임아웃 → Yahoo 폴백으로만 동작.
+
+**진단(SSH `pr-test.pem`, 07:01Z)**: 호스트 load 0.8·메모리 여유·디스크 39%, 컨테이너 CPU 2%, pg-stock/postgres active 1, MariaDB Threads_connected 6/151 → 자원·DB 아님. `crypto-mock-python`(uvicorn `--workers 1`) **스레드 48개**(anyio 동기 핸들러 풀 한도 40 소진), KIS 쪽 소켓 CLOSE-WAIT. 즉 동기 라우트(`def candles/minutes`)가 전부 풀 대기 → 라우팅 404 는 즉시, 실제 핸들러는 전부 정지(`/api/member/me` 도 504).
+
+**근본 원인(코드)**: `kis_chart.minute_candles` 는 요청 1건당 KIS `inquire-time-itemchartprice` 를 **최대 8회**(30봉×8=240) 호출하고, `kis.kis_request` 는 `_KIS_API_CALL_GAP_SECONDS=1.05` 를 **프로세스 전역 락**으로 직렬화한다 → 분봉 1건 ≈ 8.4초. lumina 는 5분 사이클마다 31종목 분봉(`count=240`) + 일봉 + 잔고 + 체결확인(2분) + 정합성(10분)을 보내고 클라이언트 타임아웃은 **10초** → 사이클당 248회 × 1.05 ≈ 260초가 단일 레인을 점유(5분의 87%). lumina 가 10초에 끊어도(499) 백엔드는 남은 KIS 호출을 끝까지 수행하므로 버린 요청이 레인을 계속 소비 → 대기열 누적 → 풀 40 소진 → 전면 정지. 재기동 6분 뒤에도 분봉 499 가 다시 쌓이기 시작(07:11Z 사이클, 완료 간격 8.3초 = 타임아웃 10초 턱밑). 장 마감 후(16:11 KST)에도 `time=153000` 분봉을 매 사이클 받는다.
+
+**조치**: `docker restart crypto-mock-python`(07:06Z) → 스레드 8, `/api/kis-chart/candles` 0.02초, `/api/member/me` 200, fd 현재가 0.07초(`source=kis`), fd 스크리닝 6조합 200(31종목). **재발 조건은 그대로**이므로 아래 중 결정 필요.
+
+**권고(미적용)**
+| 위치 | 변경 | 효과 |
+|------|------|------|
+| lumina `.env`(fd) | `KIS_CHART_MINUTES=60`(KIS 2회/건, 5분봉 12개) 또는 120, `KIS_CHART_TIMEOUT=30` | 사이클당 KIS 호출 248→62회, 타임아웃 뒤 유령 처리 소멸 |
+| lumina 코드 | 장중(09:00~15:30 KST)이 아니면 분봉 수집 생략, 사이클 안 종목 조회를 순차 유지하되 사이클 시작 시 1회 잔고 공유 | 장외 낭비 제거 |
+| st `kis_chart` | `_CACHE_TTL_SECONDS` 30→300(장외는 당일 종가 고정이라 더 길게), 분봉 라우트에 `count` 기본값 축소, 또는 `minutes` 를 `run_in_threadpool` 대신 asyncio + 큐 길이 상한(초과 시 즉시 429) | 버린 요청이 레인을 못 잡음 |
+| st 운영 | `crypto-mock-python` healthcheck(`wget /openapi.json` 5초)+autoheal, 또는 `--workers 2`(단, 레이트 락은 프로세스별이라 KIS 초당 한도 초과 위험 — Testbed 는 비권장) | 정지 시 자동 복구 |
+
+**확인 명령**: `ssh -i stock-coin-trade/pr-test.pem ubuntu@43.202.161.134 'P=$(sudo docker inspect -f "{{.State.Pid}}" crypto-mock-python); ls /proc/$P/task | wc -l; sudo docker logs --since 30m crypto-mock-frontend 2>&1 | grep -cE " (499|504) "'` — 스레드가 40 근처면 재발, 499 가 사이클당 수십 건이면 권고 1 적용.
