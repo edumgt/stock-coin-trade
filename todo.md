@@ -398,7 +398,7 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 | S3 | API 키 권한 방식 확정 | `api_key.scopes` 컬럼(현재 병행) vs env 화이트리스트만 | 컬럼으로 일원화하고 env 는 폐기 |
 | S4 | KIS Testbed 체결 목록 미제공에 대한 운영 수용 | 보유수량 추정(현재)으로 Phase 4 진행 vs KIS 문의 후 대기 | 추정으로 진행, 실전에서 ccld 정상 확인 |
 | S5 | 같은 종목 동시 주문 허용 여부 | 허용 시 체결 귀속 모호(`ambiguous_open_orders`). lumina 쿨다운으로 1건 유지가 전제 | Testbed 기간엔 종목당 1건 |
-| S6 | 변경분 커밋 | 10개 경로 미커밋 | 기능 단위 커밋 |
+| S6 | ~~변경분 커밋~~ **완료**(2026-10-02 푸시, origin/main=e55bfd7, 10-06 기준 미커밋 없음) | — | — |
 
 ### 6-6. 2026-10-02 운영 시작 (7절 권고 수용 적용)
 
@@ -450,10 +450,29 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
    - 키가 비어 있는 동안 fd 의 live 모드는 레거시 직접 호출로 폴백한다(게이트웨이 미사용). 운영 계정은 아직 paper/mock 이므로 실주문은 나가지 않음
 4. 운영에서 자동매매를 켤 계정의 종목 선정 화면 설정(live + KIS)은 Testbed 1주 관찰 결정(7절 L1)에 따라 진행
 
+> **2026-10-06 갱신**: 아래 표 작성 이후 상황이 바뀌었다. 푸시·st 배포·API 키 발급은 완료됐고, domain-rag-lab 시크릿도 갱신됐다. 현재 상태는 8-1 절 참고.
+
 **배포 결과 (15:5x KST)**
 | 서버 | 결과 |
 |------|------|
 | fd.edumgt.co.kr (lumina) | rsync + `compose up -d --build` 완료. 컨테이너 내부 `/api/health` 200, **alembic 0009 (head)** 적용, 공개 `https://fd.edumgt.co.kr/api/health` 200. 게이트웨이는 `STOCK_COIN_TRADE_API_KEY` 가 비어 미설정 상태(레거시 폴백) — st 서버 키 발급 후 기입 |
 | pr.edumgt.co.kr (domain-rag-lab) | rsync + `deploy/pr-edumgt/compose.yml up --build -d`. 첫 up 에서 api 가 Created 에 머물러(postgres 재생성 대기) `up -d api` 재실행 → healthy. `/health` 200, `/backtests/strategies` 키 없음 401 / 키 있음 200, lumina 컨테이너에서 `pr-api` 조회 성공(전략 0건). 공개 `https://pr.edumgt.co.kr/health` 200 |
-| st.edumgt.co.kr (stock-coin-trade) | **미배포** — 사용자 푸시 → `deploy-ec2.yml` 자동 배포 필요 (위 1·2·3 절차) |
+| st.edumgt.co.kr (stock-coin-trade) | ~~미배포~~ → **2026-10-02 06:30Z `deploy-ec2.yml` 성공(e55bfd7)**. 이후 lumina 전용 API 키 발급 완료(lumina todo 6-8). 8-1 참고 |
 
+
+### 8-1. 2026-10-06 현황 갱신
+
+| 항목 | 상태 |
+|------|------|
+| origin/main | `e55bfd7` (docs(todo): 운영 배포 8절). 10-06 09:50 fetch/pull 결과 로컬=원격, **미커밋 없음** |
+| GitHub secret | `EC2_HOST`, `EC2_SSH_KEY`, `EC2_USER`, `STOCK_TRADE_DEPLOY_TOKEN` 존재. 10-06 정비에서 **변경 없음**(배포가 이미 성공 중). 로컬 `pr-test.pem` 은 어느 서버 키인지 문서 근거가 없어 미사용 |
+| `deploy-ec2.yml` | 최근 6회 중 5회 성공, 최신 e55bfd7 성공(10-02 06:30Z). 대상 st 43.202.161.134 `/opt/stock-coin-trade`, compose `docker-compose.yml + ssl + pg-stock`, `-p stock-coin-trade` |
+| 서버 상태 | `https://st.edumgt.co.kr/health` 200(프런트 HTML), `GET /openapi/v1/kis/balance` 무키 → 401 UNAUTHORIZED(API 기동·인증 정상) |
+| lumina 연동 | st MariaDB `api_key` 에 `lumina-autotrade`(member_id=1, scopes `kis:order`) 발급, fd `.env STOCK_COIN_TRADE_API_KEY` 기입 → lumina live 주문이 이 게이트웨이로 들어옴. 첫 주문 0000030540 `kis_autotrade_order` 기록 |
+| KIS 키 보관 | st `.env` 에 `KIS_PAPER_*` 없음, Secrets Manager `stock-coin-trade/kis` 사용으로 추정(이름만 확인). S2 결정과 연결 |
+| LEAN | `docker/lean/Dockerfile` `FROM quantconnect/lean:latest`(GenericBuyAndHold). 다른 3 저장소도 같은 이미지·latest 태그를 각자 실행 — 공용 서비스 아님 |
+| 에이전트 제약 | st 서버 SSH 는 정책상 불가(변경 없음). 서버 측 확인은 사용자 수행 |
+
+**영향 받는 외부 변경(10-06)**: lumina 에 로그인 무관 백그라운드 배치(`KIS_PAPER_BATCH_ENABLED`, 시스템 사용자 `00000000-0000-0000-0000-000000000001`)가 추가됨. 활성화되면 게이트웨이로 들어오는 주문의 `client_order_id`/사용자 식별이 시스템 사용자로 찍힌다. 사용자 계정 행이 함께 켜져 있으면 같은 Testbed 계좌로 **2개 사이클** 주문이 들어올 수 있음(S5 종목당 1건 전제 깨짐) → lumina 쪽에서 tester 행 OFF 권고.
+
+**다음 작업**: 없음(대기). S1·S2 결정 시 6절에 추가.
