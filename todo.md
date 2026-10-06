@@ -486,3 +486,15 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 
 **검증**: 백엔드 pytest 79 passed(변경 없음·회귀 확인). 프런트는 괄호·백틱 균형 점검. 배포는 push → `deploy-ec2.yml`.
 **참고**: 서버(`/api/broker-test/kis/orders`)도 KIS 응답으로 잔고 부족을 거부하지만, 이 변경으로 KIS 호출 전에 화면에서 먼저 막는다.
+
+### 6-8. 2026-10-06 에러분석(error-analysis.html) 그리드 AG Grid Community 정식 구성 (사용자 요청)
+
+**진단**: 이미 `ag-grid-community@36.0.2`(CDN) 를 쓰고 있었으나 `createGrid(... theme:'legacy')` 로 생성하면서 레거시 CSS(`ag-grid.css`·`ag-theme-*.css`)와 테마 클래스를 싣지 않아 **스타일 없는 그리드**(헤더·테두리·페이지네이션 깨짐)로 렌더됐다. 컨테이너의 `--ag-*` 변수도 레거시 전용이라 무시됨. 다른 페이지(kis-api-history 등)는 Theming API 기본으로 정상.
+
+| 변경 | 내용 |
+|------|------|
+| `frontend/js/error-analysis.js` | `theme:'legacy'` 제거 → `agGrid.themeQuartz.withParams({...})`(Theming API, Community 포함). 기존 색·폰트·헤더 굵기를 파라미터로 이관. `themeQuartz` 가 없으면 기본 테마로 폴백 |
+| `frontend/error-analysis.html` | `.ea-grid` 는 높이·폭만 유지(레거시 변수 제거), 스크립트 캐시 버스터 `v=20261006-theming-api` |
+
+**유지**: 상세/피벗 전환, 플로팅 필터, 페이지네이션(25/50/100/200), 핀 고정 열, 하단 합계 행, CSV 내보내기, 행 클릭 상세 모달 — 모두 Community 기능.
+**검증**: 번들에 `themeQuartz` 포함 확인. 배포 후 페이지에서 헤더 배경·행 구분선·페이지네이션 바가 보여야 정상.

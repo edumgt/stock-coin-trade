@@ -49,9 +49,24 @@ const pivotColumns = [
   {headerName:'비율',field:'ratio',minWidth:180,flex:1,valueFormatter:p => p.value == null ? '-' : `${Number(p.value).toFixed(1)}%`},
 ];
 
+// AG Grid Community v33+ Theming API. (이전 코드는 theme:'legacy' 인데 레거시 CSS·테마 클래스를 싣지 않아 그리드가 스타일 없이 그려졋다 — 2026-10-06 교체)
+function buildTheme() {
+  const quartz = agGrid.themeQuartz;
+  if (!quartz || typeof quartz.withParams !== 'function') return undefined; // 구버전 번들이면 기본 테마
+  return quartz.withParams({
+    fontFamily:'Pretendard, sans-serif', fontSize:13.5, headerFontWeight:850,
+    backgroundColor:'#fff', foregroundColor:'#172033',
+    headerBackgroundColor:'#f7f9fc', headerTextColor:'#526071',
+    borderColor:'#dfe6ef', rowBorder:{color:'#edf0f5'}, oddRowBackgroundColor:'#fbfcfe',
+    selectedRowBackgroundColor:'#eaf2ff', accentColor:'#2563eb',
+    wrapperBorderRadius:12, headerHeight:42, rowHeight:40, spacing:7,
+  });
+}
+
 function createGrid() {
+  const theme = buildTheme();
   gridApi = agGrid.createGrid(ea('grid'), {
-    theme:'legacy',
+    ...(theme ? {theme} : {}),
     columnDefs:detailColumns,
     rowData:[],
     defaultColDef:{sortable:true,filter:true,resizable:true,floatingFilter:true,suppressHeaderMenuButton:true},
