@@ -476,3 +476,13 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 **영향 받는 외부 변경(10-06)**: lumina 에 로그인 무관 백그라운드 배치(`KIS_PAPER_BATCH_ENABLED`, 시스템 사용자 `00000000-0000-0000-0000-000000000001`)가 추가됨. 활성화되면 게이트웨이로 들어오는 주문의 `client_order_id`/사용자 식별이 시스템 사용자로 찍힌다. 사용자 계정 행이 함께 켜져 있으면 같은 Testbed 계좌로 **2개 사이클** 주문이 들어올 수 있음(S5 종목당 1건 전제 깨짐) → lumina 쪽에서 tester 행 OFF 권고.
 
 **다음 작업**: 없음(대기). S1·S2 결정 시 6절에 추가.
+
+### 6-7. 2026-10-06 KIS 모의투자 화면 매도 사전 보유수량 점검 (사용자 요청)
+
+| 변경 | 내용 |
+|------|------|
+| `frontend/js/kis-real-trading-practice.js` | 매도 주문 직전 `precheckSell()`: 잔고를 다시 조회(`/api/broker-test/kis/balance`)해 **보유 0주 → 주문 중단 + 토스트(error 4.5s)**, **수량 > 보유 → 중단 + "매도 가능 N주" 안내**, 전량 매도면 warn 토스트. 매도 탭 전환 시 보유가 없으면 즉시 warn 토스트(비차단). 메시지 박스(`orderMessage`)에도 동일 안내 |
+| `frontend/kis-real-trading-practice.html` | 스크립트 캐시 버스터 `v=20261006-sell-precheck` |
+
+**검증**: 백엔드 pytest 79 passed(변경 없음·회귀 확인). 프런트는 괄호·백틱 균형 점검. 배포는 push → `deploy-ec2.yml`.
+**참고**: 서버(`/api/broker-test/kis/orders`)도 KIS 응답으로 잔고 부족을 거부하지만, 이 변경으로 KIS 호출 전에 화면에서 먼저 막는다.

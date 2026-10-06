@@ -210,6 +210,22 @@
     } catch { el('marketTimestamp').textContent = '지수 조회 지연'; }
   }
 
+  function warnToast(message, detail = '', type = 'error') {
+    if (typeof window.showToast === 'function') window.showToast(detail ? `${message} ${detail}` : message, { type, duration: type === 'error' ? 4500 : 3000 });
+    setMessage(message, type === 'error' ? 'error' : 'success', detail);
+  }
+
+  async function precheckSell(symbol, quantity) {
+    // 화면의 positionsState 는 마지막 조회 시점 값이므로 주문 직전에 잔고를 다시 받는다. 조회 실패 시 화면 상태로 판단한다.
+    try { await refreshAccount(); } catch (_) { /* 조회 실패 — 기존 positionsState 로 판단 */ }
+    const position = positionsState.find(item => item.symbol === symbol);
+    const held = Number(position?.quantity || 0);
+    const name = position?.name || quote?.name || symbol;
+    if (held <= 0) return { ok:false, held, message:`${name} 보유 수량이 없어 매도할 수 없습니다.`, detail:'보유종목 탭에서 수량을 확인하세요.' };
+    if (quantity > held) return { ok:false, held, message:`매도 수량 ${number(quantity)}주가 보유 ${number(held)}주를 초과합니다.`, detail:`매도 가능 ${number(held)}주 — 수량을 줄이거나 '최대' 를 누르세요.` };
+    return { ok:true, held, sellAll: quantity === held };
+  }
+
   async function submitOrder() {
     const quantity = Number(el('quantity').value);
     if (!Number.isInteger(quantity) || quantity < 1) { setMessage('주문수량은 1주 이상의 정수여야 합니다.'); return; }
@@ -218,6 +234,12 @@
     if (orderType === 'LIMIT' && (!Number.isInteger(price) || price < 1)) { setMessage('지정가는 1원 이상의 정수여야 합니다.'); return; }
     const intent = { symbol:selectedSymbol(), side, quantity, orderType, price };
     const label = `${quote?.name || selectedSymbol()} ${quantity}주 ${side === 'BUY' ? '매수' : '매도'} ${orderType === 'MARKET' ? '시장가' : won(price)}`;
+    if (side === 'SELL') {
+      // 매도 사전 점검: 최신 보유수량으로 판단해 보유가 없거나 부족하면 토스트로 경고하고 주문을 보내지 않는다 (2026-10-06)
+      const check = await precheckSell(intent.symbol, quantity);
+      if (!check.ok) { warnToast(check.message, check.detail); return; }
+      if (check.sellAll) warnToast(`${quote?.name || intent.symbol} 보유 ${number(check.held)}주를 전량 매도합니다.`, '', 'warn');
+    }
     if (!window.confirm(`${label}\n\nKIS Testbed 모의계좌에 주문을 접수할까요?`)) return;
     const button = el('orderBtn'); button.disabled = true; el('orderMessage').className = 'message';
     try {
@@ -240,6 +262,10 @@
     side = nextSide;
     document.querySelectorAll('.side-btn[data-side]').forEach(item => item.classList.toggle('active', item.dataset.side === side));
     el('orderBtn').textContent = `${side === 'BUY' ? '매수' : '매도'} 주문`; el('orderBtn').classList.toggle('sell', side === 'SELL'); updateEstimate();
+    if (side === 'SELL') {
+      const held = Number(positionsState.find(item => item.symbol === selectedSymbol())?.quantity || 0);
+      if (held <= 0 && typeof window.showToast === 'function') window.showToast(`${quote?.name || selectedSymbol()} 은(는) 보유 수량이 없습니다. 매도 주문은 접수되지 않습니다.`, { type:'warn', duration:3500 });
+    }
   }
 
   function bindEvents() {
