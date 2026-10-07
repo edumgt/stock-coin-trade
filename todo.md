@@ -534,3 +534,28 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 **배포**: main 푸시 → `deploy-ec2.yml`(rsync + compose up --build + frontend 재시작). 정적 파일이라 캐시 버전 쿼리로 갱신됨.
 
 **남은 결정**: 두 탭의 종목 검색을 하나로 합칠지(현재 각자 검색창), KIS 탭 진입 시 자체 모드 5초 폴링(`stock.js` setInterval)을 멈출지(현재 계속 돔).
+
+### 6-11. 2026-10-07 trade/stock.html KIS 탭을 "같은 화면 + KIS 데이터·주문" 방식으로 교체 (사용자 요청 "동일 차트 보는 스타일로 기존 모의투자를 이용한 KIS 투자 FE")
+
+**6-10 과의 차이**: 6-10(bd046b3, 사용자 커밋)은 KIS 탭에 `kis-real-trading-practice.html` 본문을 통째로 삽입했다. 이번에는 그 삽입 패널·CSS·스크립트를 걷어내고, **자체 모의투자 화면 하나(LightweightCharts 캔들+MA·시세·계좌·주문·보유·내역·호가)** 를 그대로 쓰면서 탭이 **데이터 제공자와 주문 경로만** 바꾼다.
+
+| 변경 | 내용 |
+|------|------|
+| `frontend/js/stock.js` | `tradeMode`(self/kis) + 제공자 분기. **KIS**: 시세 `/api/broker-test/kis/quote`(공개, 종목명은 목록·보유·차트 summary 에서 보완), 차트 1주~1년 `/api/kis-chart/candles?period=D&count=20/40/80/260`(공개·서버 캐시, KST 자정 epoch 로 변환해 기존 캔들·거래량·MA 렌더 공유), **1일 분봉은 기존 `/api/stocks/chart` 유지**(KIS 분봉 조회가 17초), 계좌·보유 `/api/broker-test/kis/balance`(로그인, 3초 메모로 1회 호출), 내역 `/api/broker-test/kis/orders?limit=30`(당일, 체결가·상태 표시), 주문 `order-approval`→`orders`(CSRF = `initPage()` 사용자 csrfToken, 확인창, 매도 전 보유수량 재조회). 미로그인/401 이면 계좌 패널에 안내 + 매수·매도 버튼 비활성(시세·차트는 계속). 초기화 버튼은 KIS 에서 숨김, 배치 시세 폴링 생략(보유 currentPrice 사용). `setTradeMode()`: 탭·라벨·URL `#kis/#self`·localStorage, 전환 시 계좌→보유→시세·차트·내역 순 재조회. 기존 5/15/30초 폴링은 제공자 분기를 타므로 그대로 |
+| `frontend/trade/stock.html` | 삽입 패널(`#kisModePanel`)·`kis-practice.css`·`kis-real-trading-practice.js`·인라인 탭 스크립트 제거. 모드 탭 문구 "같은 화면 · 데이터·주문은 KIS Testbed 계좌". 계좌 패널 `#accountPanelTitle/#accountModeNote/#accountCashLabel/#accountPnlLabel/#kisLoginNotice`, 주문 패널 KIS 전용 `#kisOrderTypeRow`(시장가/지정가 + 지정가 입력), 우측 `#holdingsSourceLabel`. `stock.js?v=20261007-kis-provider` |
+| 유지 | `kis-real-trading-practice.js` 의 삽입 지원 코드(6-10)는 단독 페이지에 무해해 그대로 둠. `self-order-panel` 클래스명도 유지 |
+
+**검증(정적)**: id 81개 중복 0, stock.js 가 참조하는 id 65개 중 누락은 원래 없던 `marketTabs`(선택적) 뿐, 괄호 균형 델타 HEAD 와 동일, HTML 중첩 정상. 브라우저 미실행 — 배포 후 확인: ① KIS 탭에서 차트가 자체 탭과 같은 스타일(캔들·MA·거래량)로 KIS 일봉 표시, 배지 "KIS Testbed" ② 로그인 상태에서 계좌 패널이 "KIS 모의계좌 · 주문 가능 예수금 · 평가손익", 우측 보유 종목이 KIS 보유 ③ 시장가/지정가 매수 → 확인창 → 주문번호 메시지 → 보유·내역 갱신 ④ 미로그인 시 계좌 패널 안내·버튼 비활성 ⑤ 자체 탭은 이전과 동일.
+
+**배포**: main 푸시 → `deploy-ec2.yml`.
+
+### 6-12. 2026-10-07 iv.edumgt.co.kr 가 st 화면으로 바뀐 사고 → iv 역프록시 블록을 저장소 nginx 설정에 고정 (사용자 요청)
+
+**원인**: iv(투자 분석 포털, stock-kms-portal) 는 같은 st 서버에서 이 저장소의 nginx(`crypto-mock-frontend`) 가 `iv-kms-api:8000` 으로 역프록시한다. 그 server 블록은 서버의 `/opt/stock-coin-trade/docker/nginx.ssl.conf` 에 **수동으로 덧붙인 것**(백업 `nginx.ssl.conf.before-iv-*` 10-06·10-07 02:00·02:03)이었는데, 03:04 `deploy-ec2.yml` 배포의 rsync 가 저장소 원본(3560B, st 블록만)으로 덮어쓰고 frontend 를 재시작 → iv 호스트가 기본 서버(st)로 떨어져 st 화면이 나왔다.
+
+| 변경 | 내용 |
+|------|------|
+| `docker/nginx.ssl.conf` | iv.edumgt.co.kr 80(ACME·리다이렉트)·443 블록 추가(stock-kms-portal `deploy/st-iv/nginx.iv.conf` 내용). 업스트림을 `set $iv_kms_upstream` + `resolver 127.0.0.11` 로 지연 해석해 **포털 컨테이너가 없어도 nginx 기동이 실패하지 않게** 함(기존 nginx.iv.conf 는 고정 proxy_pass 라 컨테이너 부재 시 st 까지 죽음). 인증서는 st 와 같은 `live/st.edumgt.co.kr`(SAN 에 iv 포함) |
+| 적용 | 서버 적용은 `cp` 로 **같은 inode 에 덮어쓰고** `nginx -s reload`(bind mount 된 단일 파일은 `install`/`mv` 로 바꾸면 컨테이너가 옛 inode 를 계속 봄). 배포 rsync 는 inode 가 바뀌지만 `docker restart crypto-mock-frontend` 가 따라오므로 문제없음 |
+
+**검증**: 서버에서 임시 컨테이너 `nginx -t` 통과 → 적용 후 `curl https://iv.edumgt.co.kr/` 제목 "투자 분석 · 금융 학습 포털", st 는 그대로. 앞으로 iv 블록은 이 파일에서만 관리하고 서버 conf 에 손으로 덧붙이지 않는다.

@@ -148,35 +148,33 @@
     .mode-tabs-note { margin-left:auto; align-self:center; padding-bottom:6px; font-size:12.5px; font-weight:600; color:var(--muted); }
     .mode-tabs-note b { color:var(--fg); }
     @media (max-width:640px) { .mode-tab { min-width:0; flex:1; } .mode-tab small, .mode-tabs-note { display:none; } }
-    .trading-body[hidden] { display:none; }
-    .kis-mode-panel { min-height:0; overflow-y:auto; background:#f3f6fb; scrollbar-width:thin; scrollbar-color:#94A3B8 #E8EDF5; }
-    .kis-mode-panel[hidden] { display:none; }
-    .kis-embedded-shell { padding-top:14px; }
+    .kis-login-notice { margin:8px 0 0; padding:8px 10px; border:1px solid rgba(225,29,72,.25); border-radius:8px; background:rgba(225,29,72,.06); color:#BE123C; font-size:13px; line-height:1.5; }
+    .kis-order-type-row { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px; }
+    .kis-order-type-row[hidden] { display:none; }
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','sans-serif']}}}}</script>
   <link rel="stylesheet" href="/css/style.css?v=20260920-chart-f13">
-  <link rel="stylesheet" href="/css/kis-practice.css?v=20260926-kis-paper-v2-f13">
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 <div class="trading-root">
   <div id="header-mount"></div>
 
-  <!-- 모의투자 방식 선택: 두 탭은 서로 다른 원장(가상 계좌 vs KIS Testbed 계좌)과 API 를 쓴다 -->
+  <!-- 모의투자 방식 선택: 화면은 하나, 탭이 데이터 제공자와 주문 경로(가상 계좌 vs KIS Testbed 계좌)를 바꾼다 (stock.js setTradeMode) -->
   <nav class="mode-tabs" role="tablist" aria-label="모의투자 방식">
-    <button type="button" class="mode-tab active" role="tab" data-mode="self" aria-selected="true" aria-controls="selfModePanel"
+    <button type="button" class="mode-tab active" role="tab" data-mode="self" aria-selected="true"
       data-guide="서버의 가상 계좌(기본 1억 원)로 시뮬레이션 체결합니다. 실제 증권사 계좌와 연결되지 않으며 언제든 초기화할 수 있습니다.">
       <i class="fa-solid fa-flask"></i><span><b>자체 모의투자</b><small>가상 계좌 · 시뮬레이션 체결 · 초기화 가능</small></span>
     </button>
-    <button type="button" class="mode-tab" role="tab" data-mode="kis" aria-selected="false" aria-controls="kisModePanel"
-      data-guide="한국투자증권 Testbed(모의투자) 계좌로 실제 모의주문을 전송합니다. 로그인이 필요하고, 예수금·보유종목은 KIS 모의계좌 기준입니다.">
-      <i class="fa-solid fa-building-columns"></i><span><b>KIS 모의투자</b><small>한국투자증권 Testbed 계좌 · 실제 모의주문 전송 · 로그인 필요</small></span>
+    <button type="button" class="mode-tab" role="tab" data-mode="kis" aria-selected="false"
+      data-guide="같은 화면에서 시세·차트·예수금·보유종목을 한국투자증권 Testbed 모의계좌 기준으로 보고, 매수·매도는 KIS 모의계좌에 실제 모의주문으로 전송합니다. 로그인이 필요합니다.">
+      <i class="fa-solid fa-building-columns"></i><span><b>KIS 모의투자</b><small>같은 화면 · 데이터·주문은 한국투자증권 Testbed 계좌 · 로그인 필요</small></span>
     </button>
     <span class="mode-tabs-note" id="modeTabsNote"><b>자체 모의투자</b> · 가상 계좌에서 시뮬레이션 체결</span>
   </nav>
 
-  <div class="trading-body" id="selfModePanel" data-mode-panel="self" role="tabpanel">
+  <div class="trading-body" id="tradingBody">
     <!-- ── 왼쪽 컬럼 ── -->
     <div class="left-col">
 
@@ -265,12 +263,12 @@
         <!-- 계좌 현황 -->
         <div id="accountPanel" class="glass-card" style="padding:18px;" data-guide="보유 현금, 총자산, 수익률과 보유 비중을 확인합니다.">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <div style="font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">계좌 현황</div>
+            <div><div id="accountPanelTitle" style="font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">계좌 현황</div><div id="accountModeNote" style="font-size:12px;color:var(--muted);margin-top:2px;">가상 계좌 · 시뮬레이션 체결</div></div>
             <button id="resetBtn" type="button" style="font-size:13px;padding:4px 11px;border-radius:999px;background:rgba(248,113,113,0.1);color:#F87171;border:1px solid rgba(248,113,113,0.2);cursor:pointer;font-weight:600;">초기화</button>
           </div>
           <div>
             <div style="display:flex;justify-content:space-between;padding:6px 0;">
-              <span style="font-size:14px;color:var(--muted);">보유 현금</span>
+              <span id="accountCashLabel" style="font-size:14px;color:var(--muted);">보유 현금</span>
               <span id="accountCash" style="font-size:16px;font-weight:700;color:var(--fg);">-</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);">
@@ -278,10 +276,11 @@
               <span id="accountAsset" style="font-size:16px;font-weight:700;color:var(--fg);">-</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);">
-              <span style="font-size:14px;color:var(--muted);">수익률</span>
+              <span id="accountPnlLabel" style="font-size:14px;color:var(--muted);">수익률</span>
               <span id="accountPnlRate" style="font-size:20px;font-weight:900;">-</span>
             </div>
           </div>
+          <p id="kisLoginNotice" class="kis-login-notice" hidden></p>
           <div id="portfolioChart" style="min-height:126px;margin-top:12px;"></div>
         </div>
 
@@ -289,6 +288,10 @@
         <div id="orderPanel" class="glass-card self-order-panel" style="padding:12px;" data-guide="수량 또는 비율을 선택해 현재 종목을 매수·매도합니다.">
           <div style="font-size:13.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">주문</div>
           <input id="orderQty" type="number" min="1" step="1" placeholder="수량 (주)" class="dark-input" style="font-size:13px;padding:.4rem .7rem;margin-bottom:6px;">
+          <div id="kisOrderTypeRow" class="kis-order-type-row" hidden data-guide="KIS 모의주문 유형입니다. 시장가는 즉시 체결을 우선하고, 지정가는 입력한 가격에만 체결됩니다.">
+            <select id="kisOrderType" class="dark-input" style="font-size:13px;padding:.4rem .7rem;"><option value="MARKET">시장가</option><option value="LIMIT">지정가</option></select>
+            <input id="kisLimitPrice" type="number" min="1" step="1" placeholder="지정가 (원)" class="dark-input" style="font-size:13px;padding:.4rem .7rem;" hidden>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
             <div>
               <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:4px;">매수 · 보유 현금 비율</div>
@@ -415,7 +418,7 @@
     <div class="market-col">
       <div style="padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;" data-guide="내 보유 종목에서 현재가, 수량과 손익을 확인하고 종목을 선택할 수 있습니다.">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          <span style="font-size:13.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">내 보유 종목</span>
+          <span id="holdingsSourceLabel" style="font-size:13.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">내 보유 종목</span>
           <span class="live-dot" style="margin-left:auto;"></span>
         </div>
       </div>
@@ -438,73 +441,6 @@
 
   </div><!-- /trading-body -->
 
-  <!-- KIS 연동 모의투자: kis-real-trading-practice.html 의 본문을 id 접두사 kis- 로 격리해 삽입. 스크립트는 [data-kis-root] 안에서만 동작 -->
-  <div id="kisModePanel" class="kis-mode-panel" data-mode-panel="kis" role="tabpanel" data-kis-root data-kis-id-prefix="kis-" hidden>
-<main class="trader-shell kis-embedded-shell">
-    <section class="trader-hero">
-      <div class="trader-hero-copy"><div class="trader-kicker">KIS TESTBED · PAPER TRADING</div><h1>KIS 연동 모의투자</h1><p>한국투자증권 Testbed 모의계좌의 예수금·보유종목을 조회하고 모의 매수·매도 주문을 전송합니다. 왼쪽 「자체 모의투자」 탭의 가상 계좌와는 별개의 원장입니다.</p></div>
-      <div class="ledger-badge"><i class="fa-solid fa-shield-halved"></i><span>KIS PAPER</span><b>한국투자증권 Testbed 모의계좌</b></div>
-    </section>
-    <section class="account-boundary" aria-label="거래 환경 안내">
-      <div><i class="fa-solid fa-wallet"></i><span><b>계좌 원장</b> KIS 모의투자 계좌 · Testbed 잔고/보유종목</span></div>
-      <div><i class="fa-solid fa-building-columns"></i><span><b>주문 경로</b> 서버 → KIS Testbed · 실전 도메인 사용 안 함</span></div>
-      <div><i class="fa-solid fa-lock"></i><span><b>주문 보호</b> 로그인 · CSRF · 확인 · 60초 일회성 승인</span></div>
-    </section>
-    <section class="market-strip" aria-label="시장 지수">
-      <div class="market-status"><span class="status-dot"></span><b>KRX MARKET</b><small id="kis-marketTimestamp">시세 연결 중</small></div>
-      <div class="market-index"><span>KOSPI</span><b id="kis-kospiValue">-</b><em id="kis-kospiChange">-</em></div>
-      <div class="market-index"><span>KOSDAQ</span><b id="kis-kosdaqValue">-</b><em id="kis-kosdaqChange">-</em></div>
-      <button id="kis-refreshAllBtn" class="icon-button" type="button" aria-label="전체 새로고침"><i class="fa-solid fa-rotate"></i></button>
-    </section>
-    <section class="account-overview" aria-label="모의계좌 요약">
-      <article><span>주문 가능 예수금</span><strong id="kis-cash">-</strong><small>KIS 모의계좌</small></article>
-      <article><span>총 평가자산</span><strong id="kis-totalAsset">-</strong><small>예수금 + 주식 평가액</small></article>
-      <article><span>평가손익</span><strong id="kis-pnlRate">-</strong><small>KIS 잔고 응답 기준</small></article>
-      <article><span>보유 종목</span><strong id="kis-positionCount">-</strong><small id="kis-holdingValue">평가금액 -</small></article>
-    </section>
-    <section class="trading-workspace">
-      <aside class="trade-card symbol-panel">
-        <header><div><span class="card-eyebrow">MARKET</span><h2>종목 탐색</h2></div></header>
-        <div class="symbol-search"><input id="kis-symbolSearch" autocomplete="off" placeholder="종목명 또는 코드"><button id="kis-searchBtn" type="button" aria-label="종목 검색"><i class="fa-solid fa-magnifying-glass"></i></button></div>
-        <label class="select-label" for="kis-stockSelect">검색 결과</label><select id="kis-stockSelect"><option value="005930">삼성전자 (005930)</option></select>
-        <div class="watch-head"><b>빠른 종목</b><small>선택하면 시세가 변경됩니다</small></div><div id="kis-watchlistBody" class="watchlist"><div class="watch-skeleton">종목을 불러오는 중…</div></div>
-      </aside>
-      <section class="trade-card quote-panel">
-        <header class="quote-header"><div><div class="quote-identity"><h2 id="kis-quoteName">삼성전자</h2><span id="kis-quoteSymbol">005930</span><em id="kis-quoteMarket">KOSPI</em></div><div class="quote-main"><strong id="kis-quotePrice">현재가 조회 중…</strong><span id="kis-quoteChange">-</span></div></div><button id="kis-quoteRefreshBtn" class="icon-button" type="button" aria-label="현재가 새로고침"><i class="fa-solid fa-rotate"></i></button></header>
-        <div class="quote-stats"><div><span>전일 종가</span><b id="kis-quotePrevClose">-</b></div><div><span>전일 대비</span><b id="kis-quoteDelta">-</b></div><div><span>거래량</span><b id="kis-quoteVolume">-</b></div><div><span>데이터 원장</span><b>KIS Testbed</b></div></div>
-        <div class="chart-toolbar"><b>일봉 차트</b><div role="group" aria-label="차트 기간"><button data-period="1w">1주</button><button class="active" data-period="1m">1개월</button><button data-period="3m">3개월</button><button data-period="1y">1년</button></div></div>
-        <div class="chart-frame"><canvas id="kis-priceChart" aria-label="선택 종목 가격 차트"></canvas><div id="kis-chartState" class="chart-state">차트 불러오는 중…</div></div>
-        <p class="data-note"><i class="fa-solid fa-circle-info"></i> 주문 직전 서버가 KIS 최신 가격과 모의계좌 예수금·보유수량을 다시 검증합니다.</p>
-      </section>
-      <aside class="trade-card order-panel">
-        <header><div><span class="card-eyebrow">KIS ORDER TICKET</span><h2>모의주문</h2></div><span class="paper-chip">TESTBED</span></header>
-        <div class="side-switch" role="group" aria-label="주문 구분"><button class="side-btn active" data-side="BUY">매수</button><button class="side-btn" data-side="SELL">매도</button></div>
-        <div class="order-context"><span id="kis-orderSymbolName">삼성전자</span><b id="kis-orderCurrentPrice">-</b><small id="kis-orderAvailability">주문 가능 금액 계산 중</small></div>
-        <label class="order-label" for="kis-orderType"><span>주문유형</span></label>
-        <select id="kis-orderType" class="order-select"><option value="MARKET">시장가</option><option value="LIMIT">지정가</option></select>
-        <label id="kis-limitPriceLabel" class="order-label" for="kis-limitPrice" hidden><span>지정가</span></label>
-        <input id="kis-limitPrice" class="order-price" type="number" min="1" step="1" hidden>
-        <label class="order-label" for="kis-quantity"><span>주문수량</span><button id="kis-maxQuantityBtn" type="button">최대</button></label>
-        <div class="quantity-control"><button id="kis-quantityMinus" type="button" aria-label="수량 감소">−</button><input id="kis-quantity" type="number" min="1" step="1" value="1"><button id="kis-quantityPlus" type="button" aria-label="수량 증가">＋</button></div>
-        <div class="order-breakdown"><div><span>주문유형</span><b id="kis-orderTypeSummary">시장가</b></div><div><span>예상 체결가</span><b id="kis-estimatedPrice">-</b></div><div class="total"><span>예상 주문금액</span><strong id="kis-estimatedAmount">-</strong></div></div>
-        <button id="kis-orderBtn" class="submit" type="button">매수 주문</button><div id="kis-orderMessage" class="message" role="alert" aria-live="polite"></div>
-        <p class="order-notice"><i class="fa-solid fa-building-columns"></i> 확인 후 KIS Testbed 모의계좌에 실제 모의주문이 접수됩니다. 실전계좌에는 전송되지 않습니다.</p>
-      </aside>
-    </section>
-    <section class="trade-card portfolio-panel">
-      <div class="portfolio-tabs" role="tablist"><button class="active" data-tab="positions" role="tab">보유종목 <span id="kis-positionsBadge">0</span></button><button data-tab="orders" role="tab">체결내역 <span id="kis-ordersBadge">0</span></button></div>
-      <div data-tab-panel="positions" class="table-wrap"><table class="data-table"><thead><tr><th>종목</th><th>보유수량</th><th>평균단가</th><th>현재가</th><th>평가금액</th><th>평가손익</th><th>수익률</th></tr></thead><tbody id="kis-positionsBody"><tr><td colspan="7" class="empty">불러오는 중…</td></tr></tbody></table></div>
-      <div data-tab-panel="orders" class="table-wrap" hidden><table class="data-table"><thead><tr><th>체결시각</th><th>종목</th><th>구분</th><th>수량</th><th>체결가</th><th>체결금액</th></tr></thead><tbody id="kis-historyBody"><tr><td colspan="6" class="empty">불러오는 중…</td></tr></tbody></table></div>
-    </section>
-    <details class="trade-card real-account-panel" open>
-      <summary><div><span class="card-eyebrow">KIS PAPER · CONNECTION</span><h2>KIS 모의계좌 연결 상태</h2><p>키와 계좌번호는 서버에만 보관되며 브라우저로 노출되지 않습니다.</p></div><span class="readonly-chip"><i class="fa-solid fa-shield-halved"></i> Testbed 전용</span></summary>
-      <div class="real-account-body">
-        <div class="real-actions"><div class="setup-grid"><div id="kis-realAppKeyState" class="setup-item">○ 모의 App Key/Secret</div><div id="kis-realAccountState" class="setup-item">○ 모의 계좌번호</div><div id="kis-realOwnerState" class="setup-item">○ Paper 환경</div><div id="kis-realSecretState" class="setup-item">○ Testbed 도메인</div></div><button id="kis-realBalanceBtn" class="real-button" type="button">모의 잔고 새로고침</button></div>
-        <div id="kis-realStatus" class="setup-guide"><strong>설정 확인 중</strong><br><code>KIS_PAPER_APP_KEY</code>, <code>KIS_PAPER_APP_SECRET</code>, <code>KIS_PAPER_ACCOUNT_NO</code>를 서버 비밀값으로 설정합니다.</div>
-      </div>
-    </details>
-  </main>
-  </div><!-- /kisModePanel -->
 
   <footer id="site-footer">
     <div class="w-full px-4 py-2 flex items-center justify-between">
@@ -586,46 +522,6 @@ switchTab('positions');
 </script>
 <script src="/js/config.js"></script>
 <script src="/js/common.js?v=20261001-step17-f13"></script>
-<script src="/js/stock.js?v=20260819-default-symbol-4-f13"></script>
-<script src="/js/kis-real-trading-practice.js?v=20261007-embed-tab"></script>
-<script>
-// ── 모의투자 방식 탭 ──────────────────────────────────────────────────────────
-// self: 기존 자체 모의투자(stock.js, /api/stocks/*) · kis: KIS 연동 모의투자(kis-real-trading-practice.js, /api/broker-test/kis/*)
-(() => {
-  const NOTES = {
-    self: '<b>자체 모의투자</b> · 가상 계좌에서 시뮬레이션 체결',
-    kis:  '<b>KIS 모의투자</b> · 한국투자증권 Testbed 모의계좌에 실제 모의주문 전송',
-  };
-  let kisStarted = false;
-  function setTradeMode(mode, { persist = true } = {}) {
-    if (!['self', 'kis'].includes(mode)) mode = 'self';
-    document.querySelectorAll('.mode-tab[data-mode]').forEach(button => {
-      const active = button.dataset.mode === mode;
-      button.classList.toggle('active', active);
-      button.setAttribute('aria-selected', String(active));
-    });
-    document.querySelectorAll('[data-mode-panel]').forEach(panel => { panel.hidden = panel.dataset.modePanel !== mode; });
-    const note = document.getElementById('modeTabsNote'); if (note) note.innerHTML = NOTES[mode];
-    document.title = (mode === 'kis' ? 'KIS 모의투자' : '주식 실습') + ' — EDUMGT';
-    if (persist) {
-      try { localStorage.setItem('stockTradeMode', mode); } catch {}
-      if (history.replaceState) history.replaceState(null, '', mode === 'kis' ? '#kis' : '#self');
-    }
-    if (mode === 'kis' && !kisStarted) {
-      kisStarted = true;
-      window.KisPaperPanel?.init().catch(error => console.error('KIS 모의투자 초기화 실패', error));
-    } else if (mode === 'kis') {
-      window.KisPaperPanel?.refresh?.();
-    }
-  }
-  document.querySelectorAll('.mode-tab[data-mode]').forEach(button => button.addEventListener('click', () => setTradeMode(button.dataset.mode)));
-  window.addEventListener('hashchange', () => { if (['#kis', '#self'].includes(location.hash)) setTradeMode(location.hash.slice(1), { persist: false }); });
-  let initial = 'self';
-  if (location.hash === '#kis') initial = 'kis';
-  else if (location.hash !== '#self') { try { initial = localStorage.getItem('stockTradeMode') || 'self'; } catch {} }
-  setTradeMode(initial, { persist: false });
-  window.setTradeMode = setTradeMode;
-})();
-</script>
+<script src="/js/stock.js?v=20261007-kis-provider"></script>
 </body>
 </html>

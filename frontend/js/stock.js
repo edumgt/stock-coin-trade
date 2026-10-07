@@ -10,6 +10,14 @@ let stockPickerActiveIndex = -1;
 let stockPickerMatches = [];
 let stockPickerRequestId = 0;
 let currentStockPrice = 0;
+
+/* ── 모의투자 방식: self(가상 계좌, /api/stocks/*) | kis(한국투자증권 Testbed 모의계좌, /api/broker-test/kis/* · /api/kis-chart/*) ──
+   화면(차트·시세·계좌·주문·보유·내역)은 하나이고, 탭이 데이터 제공자와 주문 경로만 바꾼다. */
+let tradeMode = 'self';
+let currentUser = null;            // initPage() 결과. KIS 잔고·주문은 로그인(csrfToken) 필요
+let kisBalanceCache = { at: 0, data: null };
+let kisAuthMessage = '';           // KIS 잔고 조회가 401 이면 안내 문구
+const KIS_NAME_CACHE = {};         // KIS 시세 응답에는 종목명이 없어 차트 summary·보유종목에서 모은다
 // 종목 목록(/api/stocks/list)이 코드순 30개만 반환해 삼성전자 등 대형주가 빠질 수 있으므로,
 // 기본 종목은 검색 API에 의존하지 않고 아래 객체를 allStocks에 직접 주입해 항상 보장한다.
 let DEFAULT_STOCK_SYMBOL = '005930';
@@ -307,6 +315,7 @@ document.getElementById('watchlistBtn')?.addEventListener('click', () => {
 
 /* ── 마켓 리스트 (실시간 5초 polling) ───────────────────────────────────── */
 async function loadBatchPrices() {
+  if (tradeMode === 'kis') { renderStockMarketList(); return; }
   try {
     const symbols = allStocks.slice(0, 50).map(stock => stock.symbol).join(',');
     const data = await requestJson(`/api/stocks/prices?symbols=${encodeURIComponent(symbols)}`);
@@ -518,22 +527,48 @@ document.getElementById('marketTabs')?.addEventListener('click', e => {
 });
 
 /* ── 차트 로드 ───────────────────────────────────────────────────────────── */
+async function fetchSelfCandles(symbol, period) {
+  const data = await requestJson(`/api/stocks/chart?symbol=${encodeURIComponent(symbol)}&period=${encodeURIComponent(period)}&include_ma=1`);
+  const candles = (data.data ?? []).map(d => ({ time: Math.floor(d.x / 1000), open: d.o, high: d.h, low: d.l, close: d.c }))
+    .sort((a, b) => a.time - b.time);
+  const volumes = (data.data ?? []).map(d => ({
+    time: Math.floor(d.x / 1000), value: d.v,
+    color: d.c >= d.o ? 'rgba(248,113,113,0.35)' : 'rgba(96,165,250,0.35)',
+  })).sort((a, b) => a.time - b.time);
+  return { candles, volumes, visibleFrom: data.visibleFrom ? Math.floor(data.visibleFrom / 1000) : null };
+}
+
+// KIS 일봉(공개 /api/kis-chart/candles, 서버 캐시). 1일(분봉)은 KIS 분봉 조회가 10초 이상 걸려 기존 경로를 그대로 쓴다.
+const KIS_CANDLE_COUNT = { '1w': 20, '1m': 40, '3m': 80, '1y': 260 };
+async function fetchKisCandles(symbol, period) {
+  if (period === '1d') return fetchSelfCandles(symbol, period);
+  const count = KIS_CANDLE_COUNT[period] || 40;
+  const data = await requestJson(`/api/kis-chart/candles?symbol=${encodeURIComponent(symbol)}&period=D&count=${count}`);
+  if (data.summary?.name) KIS_NAME_CACHE[symbol] = data.summary.name;
+  const rows = (data.candles ?? []).filter(c => c && c.time && Number.isFinite(Number(c.close)));
+  const toTime = c => Math.floor(new Date(`${c.time}T00:00:00+09:00`).getTime() / 1000);
+  const candles = rows.map(c => ({ time: toTime(c), open: Number(c.open), high: Number(c.high), low: Number(c.low), close: Number(c.close) }))
+    .sort((a, b) => a.time - b.time);
+  const volumes = rows.map(c => ({
+    time: toTime(c), value: Number(c.volume || 0),
+    color: Number(c.close) >= Number(c.open) ? 'rgba(248,113,113,0.35)' : 'rgba(96,165,250,0.35)',
+  })).sort((a, b) => a.time - b.time);
+  const days = { '1w': 7, '1m': 30, '3m': 90, '1y': 365 }[period] || 30;
+  const visibleFrom = candles.length ? Math.max(candles[0].time, candles[candles.length - 1].time - days * 86400) : null;
+  return { candles, volumes, visibleFrom };
+}
+
 async function loadChart(symbol, period) {
   if (!lwCandle) return;
   try {
-    const data = await requestJson(`/api/stocks/chart?symbol=${encodeURIComponent(symbol)}&period=${encodeURIComponent(period)}&include_ma=1`);
-    const candles = (data.data ?? []).map(d => ({ time: Math.floor(d.x / 1000), open: d.o, high: d.h, low: d.l, close: d.c }))
-      .sort((a, b) => a.time - b.time);
-    const volumes = (data.data ?? []).map(d => ({
-      time: Math.floor(d.x / 1000), value: d.v,
-      color: d.c >= d.o ? 'rgba(248,113,113,0.35)' : 'rgba(96,165,250,0.35)',
-    })).sort((a, b) => a.time - b.time);
+    const data = tradeMode === 'kis' ? await fetchKisCandles(symbol, period) : await fetchSelfCandles(symbol, period);
+    const { candles, volumes } = data;
     lwCandle.setData(candles);
     lwVolume.setData(volumes);
     movingAverageOptions.forEach(({ period }) => {
       movingAverageSeries[period]?.setData(calculateMovingAverage(candles, period));
     });
-    const visibleFrom = data.visibleFrom ? Math.floor(data.visibleFrom / 1000) : null;
+    const visibleFrom = data.visibleFrom;
     if (visibleFrom && candles.length) {
       lwChart.timeScale().setVisibleRange({ from: visibleFrom, to: candles[candles.length - 1].time });
     } else {
@@ -543,10 +578,27 @@ async function loadChart(symbol, period) {
 }
 
 /* ── 시세 조회 ───────────────────────────────────────────────────────────── */
+function stockDisplayName(symbol) {
+  return allStocks.find(item => item.symbol === symbol)?.name
+    || lastPositions.find(position => position.symbol === symbol)?.name
+    || KIS_NAME_CACHE[symbol] || symbol;
+}
+
+// KIS 현재가(공개). 응답이 문자열·종목명 없음이라 자체 모드 응답 모양으로 맞춘다.
+async function fetchKisQuote(symbol) {
+  const data = await requestJson(`/api/broker-test/kis/quote?symbol=${encodeURIComponent(symbol)}`);
+  const q = data.quote || {};
+  const meta = allStocks.find(item => item.symbol === symbol);
+  return {
+    name: stockDisplayName(symbol), price: Number(q.price || 0), change: Number(q.change || 0), changeRate: Number(q.changeRate || 0),
+    volume: Number(q.volume || 0), market: meta?.market || 'KRX', simulated: false, source: 'KIS Testbed',
+  };
+}
+
 async function loadQuote(symbol) {
   if (!symbol) return;
   try {
-    const data = await requestJson(`/api/stocks/quote?symbol=${encodeURIComponent(symbol)}`);
+    const data = tradeMode === 'kis' ? await fetchKisQuote(symbol) : await requestJson(`/api/stocks/quote?symbol=${encodeURIComponent(symbol)}`);
     const rate  = Number(data.changeRate ?? 0);
     const color = colorByVal(rate);
     currentStockPrice = Number(data.price ?? 0);
@@ -557,8 +609,11 @@ async function loadQuote(symbol) {
     setEl('quoteChangeRate',   (rate >= 0 ? '+' : '') + rate.toFixed(2) + '%', color);
     setText('quoteVolume',     data.volume ? fmtVol(data.volume) : '-');
     setText('quoteMarket',     data.market ?? '-');
-    if (data.simulated) document.getElementById('dataSourceBadge')?.classList.remove('hidden');
-    else                document.getElementById('dataSourceBadge')?.classList.add('hidden');
+    const badge = document.getElementById('dataSourceBadge');
+    if (badge) {
+      if (tradeMode === 'kis') { badge.textContent = 'KIS Testbed'; badge.classList.remove('hidden'); }
+      else { badge.textContent = '시뮬레이션'; badge.classList.toggle('hidden', !data.simulated); }
+    }
 
     renderOrderBook(data.price);
     updateBreakEven(lastPositions, symbol);
@@ -587,7 +642,58 @@ async function loadMarket() {
 }
 
 /* ── 계좌 + 포지션 ───────────────────────────────────────────────────────── */
+// KIS 모의계좌 잔고(로그인 필요). 계좌 현황과 보유 포지션이 같은 응답을 쓰므로 3초 동안 재사용한다.
+async function fetchKisBalance() {
+  const now = Date.now();
+  if (kisBalanceCache.data && now - kisBalanceCache.at < 3000) return kisBalanceCache.data;
+  const data = await requestJson('/api/broker-test/kis/balance');
+  const b = data.balance || {};
+  const positions = (b.holdings || []).filter(h => Number(h.quantity) > 0).map(h => {
+    const meta = allStocks.find(item => item.symbol === h.symbol);
+    if (h.name) KIS_NAME_CACHE[h.symbol] = h.name;
+    return {
+      symbol: h.symbol, name: h.name || stockDisplayName(h.symbol), sector: meta?.sector || '기타',
+      quantity: Number(h.quantity || 0), avgPrice: Number(h.avgPrice || 0), currentPrice: Number(h.currentPrice || 0),
+      evalAmount: Number(h.evalAmount || 0), pnl: Number(h.profitLoss || 0), pnlRate: Number(h.profitLossRate || 0),
+    };
+  });
+  const cash = Number(b.cashBalance || 0), totalAsset = Number(b.totalEvalAmount || 0), totalPnl = Number(b.totalProfitLoss || 0);
+  const invested = positions.reduce((sum, p) => sum + p.avgPrice * p.quantity, 0);
+  const normalized = { cash, totalAsset, totalPnl, totalPnlRate: invested > 0 ? totalPnl / invested * 100 : 0, positions };
+  kisBalanceCache = { at: now, data: normalized };
+  kisAuthMessage = '';
+  return normalized;
+}
+
+function setKisNotice(message) {
+  const notice = document.getElementById('kisLoginNotice');
+  if (!notice) return;
+  notice.hidden = !message;
+  if (message) notice.innerHTML = `${escapeHtml(message)}${currentUser?.loggedIn ? '' : ' <a href="/member/login.html" style="font-weight:800;text-decoration:underline;">로그인</a>'}`;
+  const locked = Boolean(message);
+  ['buyBtn', 'sellBtn'].forEach(id => { const button = document.getElementById(id); if (button) button.disabled = locked; });
+}
+
 async function loadAccount() {
+  if (tradeMode === 'kis') {
+    let data;
+    try { data = await fetchKisBalance(); }
+    catch (error) {
+      kisAuthMessage = error.message || 'KIS 모의계좌 잔고를 불러오지 못했습니다.';
+      setKisNotice(kisAuthMessage);
+      setText('accountCash', '-'); setText('accountAsset', '-'); setEl('accountPnlRate', '-', 'var(--muted)');
+      updateOrderSummary();
+      return;
+    }
+    setKisNotice('');
+    lastCash = data.cash;
+    setText('accountCash',  fmtKrw(data.cash));
+    setText('accountAsset', fmtKrw(data.totalAsset));
+    setEl('accountPnlRate', `${data.totalPnl >= 0 ? '+' : ''}${fmtKrw(data.totalPnl)} (${data.totalPnlRate >= 0 ? '+' : ''}${data.totalPnlRate.toFixed(2)}%)`, colorByVal(data.totalPnl));
+    updatePortfolioMini(lastPositions, data.cash);
+    updateOrderSummary();
+    return;
+  }
   const data = await requestJson('/api/stocks/account');
   lastCash = data.cash;
   setText('accountCash',   fmtKrw(data.cash));
@@ -599,8 +705,13 @@ async function loadAccount() {
 }
 
 async function loadPositions() {
-  const data = await requestJson('/api/stocks/positions');
-  lastPositions = data.positions ?? [];
+  if (tradeMode === 'kis') {
+    try { lastPositions = (await fetchKisBalance()).positions; }
+    catch { lastPositions = []; }
+  } else {
+    const data = await requestJson('/api/stocks/positions');
+    lastPositions = data.positions ?? [];
+  }
   const tbody = document.getElementById('positionsBody');
   if (!tbody) return;
 
@@ -630,12 +741,36 @@ async function loadPositions() {
   if (document.getElementById('avgDownModal')?.classList.contains('open')) renderAvgDownCalculator();
 }
 
+// KIS 당일 주문내역 → 자체 모드 내역 모양({ts,name,symbol,type,quantity,amount}). 미체결(체결수량 0)은 주문수량·주문가로 표시한다.
+async function fetchKisHistory() {
+  const data = await requestJson('/api/broker-test/kis/orders?limit=30');
+  const h = data.history || {};
+  const day = String(h.date || '').replace(/-/g, '');
+  const base = day.length === 8 ? `${day.slice(0,4)}-${day.slice(4,6)}-${day.slice(6,8)}` : new Date().toISOString().slice(0, 10);
+  return (h.orders || []).map(order => {
+    const t = String(order.orderTime || '000000').padStart(6, '0');
+    const quantity = Number(order.filledQuantity || order.orderQuantity || 0);
+    const price = Number(order.filledPrice || order.orderPrice || 0);
+    return {
+      ts: new Date(`${base}T${t.slice(0,2)}:${t.slice(2,4)}:${t.slice(4,6)}+09:00`).getTime(),
+      name: order.name || stockDisplayName(order.symbol), symbol: order.symbol, type: order.side,
+      quantity, amount: quantity * price, status: order.status || '',
+    };
+  });
+}
+
 async function loadHistory() {
   try {
-    const data = await requestJson('/api/stocks/orders/history');
     const tbody = document.getElementById('historyBody');
     if (!tbody) return;
-    const hist = (data.history ?? []).slice(0, 30);
+    let hist;
+    if (tradeMode === 'kis') {
+      try { hist = await fetchKisHistory(); }
+      catch (error) { tbody.innerHTML = `<tr><td colspan="5" style="padding:10px;text-align:center;color:var(--muted);">${escapeHtml(error.message || 'KIS 주문내역을 불러오지 못했습니다.')}</td></tr>`; return; }
+    } else {
+      const data = await requestJson('/api/stocks/orders/history');
+      hist = (data.history ?? []).slice(0, 30);
+    }
     if (!hist.length) {
       tbody.innerHTML = `<tr><td colspan="5" style="padding:10px;text-align:center;color:var(--muted);">거래 내역 없음</td></tr>`;
       return;
@@ -647,7 +782,7 @@ async function loadHistory() {
       return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
         <td style="padding:8px 12px;color:var(--muted);font-size:13px;">${dt}</td>
         <td style="padding:8px 12px;font-weight:700;color:var(--fg);font-size:15px;">${h.name}<br><span style="font-size:13.5px;color:var(--accent-dark);">${h.symbol}</span></td>
-        <td style="padding:8px 12px;text-align:center;font-weight:800;font-size:15px;color:${color};">${isBuy ? '매수' : '매도'}</td>
+        <td style="padding:8px 12px;text-align:center;font-weight:800;font-size:15px;color:${color};">${isBuy ? '매수' : '매도'}${h.status ? `<br><span style="font-size:12px;font-weight:600;color:var(--muted);">${escapeHtml(h.status)}</span>` : ''}</td>
         <td style="padding:8px 12px;text-align:right;color:rgba(255,255,255,0.7);font-size:15px;">${Number(h.quantity).toLocaleString('ko-KR')}주</td>
         <td style="padding:8px 12px;text-align:right;color:var(--accent-dark);font-weight:700;font-size:15px;">${fmtKrw(h.amount)}</td>
       </tr>`;
@@ -694,9 +829,40 @@ function updateBreakEven(positions, sym) {
 }
 
 /* ── 주문 ────────────────────────────────────────────────────────────────── */
+// KIS Testbed 모의주문: 승인 토큰(60초) → 주문. 실전계좌로는 가지 않지만 실제 모의계좌 잔고가 바뀐다.
+async function submitKisOrder(type, qty) {
+  const symbol = document.getElementById('stockSymbol')?.value;
+  if (!symbol) return;
+  if (!currentUser?.loggedIn) { showMsg('KIS 모의주문은 로그인 후 이용할 수 있습니다.', true); return; }
+  const orderType = document.getElementById('kisOrderType')?.value === 'LIMIT' ? 'LIMIT' : 'MARKET';
+  const price = orderType === 'LIMIT' ? Math.floor(Number(document.getElementById('kisLimitPrice')?.value) || 0) : 0;
+  if (orderType === 'LIMIT' && price < 1) { showMsg('지정가는 1원 이상이어야 합니다.', true); return; }
+  const side = type === 'buy' ? 'BUY' : 'SELL';
+  if (side === 'SELL') {
+    try { kisBalanceCache.at = 0; lastPositions = (await fetchKisBalance()).positions; } catch {}
+    const held = Number(selectedPosition()?.quantity || 0);
+    if (held <= 0) { showMsg(`${stockDisplayName(symbol)} 보유 수량이 없어 매도할 수 없습니다.`, true); return; }
+    if (qty > held) { showMsg(`매도 수량 ${qty.toLocaleString('ko-KR')}주가 보유 ${held.toLocaleString('ko-KR')}주를 초과합니다.`, true); return; }
+  }
+  const label = `${stockDisplayName(symbol)} ${qty.toLocaleString('ko-KR')}주 ${side === 'BUY' ? '매수' : '매도'} · ${orderType === 'MARKET' ? '시장가' : fmtKrw(price)}`;
+  if (!confirm(`${label}\n\n한국투자증권 Testbed 모의계좌에 주문을 접수할까요? (실전계좌로는 전송되지 않습니다)`)) return;
+  const intent = { symbol, side, quantity: qty, orderType, price };
+  const headers = { 'Content-Type': 'application/json', 'X-CSRF-Token': currentUser.csrfToken || '' };
+  ['buyBtn', 'sellBtn'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = true; });
+  try {
+    const approval = await requestJson('/api/broker-test/kis/order-approval', { method: 'POST', headers, body: JSON.stringify(intent) });
+    const result = await requestJson('/api/broker-test/kis/orders', { method: 'POST', headers, body: JSON.stringify({ ...intent, approvalToken: approval.approvalToken }) });
+    showMsg(`KIS 모의주문 접수 · 주문번호 ${result.order?.orderNo || '-'} ${result.order?.message || ''}`);
+    kisBalanceCache.at = 0;
+    await Promise.all([loadAccount(), loadPositions(), loadQuote(symbol), loadHistory()]);
+  } catch (e) { showMsg(e.message, true); }
+  finally { ['buyBtn', 'sellBtn'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = Boolean(kisAuthMessage); }); }
+}
+
 async function submitOrder(type) {
   const qty = Number(document.getElementById('orderQty')?.value);
   if (!Number.isFinite(qty) || qty <= 0) { showMsg('수량은 1 이상이어야 합니다.', true); return; }
+  if (tradeMode === 'kis') { await submitKisOrder(type, Math.floor(qty)); return; }
   try {
     await requestJson(`/api/stocks/orders/${type}`, {
       method: 'POST',
@@ -729,6 +895,7 @@ document.addEventListener('keydown', event => {
 
 /* ── 초기화 버튼 ─────────────────────────────────────────────────────────── */
 document.getElementById('resetBtn')?.addEventListener('click', async () => {
+  if (tradeMode === 'kis') { showMsg('KIS 모의계좌는 초기화할 수 없습니다.', true); return; }
   if (!confirm('계좌를 초기화하시겠습니까?')) return;
   try {
     await requestJson('/api/stocks/account/reset', { method: 'POST' });
@@ -857,15 +1024,76 @@ function initUsageGuide() {
   });
 }
 
+/* ── 모의투자 방식 탭 ─────────────────────────────────────────────────────── */
+const TRADE_MODE_TEXT = {
+  self: { note: '<b>자체 모의투자</b> · 가상 계좌에서 시뮬레이션 체결', accountTitle: '계좌 현황', accountNote: '가상 계좌 · 시뮬레이션 체결', cashLabel: '보유 현금', pnlLabel: '수익률', holdings: '내 보유 종목', title: '주식 실습' },
+  kis:  { note: '<b>KIS 모의투자</b> · 한국투자증권 Testbed 모의계좌에 실제 모의주문 전송', accountTitle: 'KIS 모의계좌', accountNote: '한국투자증권 Testbed · 실제 모의주문', cashLabel: '주문 가능 예수금', pnlLabel: '평가손익', holdings: 'KIS 모의계좌 보유 종목', title: 'KIS 모의투자' },
+};
+
+function readInitialTradeMode() {
+  if (location.hash === '#kis') return 'kis';
+  if (location.hash === '#self') return 'self';
+  try { return localStorage.getItem('stockTradeMode') === 'kis' ? 'kis' : 'self'; } catch { return 'self'; }
+}
+
+function applyTradeModeUi(mode) {
+  const text = TRADE_MODE_TEXT[mode];
+  document.querySelectorAll('.mode-tab[data-mode]').forEach(button => {
+    const active = button.dataset.mode === mode;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', String(active));
+  });
+  const note = document.getElementById('modeTabsNote'); if (note) note.innerHTML = text.note;
+  setText('accountPanelTitle', text.accountTitle); setText('accountModeNote', text.accountNote);
+  setText('accountCashLabel', text.cashLabel); setText('accountPnlLabel', text.pnlLabel); setText('holdingsSourceLabel', text.holdings);
+  const reset = document.getElementById('resetBtn'); if (reset) reset.style.display = mode === 'kis' ? 'none' : '';
+  const kisRow = document.getElementById('kisOrderTypeRow'); if (kisRow) kisRow.hidden = mode !== 'kis';
+  document.title = `${text.title} — EDUMGT`;
+  if (mode !== 'kis') setKisNotice('');
+}
+
+async function setTradeMode(mode, { persist = true, reload = true } = {}) {
+  mode = mode === 'kis' ? 'kis' : 'self';
+  if (persist) {
+    try { localStorage.setItem('stockTradeMode', mode); } catch {}
+    if (history.replaceState) history.replaceState(null, '', mode === 'kis' ? '#kis' : '#self');
+  }
+  const changed = mode !== tradeMode;
+  tradeMode = mode;
+  kisBalanceCache = { at: 0, data: null };
+  applyTradeModeUi(mode);
+  if (!reload) return;
+  if (changed) {
+    lastPositions = []; renderStockMarketList();
+    const history = document.getElementById('historyBody'); if (history) history.innerHTML = '<tr><td colspan="5" style="padding:10px;text-align:center;color:var(--muted);">불러오는 중…</td></tr>';
+    showMsg('');
+  }
+  const sym = document.getElementById('stockSymbol')?.value;
+  await Promise.all([loadAccount(), loadPositions()]);
+  await Promise.all([loadQuote(sym), loadChart(sym, currentPeriod), loadHistory(), loadBatchPrices()]);
+}
+window.setTradeMode = setTradeMode;
+
+document.querySelectorAll('.mode-tab[data-mode]').forEach(button => button.addEventListener('click', () => setTradeMode(button.dataset.mode)));
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#kis' || location.hash === '#self') setTradeMode(location.hash.slice(1), { persist: false });
+});
+document.getElementById('kisOrderType')?.addEventListener('change', event => {
+  const limit = event.target.value === 'LIMIT';
+  const priceInput = document.getElementById('kisLimitPrice');
+  if (priceInput) { priceInput.hidden = !limit; if (limit && !priceInput.value && currentStockPrice) priceInput.value = currentStockPrice; }
+});
+
 /* ── 부트 ────────────────────────────────────────────────────────────────── */
 (async () => {
   relocateStockPanels();
   initUsageGuide();
-  await initPage();
+  currentUser = await initPage();
   initStockChart();
 
   await pickTopVolumeKospiSymbol();
   await loadStockList();
+  await setTradeMode(readInitialTradeMode(), { persist: false, reload: false });
 
   const sym = document.getElementById('stockSymbol')?.value;
   await Promise.all([loadMarket(), loadQuote(sym), loadAccount(), loadPositions()]);
