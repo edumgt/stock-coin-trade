@@ -18,7 +18,7 @@ def completion(payload, key=None, user=None):
     if request.get('tools'):
         native['tools'] = request['tools']
     script = "import sys,httpx; r=httpx.post('http://fin-ai-ollama:11434/api/chat',content=sys.stdin.read(),headers={'Content-Type':'application/json'},timeout=580); r.raise_for_status(); print(r.text)"
-    command = 'docker exec -i fin-ai-app python -c ' + shlex.quote(script)
+    command = 'docker run --rm -i --network shared-net --memory 128m --entrypoint python lumina-invest-app:fd -c ' + shlex.quote(script)
     args = ['ssh','-i',key or os.environ['LEAN_SSH_KEY_PATH'],'-o','BatchMode=yes',
             '-o','StrictHostKeyChecking=accept-new','-o','ConnectTimeout=10',
             f"{user or os.environ.get('LEAN_SSH_USER','lean-iv')}@172.31.0.151", command]
