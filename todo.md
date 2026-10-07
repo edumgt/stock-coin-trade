@@ -518,3 +518,19 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 | st 운영 | `crypto-mock-python` healthcheck(`wget /openapi.json` 5초)+autoheal, 또는 `--workers 2`(단, 레이트 락은 프로세스별이라 KIS 초당 한도 초과 위험 — Testbed 는 비권장) | 정지 시 자동 복구 |
 
 **확인 명령**: `ssh -i stock-coin-trade/pr-test.pem ubuntu@43.202.161.134 'P=$(sudo docker inspect -f "{{.State.Pid}}" crypto-mock-python); ls /proc/$P/task | wc -l; sudo docker logs --since 30m crypto-mock-frontend 2>&1 | grep -cE " (499|504) "'` — 스레드가 40 근처면 재발, 499 가 사이클당 수십 건이면 권고 1 적용.
+
+### 6-10. 2026-10-07 trade/stock.html 「자체 모의투자 / KIS 모의투자」 탭 분리 (사용자 요청)
+
+**요구**: 주식 실습 화면 상단에 탭 버튼 두 개를 두고, 클릭 시 UI 가 바뀌며 기능도 가상 계좌 모의투자와 KIS 연동 모의투자로 나뉜다.
+
+| 변경 | 내용 |
+|------|------|
+| `frontend/trade/stock.html` | 헤더 아래 `.mode-tabs`(자체 모의투자 / KIS 모의투자) 추가. 기존 본문 `.trading-body` 는 `#selfModePanel`(자체·`stock.js`·`/api/stocks/*` 그대로), 새 `#kisModePanel`(`[data-kis-root] [data-kis-id-prefix="kis-"]`, 자체 스크롤)에 `kis-real-trading-practice.html` 의 `<main>` 본문을 **모든 id/for 에 `kis-` 접두**를 붙여 삽입(빌드 시 프로그램으로 추출, id 중복 0). `kis-practice.css` 링크 추가. 탭 상태는 `localStorage.stockTradeMode` + URL `#kis`/`#self` 로 유지, KIS 탭은 처음 열 때만 초기화(`window.KisPaperPanel.init()`), 재진입 시 `refresh()`. 자체 모드 주문 패널 클래스 `order-panel`→`self-order-panel`(KIS CSS 의 `.order-panel` sticky·grid 규칙과 분리) |
+| `frontend/js/kis-real-trading-practice.js` | 삽입 가능하게: `root=[data-kis-root]||document`, `el(id)=getElementById(prefix+id)`, `document.querySelectorAll`→`root.querySelectorAll`(8곳). 삽입 모드면 자동 부트 대신 `window.KisPaperPanel={init,refresh}` 노출, 미로그인 시 리다이렉트 없이 패널 안 안내 + 주문 버튼 비활성. 단독 페이지 동작은 동일 |
+| `frontend/kis-real-trading-practice.html` | 스크립트 버전 `?v=20261007-embed-tab` |
+
+**검증(정적)**: id 124개 중복 0, KIS 스크립트가 쓰는 id 45개 모두 `kis-` 접두로 존재, 괄호 균형(원본 대비 동일)·HTML 중첩 검사 통과. 브라우저 실행은 에이전트 환경에 node/브라우저가 없어 미실행 — 배포 후 사용자 확인 필요: ① 탭 전환 시 본문 교체·URL 해시 변화 ② KIS 탭에서 잔고·보유·차트·주문 ③ 자체 탭 주문 패널(우측 상단) 레이아웃 변화 없음 ④ `/kis-real-trading-practice.html` 단독 페이지 정상.
+
+**배포**: main 푸시 → `deploy-ec2.yml`(rsync + compose up --build + frontend 재시작). 정적 파일이라 캐시 버전 쿼리로 갱신됨.
+
+**남은 결정**: 두 탭의 종목 검색을 하나로 합칠지(현재 각자 검색창), KIS 탭 진입 시 자체 모드 5초 폴링(`stock.js` setInterval)을 멈출지(현재 계속 돔).

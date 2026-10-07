@@ -1,5 +1,10 @@
 (() => {
   const base = window.APP_CONFIG?.apiBase || '';
+  // 단독 페이지(kis-real-trading-practice.html)에서는 document 전체, trade/stock.html 의 「KIS 모의투자」 탭처럼
+  // 다른 화면에 삽입될 때는 [data-kis-root] 안에서만 요소를 찾고 id 에 data-kis-id-prefix(예: "kis-") 를 붙인다.
+  const root = document.querySelector('[data-kis-root]') || document;
+  const embedded = root !== document;
+  const idPrefix = embedded ? (root.dataset.kisIdPrefix || '') : '';
   let user = null;
   let side = 'BUY';
   let quote = null;
@@ -9,7 +14,7 @@
   let positionsState = [];
   let stocksState = [];
 
-  const el = id => document.getElementById(id);
+  const el = id => document.getElementById(idPrefix + id);
   const number = value => Number(value || 0).toLocaleString('ko-KR');
   const won = value => `${number(Math.round(Number(value || 0)))}원`;
   const signedWon = value => `${Number(value || 0) > 0 ? '+' : ''}${won(value)}`;
@@ -95,7 +100,7 @@
     el('orderSymbolName').textContent = `${quote?.name || selectedSymbol()} · ${selectedSymbol()}`;
     el('orderCurrentPrice').textContent = won(quote?.price);
     el('estimatedPrice').textContent = won(quote?.price);
-    document.querySelectorAll('.watch-item').forEach(item => item.classList.toggle('active', item.dataset.symbol === selectedSymbol()));
+    root.querySelectorAll('.watch-item').forEach(item => item.classList.toggle('active', item.dataset.symbol === selectedSymbol()));
     updateEstimate();
   }
 
@@ -260,7 +265,7 @@
 
   function setSide(nextSide) {
     side = nextSide;
-    document.querySelectorAll('.side-btn[data-side]').forEach(item => item.classList.toggle('active', item.dataset.side === side));
+    root.querySelectorAll('.side-btn[data-side]').forEach(item => item.classList.toggle('active', item.dataset.side === side));
     el('orderBtn').textContent = `${side === 'BUY' ? '매수' : '매도'} 주문`; el('orderBtn').classList.toggle('sell', side === 'SELL'); updateEstimate();
     if (side === 'SELL') {
       const held = Number(positionsState.find(item => item.symbol === selectedSymbol())?.quantity || 0);
@@ -269,13 +274,13 @@
   }
 
   function bindEvents() {
-    document.querySelectorAll('.side-btn[data-side]').forEach(button => button.addEventListener('click', () => setSide(button.dataset.side)));
-    document.querySelectorAll('[data-period]').forEach(button => button.addEventListener('click', async () => {
-      chartPeriod = button.dataset.period; document.querySelectorAll('[data-period]').forEach(item => item.classList.toggle('active', item === button)); await loadChart();
+    root.querySelectorAll('.side-btn[data-side]').forEach(button => button.addEventListener('click', () => setSide(button.dataset.side)));
+    root.querySelectorAll('[data-period]').forEach(button => button.addEventListener('click', async () => {
+      chartPeriod = button.dataset.period; root.querySelectorAll('[data-period]').forEach(item => item.classList.toggle('active', item === button)); await loadChart();
     }));
-    document.querySelectorAll('.portfolio-tabs [data-tab]').forEach(button => button.addEventListener('click', () => {
-      document.querySelectorAll('.portfolio-tabs [data-tab]').forEach(item => item.classList.toggle('active', item === button));
-      document.querySelectorAll('[data-tab-panel]').forEach(panel => { panel.hidden = panel.dataset.tabPanel !== button.dataset.tab; });
+    root.querySelectorAll('.portfolio-tabs [data-tab]').forEach(button => button.addEventListener('click', () => {
+      root.querySelectorAll('.portfolio-tabs [data-tab]').forEach(item => item.classList.toggle('active', item === button));
+      root.querySelectorAll('[data-tab-panel]').forEach(panel => { panel.hidden = panel.dataset.tabPanel !== button.dataset.tab; });
     }));
     el('stockSelect').addEventListener('change', () => loadSelectedStock().catch(error => setMessage(error.message)));
     el('watchlistBody').addEventListener('click', event => { const button = event.target.closest('[data-symbol]'); if (!button) return; el('stockSelect').value = button.dataset.symbol; loadSelectedStock().catch(error => setMessage(error.message)); });
@@ -297,10 +302,36 @@
     let resizeTimer; window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawChart, 120); });
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    user = await initPage({ requireAuth: true }); if (!user) return;
+  let booted = false;
+  async function boot(currentUser) {
+    if (booted) return; booted = true;
+    user = currentUser;
     bindEvents();
     const results = await Promise.allSettled([loadRealStatus(), loadMarket(), loadStocks(), refreshAccount()]);
     const failed = results.find(result => result.status === 'rejected'); if (failed) setMessage(failed.reason?.message || '일부 데이터를 불러오지 못했습니다.');
-  });
+  }
+
+  if (embedded) {
+    // 삽입 모드: 호스트 화면이 탭을 열 때 init() 을 부른다. 로그인이 안 돼 있으면 리다이렉트 대신 안내만 보여 준다.
+    window.KisPaperPanel = {
+      async init() {
+        if (booted) return true;
+        const currentUser = typeof getCurrentUser === 'function' ? await getCurrentUser() : null;
+        if (!currentUser?.loggedIn) {
+          const guide = el('realStatus');
+          if (guide) { guide.className = 'message show error'; guide.innerHTML = '<strong>로그인이 필요합니다</strong><br>KIS 모의투자는 로그인한 회원만 사용할 수 있습니다. <a href="/member/login.html" style="font-weight:800;text-decoration:underline;">로그인</a>'; }
+          const orderBtn = el('orderBtn'); if (orderBtn) orderBtn.disabled = true;
+          return false;
+        }
+        await boot(currentUser);
+        return true;
+      },
+      refresh: () => booted ? Promise.allSettled([loadMarket(), refreshAccount(), loadSelectedStock()]) : Promise.resolve(),
+    };
+  } else {
+    document.addEventListener('DOMContentLoaded', async () => {
+      const currentUser = await initPage({ requireAuth: true }); if (!currentUser) return;
+      await boot(currentUser);
+    });
+  }
 })();
