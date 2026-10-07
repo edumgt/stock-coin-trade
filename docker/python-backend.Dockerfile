@@ -20,6 +20,10 @@ ENV PATH="/app/.venv/bin:$PATH"
 # 컨테이너가 런타임 네트워크 없이도 즉시 RAG 검색을 시작할 수 있게 한다.
 RUN python -c "from fastembed import TextEmbedding; TextEmbedding('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'); print('fastembed model ready')"
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssh-client \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY python-stock-backend/app ./app
 
 EXPOSE 8200

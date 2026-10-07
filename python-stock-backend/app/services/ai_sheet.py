@@ -32,7 +32,8 @@ MAX_COLUMNS = 20
 SECTOR_SHEET_STOCK_LIMIT = 20
 SECTOR_SHEET_MONTHS = 24
 
-LEAN_IMAGE_TAG = "stock-coin-trade-lean:latest"
+LEAN_IMAGE_TAG = os.environ.get("LEAN_DOCKER_IMAGE", "quantconnect/lean@sha256:70071d1bbb90385deb60c7d20bc3830c7f4c79f6c09c5d1ade9196c009f68861")
+LEAN_RUNNER = os.environ.get("LEAN_RUNNER", "remote")
 LEAN_BUILD_CONTEXT = "/lean-src"
 LEAN_DATA_DIR = "/lean-data"
 LEAN_RESULTS_DIR = "/lean-results"
@@ -300,13 +301,61 @@ def _run_docker(args: list, timeout: int):
     return subprocess.run(["docker", *args], capture_output=True, text=True, timeout=timeout)
 
 
-def _ensure_lean_image():
-    check = _run_docker(["image", "inspect", LEAN_IMAGE_TAG], timeout=10)
-    if check.returncode == 0:
-        return
-    build = _run_docker(["build", "-t", LEAN_IMAGE_TAG, LEAN_BUILD_CONTEXT], timeout=120)
-    if build.returncode != 0:
-        raise RuntimeError(f"LEAN 이미지 빌드 실패: {build.stderr[-800:]}")
+def _run_remote_sheet(points, name):
+    import tempfile
+    import uuid
+    import shlex
+    key = os.environ.get('LEAN_SSH_KEY_PATH', '')
+    host = os.environ.get('LEAN_SSH_HOST', '')
+    user = os.environ.get('LEAN_SSH_USER', 'lean-iv')
+    if not host or not os.path.isfile(key):
+        raise SheetError(503, '공통 LEAN 원격 러너 설정이 없습니다.')
+    root = os.environ.get('LEAN_REMOTE_WORKDIR', '/home/lean-iv/workflows').rstrip('/')
+    if not re.fullmatch(r'/[A-Za-z0-9_/-]+', root):
+        raise SheetError(503, 'LEAN 작업 경로 설정이 올바르지 않습니다.')
+    work_id = 'st-' + uuid.uuid4().hex
+    remote = root + '/' + work_id
+    container = 'lean-' + work_id
+    options = ['-i', key, '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
+               '-o', 'UserKnownHostsFile=/run/secrets/lean-known-hosts', '-o', 'ConnectTimeout=15']
+    target = f'{user}@{host}'
+    def ssh(command, timeout=30):
+        return subprocess.run(['ssh', *options, target, command], capture_output=True, text=True, timeout=timeout)
+    def copy(source, destination):
+        result = subprocess.run(['scp', *options, source, destination], capture_output=True, text=True, timeout=30)
+        if result.returncode:
+            raise SheetError(502, 'LEAN 파일 전송 실패', log=result.stderr[-1000:])
+    try:
+        check = ssh(f'docker image inspect {shlex.quote(LEAN_IMAGE_TAG)} >/dev/null && mkdir -p {remote}/module {remote}/data {remote}/results')
+        if check.returncode:
+            raise SheetError(502, '공통 LEAN 엔진 연결 실패', log=check.stderr[-1000:])
+        with tempfile.TemporaryDirectory(prefix='st-lean-') as tmp:
+            csv = os.path.join(tmp, 'prices.csv')
+            with open(csv, 'w') as handle:
+                handle.write('Date,Open,High,Low,Close,Volume\n')
+                for iso, price in sorted(points):
+                    handle.write(f'{iso},{price},{price},{price},{price},0\n')
+            for filename in ['GenericBuyAndHold.py', 'config.json', 'entrypoint.sh']:
+                copy(os.path.join(LEAN_BUILD_CONTEXT, filename), f'{target}:{remote}/module/{filename}')
+            copy(csv, f'{target}:{remote}/data/prices.csv')
+            command = (f'docker run --rm --network none --cpus 2 --memory 2g --name {container} '
+                       f'-e SYMBOL_NAME={shlex.quote(str(name)[:40])} '
+                       f'-v {remote}/module:/module:ro -v {remote}/data:/custom-data:ro '
+                       f'-v {remote}/results:/results --entrypoint sh '
+                       f'{shlex.quote(LEAN_IMAGE_TAG)} /module/entrypoint.sh')
+            run = ssh(command, LEAN_TIMEOUT_SECONDS)
+            result = os.path.join(tmp, 'summary.json')
+            copy(f'{target}:{remote}/results/GenericBuyAndHold-summary.json', result)
+            with open(result) as handle:
+                statistics = (json.load(handle) or {}).get('statistics') or {}
+            if not statistics:
+                raise SheetError(502, 'LEAN 통계가 생성되지 않았습니다.', log=(run.stdout+run.stderr)[-2000:])
+            return statistics
+    finally:
+        try:
+            ssh(f'docker rm -f {container} >/dev/null 2>&1; rm -rf {remote}', 30)
+        except (subprocess.TimeoutExpired, OSError):
+            pass
 
 
 def lean_backtest(columns: list, rows: list, row_index) -> dict:
@@ -330,29 +379,9 @@ def lean_backtest(columns: list, rows: list, row_index) -> dict:
 
     with _lean_lock:
         try:
-            for stale_dir in (LEAN_DATA_DIR, LEAN_RESULTS_DIR):
-                for entry in os.listdir(stale_dir):
-                    path = os.path.join(stale_dir, entry)
-                    (os.remove if os.path.isfile(path) else shutil.rmtree)(path)
-            with open(os.path.join(LEAN_DATA_DIR, "prices.csv"), "w") as handle:
-                handle.write("Date,Open,High,Low,Close,Volume\n")
-                for iso_date, price in points:
-                    handle.write(f"{iso_date},{price},{price},{price},{price},0\n")
-
-            _ensure_lean_image()
-            run = _run_docker([
-                "run", "--rm",
-                "-e", f"SYMBOL_NAME={name}",
-                "-v", f"{LEAN_DATA_VOLUME}:/custom-data",
-                "-v", f"{LEAN_RESULTS_VOLUME}:/results",
-                LEAN_IMAGE_TAG,
-            ], timeout=LEAN_TIMEOUT_SECONDS)
-
-            summary_path = os.path.join(LEAN_RESULTS_DIR, "GenericBuyAndHold-summary.json")
-            if not os.path.exists(summary_path):
-                raise SheetError(502, "LEAN 백테스트가 요약 결과를 생성하지 못했습니다.", log=(run.stdout + run.stderr)[-2000:])
-            with open(summary_path) as handle:
-                statistics = (json.load(handle) or {}).get("statistics") or {}
+            if LEAN_RUNNER != "remote":
+                raise SheetError(503, "이 서비스는 공통 LEAN 원격 러너를 사용합니다.")
+            statistics = _run_remote_sheet(points, str(name))
         except SheetError:
             raise
         except subprocess.TimeoutExpired as exc:
@@ -363,6 +392,9 @@ def lean_backtest(columns: list, rows: list, row_index) -> dict:
     keys = ["Start Equity", "End Equity", "Net Profit", "Compounding Annual Return", "Sharpe Ratio", "Drawdown", "Total Orders"]
     return {
         "stock": name,
+        "engine": "QuantConnect LEAN",
+        "runner": LEAN_RUNNER,
+        "engineImage": LEAN_IMAGE_TAG,
         "startDate": points[0][0],
         "endDate": points[-1][0],
         "statistics": {key: statistics[key] for key in keys if key in statistics},

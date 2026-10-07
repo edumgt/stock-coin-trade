@@ -103,6 +103,12 @@ services:
       redis:
         condition: service_healthy
     environment:
+      LEAN_RUNNER: remote
+      LEAN_DOCKER_IMAGE: quantconnect/lean@sha256:70071d1bbb90385deb60c7d20bc3830c7f4c79f6c09c5d1ade9196c009f68861
+      LEAN_SSH_HOST: 172.31.0.151
+      LEAN_SSH_USER: lean-iv
+      LEAN_SSH_KEY_PATH: /run/secrets/lean-runner.key
+      LEAN_REMOTE_WORKDIR: /home/lean-iv/workflows
       DB_HOST: ${DB_HOST:-mariadb}
       DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${MARIADB_DATABASE:-mockinv}
@@ -173,6 +179,8 @@ services:
       # named volume로 주고받는다(호스트 경로를 몰라도 되어 이식성이 좋다).
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker/lean:/lean-src:ro
+      - /opt/stock-kms-portal/secrets/lean-runner.key:/run/secrets/lean-runner.key:ro
+      - ./docker/lean/known_hosts:/run/secrets/lean-known-hosts:ro
       - lean-data:/lean-data
       - lean-results:/lean-results
     restart: unless-stopped
