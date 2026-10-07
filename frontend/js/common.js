@@ -585,7 +585,7 @@ function toggleRagBlock() {
   if (icon) icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
-/* ── AI 분석 (RAG + Claude streaming) ───────────────────────────────────── */
+/* ── AI 분석 (RAG + Qwen) ───────────────────────────────────── */
 async function runAiAnalysis() {
   const btn      = document.getElementById('aiRunBtn');
   const box      = document.getElementById('aiContent');
@@ -633,7 +633,7 @@ async function runAiAnalysis() {
     }
   }
 
-  // ③ RAG 컨텍스트를 결합한 Claude 프롬프트 구성
+  // ③ RAG 컨텍스트를 결합한 Qwen 프롬프트 구성
   let augmented = marketCtx;
   if (ragDocs.length > 0) {
     const ragSection = ragDocs.map(d => `[${d.title}] ${d.text}`).join('\n');
@@ -642,7 +642,7 @@ async function runAiAnalysis() {
 
   box.innerHTML = '<div style="text-align:center;padding:1rem 0;color:var(--muted);font-size:13px;">✨ Qwen 7B가 분석 중입니다...</div>';
 
-  // ④ Claude API (streaming)
+  // ④ 공통 Qwen API
   try {
     const res = await apiFetch('/api/ai/analyze', {
       method: 'POST',
