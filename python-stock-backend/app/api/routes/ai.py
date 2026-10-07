@@ -1,4 +1,4 @@
-"""시세 컨텍스트를 Claude에 보내 한국어 분석을 SSE로 스트리밍한다."""
+"""시세·RAG 근거를 공통 Docker Qwen 7B로 분석한다."""
 
 from __future__ import annotations
 
@@ -34,48 +34,28 @@ def _build_prompt(type_: str, context: str) -> str:
     )
 
 
-def _stream_claude(api_key: str, model: str, prompt: str) -> Iterator[str]:
-    payload = {
-        "model": model,
-        "max_tokens": 1024,
-        "stream": True,
-        "system": SYSTEM_PROMPT,
-        "messages": [{"role": "user", "content": prompt}],
-    }
-    try:
-        with requests.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={"Content-Type": "application/json", "x-api-key": api_key, "anthropic-version": "2023-06-01"},
-            json=payload,
-            stream=True,
-            timeout=60,
-        ) as resp:
-            for raw_line in resp.iter_lines(decode_unicode=True):
-                if not raw_line or not raw_line.startswith("data: "):
-                    continue
-                data = raw_line[6:].strip()
-                if data == "[DONE]":
-                    break
-                try:
-                    event = json.loads(data)
-                except ValueError:
-                    continue
-                text = event.get("delta", {}).get("text")
-                if text:
-                    yield text
-    except Exception as exc:  # noqa: BLE001 - 스트림 중 오류는 본문으로 전달한다.
-        yield f"\n\n⚠️ AI 분석 중 오류가 발생했습니다: {exc}"
+def _stream_qwen(prompt: str) -> Iterator[str]:
+    from concurrent.futures import ThreadPoolExecutor, TimeoutError
+    from app.services.qwen_remote import completion
+    yield 'Qwen 7B가 검색 근거를 분석하고 있습니다…\n\n'
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(completion, {'messages':[
+            {'role':'system','content':SYSTEM_PROMPT + ' 제공된 근거에 없는 사실을 만들지 말고, 출처 제목을 언급하세요. 300자 이내로 답하세요.'},
+            {'role':'user','content':prompt[:12000]}], 'max_tokens':200})
+        while True:
+            try:
+                result = future.result(timeout=15)
+                yield result['choices'][0]['message']['content']
+                break
+            except TimeoutError:
+                yield '\n'
+            except Exception:
+                yield 'Qwen 분석 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                break
 
 
-@router.post("/analyze")
+@router.post('/analyze')
 def analyze(payload: AiAnalyzeBody = Body(default_factory=AiAnalyzeBody)) -> StreamingResponse:
-    context = str(payload.context or "시세 데이터 없음")
-    type_ = str(payload.type or "general")
-    settings = get_settings()
-    api_key = settings.anthropic_api_key.strip()
-    if not api_key:
-        return StreamingResponse(
-            iter(["⚠️ ANTHROPIC_API_KEY가 설정되지 않았습니다.\n\n환경변수 ANTHROPIC_API_KEY를 설정하면 AI 분석이 활성화됩니다."]),
-            media_type="text/event-stream",
-        )
-    return StreamingResponse(_stream_claude(api_key, settings.anthropic_model, _build_prompt(type_, context)), media_type="text/event-stream")
+    context = str(payload.context or '시세 데이터 없음')
+    type_ = str(payload.type or 'general')
+    return StreamingResponse(_stream_qwen(_build_prompt(type_,context)), media_type='text/plain; charset=utf-8', headers={'X-LLM-Model':'qwen2.5:7b','X-Accel-Buffering':'no'})

@@ -173,3 +173,22 @@ def news_krx() -> dict:
         return krx_news.fetch_news()
     except (requests.RequestException, ValueError) as exc:
         raise ApiError(503, error=str(exc), news=[])
+
+
+@router.post('/ai/qdrant/ask')
+def qdrant_ask(payload: QdrantSearchBody = Body(default_factory=QdrantSearchBody)) -> dict:
+    from app.services.qwen_remote import completion, MODEL
+    query = str(payload.query or '').strip()
+    if not query or len(query)>4000:
+        raise ApiError(400,error='질문은 1~4000자여야 합니다.')
+    try:
+        docs = knowledge_base.search(query,clamp(payload.limit,1,5))
+        if not docs:
+            return {'results':[], 'answer':'관련 지식을 찾을 수 없습니다.', 'model':MODEL}
+        context='\n\n'.join(f"[{d['title']}] {d['text']}" for d in docs)
+        result=completion({'messages':[
+            {'role':'system','content':'검색 근거만 사용해 한국어로 300자 이내로 답하세요. 출처 제목을 언급하세요. 근거가 부족하면 밝히고 매매를 단정하지 마세요.'},
+            {'role':'user','content':f'질문: {query}\n검색 근거:\n{context[:10000]}'}], 'max_tokens':160})
+        return {'results':docs,'answer':result['choices'][0]['message']['content'],'model':MODEL}
+    except Exception as exc:
+        raise ApiError(503,error='공통 Qwen RAG 연결에 실패했습니다.') from exc

@@ -1,3 +1,10 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   공통 타이포그래피 가이드 — pr(domain-rag-lab) · fd(lumina-invest) · st(stock-coin-trade) · iv(stock-kms-portal) 4개 사이트 통일 (2026-10-07)
+   1) 화면 타이틀(h1·h2)은 Pretendard 18px 로 고정한다(--title-size). 페이지·섹션마다 다른 크기를 쓰지 않는다.
+   2) 18px 를 초과하는 font-size 는 사용 금지. 숫자 KPI·히어로 문구도 예외 없이 18px 이하로 두고, 강조는 크기 대신 굵기(700~800)·색으로 한다.
+   3) 새 규칙을 추가할 때 font-size 는 18px 이하만 쓴다. 18px 초과가 꼭 필요하면 todo.md 7절에 결정 항목으로 올린 뒤 적용한다.
+   4) 고정 규칙은 각 사이트 주 CSS 맨 끝의 "타이틀 고정" 블록이 !important 로 적용한다(인라인·유틸리티 클래스보다 우선). 지우거나 완화하지 말 것.
+   ══════════════════════════════════════════════════════════════════════════════ */
 /* ───────────────────────────────────────────────────────────────────────────
    TradingView-inspired Design  —  Light Mode
    참고: https://kr.tradingview.com/markets/
@@ -729,3 +736,8 @@ body[data-exchange] .row button:disabled { opacity: .6; }
 
 /* min-text-floor: 시스템 전역 최소 글자 크기 — 브라우저 기본 smaller 크기 금지 */
 small,sub,sup{font-size:max(13px,.9em)!important}
+
+/* ══ 타이틀 고정 (공통 타이포그래피 가이드 1·4항) — 이 블록은 파일 맨 끝에 두어 가장 나중에 적용된다 ══ */
+:root { --title-size: 18px; --title-font: 'Pretendard Variable', 'Pretendard', 'Pretendard Hangul 110', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif; }
+h1, h2, .page-title { font-size: var(--title-size) !important; font-family: var(--title-font) !important; line-height: 1.3 !important; }
+h1 mark, h2 mark, h1 small, h2 small, h1 span, h2 span { font-size: inherit !important; }

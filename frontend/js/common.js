@@ -640,7 +640,7 @@ async function runAiAnalysis() {
     augmented = `${marketCtx}\n\n📚 Qdrant 지식 베이스에서 검색된 관련 지식:\n${ragSection}`;
   }
 
-  box.innerHTML = '<div style="text-align:center;padding:1rem 0;color:var(--muted);font-size:13px;">✨ Claude AI가 분석 중입니다...</div>';
+  box.innerHTML = '<div style="text-align:center;padding:1rem 0;color:var(--muted);font-size:13px;">✨ Qwen 7B가 분석 중입니다...</div>';
 
   // ④ Claude API (streaming)
   try {
@@ -687,12 +687,13 @@ async function runQdrantSearch() {
   if (res) res.innerHTML = '<p style="color:var(--muted);text-align:center;font-size:13px;">검색 중...</p>';
 
   try {
-    const r = await apiFetch('/api/stocks/ai/qdrant/search', {
+    const r = await apiFetch('/api/stocks/ai/qdrant/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, limit: 8 }),
     });
     const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Qwen RAG 요청 실패');
     const hits = data.results ?? [];
     if (!hits.length) {
       res.innerHTML = '<p style="color:var(--muted);text-align:center;font-size:13px;margin-top:2rem;">관련 지식을 찾을 수 없습니다.</p>';
@@ -707,6 +708,12 @@ async function runQdrantSearch() {
         </div>
         <p style="font-size:13.5px;color:#4B5563;margin:0;line-height:1.65;">${h.text}</p>
       </div>`).join('');
+    if (data.answer) {
+      const answer = document.createElement('div');
+      answer.style.cssText = 'padding:16px;margin-bottom:16px;border:1px solid #c7d2fe;border-radius:10px;white-space:pre-wrap;line-height:1.8';
+      answer.textContent = `Qwen 7B · 검색 근거 기반 답변\n\n${data.answer}`;
+      res.prepend(answer);
+    }
   } catch (err) {
     if (res) res.innerHTML = `<p style="color:#F87171;font-size:13px;">오류: ${err.message}</p>`;
   } finally {

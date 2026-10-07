@@ -1,3 +1,10 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   공통 타이포그래피 가이드 — pr(domain-rag-lab) · fd(lumina-invest) · st(stock-coin-trade) · iv(stock-kms-portal) 4개 사이트 통일 (2026-10-07)
+   1) 화면 타이틀(h1·h2)은 Pretendard 18px 로 고정한다(--title-size). 페이지·섹션마다 다른 크기를 쓰지 않는다.
+   2) 18px 를 초과하는 font-size 는 사용 금지. 숫자 KPI·히어로 문구도 예외 없이 18px 이하로 두고, 강조는 크기 대신 굵기(700~800)·색으로 한다.
+   3) 새 규칙을 추가할 때 font-size 는 18px 이하만 쓴다. 18px 초과가 꼭 필요하면 todo.md 7절에 결정 항목으로 올린 뒤 적용한다.
+   4) 고정 규칙은 각 사이트 주 CSS 맨 끝의 "타이틀 고정" 블록이 !important 로 적용한다(인라인·유틸리티 클래스보다 우선). 지우거나 완화하지 말 것.
+   ══════════════════════════════════════════════════════════════════════════════ */
 :root{--trade-bg:#f3f6fb;--trade-panel:#fff;--trade-ink:#13213a;--trade-muted:#68758a;--trade-line:#dfe6f0;--trade-red:#e11d48;--trade-blue:#2563eb;--trade-navy:#0d1b33}
 .trade-app-body{background:var(--trade-bg)}.trader-shell{max-width:1540px;margin:0 auto;padding:22px 22px 64px;color:var(--trade-ink)}
 .trader-hero{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px 28px;border-radius:18px;background:linear-gradient(115deg,#0c1930,#142b51 58%,#174278);box-shadow:0 16px 38px rgba(14,30,58,.18);color:#fff}.trader-kicker,.card-eyebrow{font-size:13.5px;font-weight:900;letter-spacing:.12em}.trader-kicker{color:#8dbbff}.trader-hero h1{margin:5px 0 3px;font-size:30px;font-weight:900}.trader-hero p{margin:0;color:#c7d5e9;font-size:14px}.ledger-badge{display:grid;grid-template-columns:auto auto;gap:1px 9px;align-items:center;padding:12px 16px;border:1px solid rgba(255,255,255,.19);border-radius:12px;background:rgba(255,255,255,.08)}.ledger-badge i{grid-row:1/3;font-size:22px;color:#6ee7b7}.ledger-badge span{font-size:13px;color:#91a9c9;font-weight:900}.ledger-badge b{font-size:13px}

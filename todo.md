@@ -569,3 +569,12 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 | 백엔드 | 변경 없음(`/api/api-usage/kis-history?limit=1000` 을 받아 클라이언트에서 거름) |
 
 **검증(정적)**: 괄호 균형 델타 HEAD 와 동일, HTML id 중복 0, 스크립트가 참조하는 id 모두 존재. 브라우저 미실행 — 배포 후 확인: 헤더 아래 필터 행 표시, 호출 시각에 날짜 선택 시 해당 일자만, HTTP 칸에 `500` 입력 시 500 만(아이콘에서 "초과" 선택 시 범위), 결과 칸에 `실패`, 새로고침 후 필터 유지, 초기화 동작. 배포는 push → `deploy-ec2.yml`.
+
+### 6-14. 2026-10-07 공통 타이포그래피 가이드 — 타이틀 Pretendard 18px 고정, 18px 초과 금지 (사용자 요청, 4개 사이트 공통)
+
+| 변경 | 내용 |
+|------|------|
+| `frontend/css/style.css`, `frontend/css/kis-practice.css`(가이드 주석) | 파일 맨 위에 공통 가이드 주석(4항), 주 CSS 맨 끝에 「타이틀 고정」 블록: `--title-size:18px`·`--title-font: Pretendard…`, `h1, h2, .page-title { font-size:18px !important; font-family: Pretendard !important }`(인라인·유틸리티 클래스보다 우선), `h1/h2` 안의 mark·small·span 은 inherit |
+| 적용 범위 | 타이틀(h1·h2)만 강제. 본문·KPI 숫자 등 기존 18px 초과 선언은 그대로 두었다(아래 수치) — 가이드 2항에 따라 새 규칙에서는 금지, 기존 값은 화면별로 줄여 나간다 |
+
+같은 블록이 pr(`frontend/style.css`)·fd(`public/css/app.css`)·st(`frontend/css/style.css`, 가이드 주석은 `kis-practice.css` 에도)·iv(`frontend/style.css`, `investment-native/styles.css`) 에 들어 있다. 캐시 버전이 있는 링크는 각 페이지에서 갱신 필요(st `style.css?v=…`, pr/iv `style.css?v=…`); fd `/css` 는 no-cache.
