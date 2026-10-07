@@ -559,3 +559,13 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 | 적용 | 서버 적용은 `cp` 로 **같은 inode 에 덮어쓰고** `nginx -s reload`(bind mount 된 단일 파일은 `install`/`mv` 로 바꾸면 컨테이너가 옛 inode 를 계속 봄). 배포 rsync 는 inode 가 바뀌지만 `docker restart crypto-mock-frontend` 가 따라오므로 문제없음 |
 
 **검증**: 서버에서 임시 컨테이너 `nginx -t` 통과 → 적용 후 `curl https://iv.edumgt.co.kr/` 제목 "투자 분석 · 금융 학습 포털", st 는 그대로. 앞으로 iv 블록은 이 파일에서만 관리하고 서버 conf 에 손으로 덧붙이지 않는다.
+
+### 6-13. 2026-10-07 kis-api-history.html 그리드 컬럼별 검색 (사용자 요청)
+
+| 변경 | 내용 |
+|------|------|
+| `frontend/js/kis-api-history.js` | AG Grid(Community 36) **플로팅 필터** 활성화 — 헤더 아래 컬럼별 검색 칸. 컬럼 타입별 필터: 호출 시각 `agDateColumnFilter`(ISO 문자열→날짜 비교 comparator, 브라우저 date picker), 시도·HTTP·소요시간 `agNumberColumnFilter`(같음·초과·미만·범위), 결과 `filterValueGetter`→"성공/실패" 텍스트, 계층·TR ID·작업·방식·경로·요약 텍스트 부분 일치(대소문자 무시). 기존 상단 빠른 검색·계층·결과 셀렉트는 유지. 상태 줄은 필터 후 표시 건수/전체 건수(`forEachNodeAfterFilter`). 필터 모델+상단 조건을 `sessionStorage` 에 저장해 새로고침 후 복원, 「필터 초기화」 버튼 |
+| `frontend/kis-api-history.html` | 「필터 초기화」 버튼, 사용 안내 문구, 그리드 높이 560→600, 스크립트 버전 `?v=20261007-column-filters` |
+| 백엔드 | 변경 없음(`/api/api-usage/kis-history?limit=1000` 을 받아 클라이언트에서 거름) |
+
+**검증(정적)**: 괄호 균형 델타 HEAD 와 동일, HTML id 중복 0, 스크립트가 참조하는 id 모두 존재. 브라우저 미실행 — 배포 후 확인: 헤더 아래 필터 행 표시, 호출 시각에 날짜 선택 시 해당 일자만, HTTP 칸에 `500` 입력 시 500 만(아이콘에서 "초과" 선택 시 범위), 결과 칸에 `실패`, 새로고침 후 필터 유지, 초기화 동작. 배포는 push → `deploy-ec2.yml`.
