@@ -11,8 +11,14 @@ def completion(payload, key=None, user=None):
     request = dict(payload)
     request['model'] = MODEL
     request['stream'] = False
+    messages = json.loads(json.dumps(request['messages']))
+    for message in messages:
+        for call in message.get('tool_calls', []):
+            arguments = call.get('function', {}).get('arguments')
+            if isinstance(arguments, str):
+                call['function']['arguments'] = json.loads(arguments)
     # Native API permits a bounded context on the 8GB shared host.
-    native = {'model': MODEL, 'messages': request['messages'], 'stream': False,
+    native = {'model': MODEL, 'messages': messages, 'stream': False,
               'options': {'num_ctx': 2048, 'num_predict': min(request.get('max_tokens',160),256), 'temperature':0.2},
               'keep_alive':'10m'}
     if request.get('tools'):
