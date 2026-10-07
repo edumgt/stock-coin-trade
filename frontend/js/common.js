@@ -640,7 +640,7 @@ async function runAiAnalysis() {
     augmented = `${marketCtx}\n\n📚 Qdrant 지식 베이스에서 검색된 관련 지식:\n${ragSection}`;
   }
 
-  box.innerHTML = '<div style="text-align:center;padding:1rem 0;color:var(--muted);font-size:13px;">✨ Qwen 7B가 분석 중입니다...</div>';
+  box.innerHTML = '<div style="text-align:center;padding:1rem 0;color:var(--muted);font-size:13px;">✨ Qwen이 분석 중입니다...</div>';
 
   // ④ 공통 Qwen API
   try {
@@ -711,7 +711,7 @@ async function runQdrantSearch() {
     if (data.answer) {
       const answer = document.createElement('div');
       answer.style.cssText = 'padding:16px;margin-bottom:16px;border:1px solid #c7d2fe;border-radius:10px;white-space:pre-wrap;line-height:1.8';
-      answer.textContent = `Qwen 7B · 검색 근거 기반 답변\n\n${data.answer}`;
+      answer.textContent = `Qwen · 검색 근거 기반 답변\n\n${data.answer}`;
       res.prepend(answer);
     }
   } catch (err) {

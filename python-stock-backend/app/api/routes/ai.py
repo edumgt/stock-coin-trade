@@ -1,4 +1,4 @@
-"""시세·RAG 근거를 공통 Docker Qwen 7B로 분석한다."""
+"""시세·RAG 근거를 공통 Docker Qwen(기본 qwen2.5:3b, QWEN_MODEL 로 교체)으로 분석한다."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from fastapi.responses import StreamingResponse
 from app.core.config import get_settings
 
 from ..schemas import AiAnalyzeBody
+from app.services.qwen_remote import MODEL as _QWEN_MODEL
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -36,8 +37,8 @@ def _build_prompt(type_: str, context: str) -> str:
 
 def _stream_qwen(prompt: str) -> Iterator[str]:
     from concurrent.futures import ThreadPoolExecutor, TimeoutError
-    from app.services.qwen_remote import completion
-    yield 'Qwen 7B가 검색 근거를 분석하고 있습니다…\n\n'
+    from app.services.qwen_remote import MODEL, completion
+    yield f'Qwen({MODEL})이 검색 근거를 분석하고 있습니다…\n\n'
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(completion, {'messages':[
             {'role':'system','content':SYSTEM_PROMPT + ' 제공된 근거에 없는 사실을 만들지 말고, 출처 제목을 언급하세요. 300자 이내로 답하세요.'},
@@ -58,4 +59,4 @@ def _stream_qwen(prompt: str) -> Iterator[str]:
 def analyze(payload: AiAnalyzeBody = Body(default_factory=AiAnalyzeBody)) -> StreamingResponse:
     context = str(payload.context or '시세 데이터 없음')
     type_ = str(payload.type or 'general')
-    return StreamingResponse(_stream_qwen(_build_prompt(type_,context)), media_type='text/plain; charset=utf-8', headers={'X-LLM-Model':'qwen2.5:7b','X-Accel-Buffering':'no'})
+    return StreamingResponse(_stream_qwen(_build_prompt(type_,context)), media_type='text/plain; charset=utf-8', headers={'X-LLM-Model':_QWEN_MODEL,'X-Accel-Buffering':'no'})

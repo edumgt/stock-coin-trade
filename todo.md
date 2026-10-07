@@ -387,6 +387,26 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 
 ---
 
+
+### 6-15. 2026-10-07 공통 LLM 모델 qwen2.5:7b → 3b 교체 (사용자 요청)
+
+**배경**: fd 호스트는 2 vCPU · 8GB 를 15개 컨테이너가 공유한다. 7b(4.7GB)는 메모리의 절반 이상을 차지하고 콜드 로딩만 30초대였다.
+
+**fd Ollama 실측** (호스트 load 1.27, num_ctx 2048 · num_predict 160, 앱과 같은 조건)
+
+| 모델 | 콜드(로딩 포함) | 웜 | 생성 속도 |
+|------|------|------|------|
+| qwen2.5:3b | 40.7초 | 16.6초 (33토큰) | 1.99 tok/s |
+| qwen2.5:1.5b | 53.2초 | 39.4초 (160토큰) | 4.06 tok/s |
+
+토큰당 속도는 1.5b 가 3b 의 약 2배다. 160토큰 답변 기준 3b ≈ 80초, 1.5b ≈ 39초로 추정된다.
+
+**변경**: `python-stock-backend/app/services/qwen_remote.py` 의 `MODEL` 을 `QWEN_MODEL` 환경변수 기반 3b 로. `app/api/routes/ai.py` 는 응답 헤더 `X-LLM-Model` 과 스트리밍 첫 문구를 그 상수에서 받아 쓰도록(문자열 중복 제거). 프런트 `js/common.js` 의 「Qwen 7B」 라벨 2곳 → 「Qwen」.
+
+**주의**: 모델 교체만으로는 체감이 크게 좋아지지 않는다. `num_predict` 를 100 이하로 줄이고 `keep_alive` 를 30분 이상으로 두어 콜드 로딩을 피하는 쪽이 효과가 크다. 벤치마크 시 `ollama run` CLI 는 토큰 상한이 없어 수천 토큰을 생성하며 호스트를 포화시킨다(2026-10-07 실제 발생). HTTP API 에 `num_predict` 를 주고 측정할 것.
+
+**7b 삭제 순서**: 배포 전에 지우면 구 코드가 도는 컨테이너가 깨진다. ① 이 변경 배포 → ② `sudo docker exec fin-ai-ollama ollama rm qwen2.5:7b`(4.7GB 회수).
+
 ## 7. 사용자 의사결정 필요 항목 (에이전트가 대신 정할 수 없는 것)
 
 > 2026-10-02 기준. 결정되면 이 표를 갱신하고 관련 "다음 작업"을 6절에 추가한다.

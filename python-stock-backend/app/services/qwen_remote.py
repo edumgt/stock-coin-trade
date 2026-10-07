@@ -4,7 +4,8 @@ import os
 import shlex
 import subprocess
 
-MODEL = 'qwen2.5:7b'
+# 모델명은 환경변수로 교체할 수 있다(기본 qwen2.5:3b). fd 호스트는 2 vCPU·8GB 공유라 7b 는 콜드 로딩(4.7GB)만 30초대였다.
+MODEL = os.environ.get('QWEN_MODEL', 'qwen2.5:3b')
 
 
 def completion(payload, key=None, user=None):
