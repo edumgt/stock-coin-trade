@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import date
 from typing import Annotated
@@ -13,6 +14,7 @@ from app.core.database import DbSession
 from app.core.errors import ApiError
 from app.core.parsing import clamp, parse_int
 from app.models import Member
+from app.services import ohlcv_ingest as ohlcv_ingest_service
 from app.services import ohlcv_store, stock_trading
 from app.services.openapi_auth import (
     PUBLIC_RATE_MAX,
@@ -25,6 +27,7 @@ from app.services.stock_market import get_quote_cached, list_krx_stocks
 
 from ..schemas import OpenApiOrderBody
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/openapi/v1", tags=["openapi"])
 _TICKER_CODE = re.compile(r"^[0-9A-Za-z._-]{1,20}$")
 
@@ -100,6 +103,48 @@ def quote(symbol: str, _: ApiKeyMember) -> dict:
         raise ApiError(503, error="MARKET_DATA_UNAVAILABLE", message=str(exc))
     except ValueError as exc:
         raise ApiError(404, error="NOT_FOUND", message=str(exc))
+
+
+@router.get("/ohlcv/search", dependencies=[Depends(public_endpoint)])
+def ohlcv_search(q: str = Query(..., min_length=1), limit: str = Query("10")) -> dict:
+    """종목코드/종목명으로 수집된 종목을 찾는다 — 종목 검색 자동완성용.
+
+    ``/ohlcv/tickers`` 는 연도별 행수까지 집계해 1초를 넘기므로 타입어헤드에 쓰기 어렵다.
+    이쪽은 ``tickers`` 만 훑어 코드·이름·시장만 돌려준다.
+    """
+    try:
+        limit_value = _bounded_int(limit, "limit", 10, 1, 50)
+    except (ValueError, TypeError):
+        raise ApiError(400, error="INVALID_REQUEST", message="limit 조건을 확인하세요.")
+    try:
+        rows = ohlcv_store.search_tickers(query=q, limit=limit_value)
+    except SQLAlchemyError:
+        raise ApiError(503, error="OHLCV_UNAVAILABLE", message="OHLCV 저장소를 조회할 수 없습니다.")
+    return {"tickers": rows, "count": len(rows)}
+
+
+@router.post("/ohlcv/ingest")
+def ohlcv_ingest(_: ApiKeyMember, payload: dict = Body(default_factory=dict)) -> dict:
+    """종목 하나의 일봉을 공급자에서 받아 OHLCV 저장소를 채운다(멱등).
+
+    종목 검색이 저장소에서 빗나갔을 때 호출된다. 쓰기라서 API 키가 필요하다.
+    국내 상장 종목코드가 아니면 skipped 로 돌려준다(저장소가 국내 일봉 전용).
+    """
+    symbol = str(payload.get("symbol") or "").strip()
+    if not symbol:
+        raise ApiError(400, error="INVALID_REQUEST", message="symbol 이 필요합니다.")
+    name = str(payload.get("name") or "").strip()
+    try:
+        start = _date_arg(str(payload.get("start") or ""), "start")
+        end = _date_arg(str(payload.get("end") or ""), "end")
+        return ohlcv_ingest_service.ingest(symbol=symbol, name=name, start=start, end=end)
+    except ValueError as exc:
+        raise ApiError(400, error="INVALID_REQUEST", message=str(exc))
+    except SQLAlchemyError:
+        raise ApiError(503, error="OHLCV_UNAVAILABLE", message="OHLCV 저장소에 적재할 수 없습니다.")
+    except Exception as exc:
+        logger.exception("OHLCV 적재 실패 %s", symbol)
+        raise ApiError(502, error="OHLCV_INGEST_FAILED", message=f"시세 공급자 조회에 실패했습니다: {exc}")
 
 
 @router.get("/ohlcv/tickers", dependencies=[Depends(public_endpoint)])

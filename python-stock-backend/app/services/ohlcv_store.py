@@ -199,3 +199,28 @@ def public_history(*, code: str, date_from: date | None, date_to: date | None, o
     ticker_data = {key: json_value(value) for key, value in ticker.items()}
     next_offset = offset + len(rows) if offset + len(rows) < total else None
     return {"ticker": ticker_data, "rows": rows, "total": total, "limit": limit, "offset": offset, "nextOffset": next_offset}
+
+
+def search_tickers(*, query: str, limit: int) -> list[dict]:
+    """종목코드/종목명 부분일치로 수집된 종목을 찾는다 — 타입어헤드 전용 경량 조회.
+
+    ``public_tickers`` 는 ohlcv 66만 행을 GROUP BY 하느라 1초를 넘긴다. 종목 검색
+    자동완성은 코드·이름·시장만 있으면 되므로 2,700행짜리 ``tickers`` 만 훑는다.
+    정렬은 ① 코드 완전일치 ② 이름 완전일치 ③ 이름이 검색어로 시작 ④ 짧은 이름 순이다
+    (예: "카카오" → 카카오 > 카카오뱅크 > 카카오게임즈).
+    """
+    q = query.strip()
+    if not q:
+        return []
+    with engine().connect() as conn:
+        return rows_of(conn.execute(text("""
+            SELECT ticker_code, name, market
+            FROM tickers
+            WHERE ticker_code ILIKE :like OR COALESCE(name, '') ILIKE :like
+            ORDER BY (ticker_code = :exact) DESC,
+                     (COALESCE(name, '') = :exact) DESC,
+                     (COALESCE(name, '') ILIKE :prefix) DESC,
+                     length(COALESCE(name, '')) ASC,
+                     ticker_code ASC
+            LIMIT :limit
+        """), {"like": f"%{q}%", "exact": q, "prefix": f"{q}%", "limit": limit}))
