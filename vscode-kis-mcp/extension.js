@@ -63,7 +63,7 @@ class KisMcpViewProvider {
     <button type="button" id="run" class="primary">도구 실행 <span>↗</span></button>
   </section>
   <section class="result-section" aria-label="실행 결과"><div class="section-head"><strong>응답</strong><button type="button" id="copy" class="text-button" disabled>복사</button></div><div id="result" class="result empty" role="status">도구를 실행하면 결과가 여기에 표시됩니다.</div></section>
-  <footer>연결: 이 작업공간의 공식 KIS MCP 서버</footer>
+  <footer class="site-footer-unified">© 2026 (주)에듀엠지티 All rights reserved.</footer>
 <script nonce="${nonce}" src="${js}"></script>
 </body></html>`;
   }

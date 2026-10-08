@@ -60,6 +60,47 @@
     @media (max-width:1050px) { .hts-app { min-width:840px; }.workspace { grid-template-columns:235px minmax(390px,1fr) 260px; }.market-ticker { display:none; }.quote-summary { gap:5px; padding:8px; }.quote-stat { padding-left:5px; } }.api-offcanvas { min-width:360px; }
   
 /* min-text-floor */ small,sub,sup{font-size:max(13px,.9em)!important}
+
+/* ══ 공통 푸터 통일 (주식투자 4개 저장소 동일 스타일) ═══════════════════════
+   높이 25px 고정 · 검정 배경 · 한 줄 중앙 정렬 · 동일 문구
+   문구: © 2026 (주)에듀엠지티 All rights reserved.
+   기존 푸터 규칙(테마 오버라이드 포함)을 덮으려면 !important가 필요하다. */
+footer,
+.site-footer-unified {
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-family: inherit !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  line-height: 25px !important;
+  letter-spacing: .02em !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+}
+footer a,
+.site-footer-unified a {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.0.2/dist/ag-grid-community.min.js"></script>
 </head>
@@ -72,10 +113,11 @@
       <section class="window main-panel"><div class="quote-summary"><div class="stock-title"><strong id="stockName">삼성전자</strong><span id="stockCode">005930 · KOSPI</span></div><div class="quote-price" id="mainPrice">71,200 <small>▲ 1.28%</small></div><div class="quote-stat"><label>전일대비</label><b class="up" id="changeText">+900원</b></div><div class="quote-stat"><label>거래량</label><b id="volumeText">12,841,327</b></div><div class="quote-stat"><label>시가총액</label><b id="capText">425.0조</b></div></div><div class="chart-area"><div class="chart-legend"><span class="ma5">5일</span><span class="ma20">20일</span><span class="ma60">60일</span><span style="margin-left:auto;color:#8393a2;">일봉 · 수정주가</span></div><svg class="chart-svg" viewBox="0 0 700 300" preserveAspectRatio="none" aria-label="삼성전자 모의 차트"><path class="ma-line" stroke="#f19b37" d="M0,230 C70,215 100,240 150,185 S245,185 290,155 S385,130 435,160 S540,80 700,82"/><path class="ma-line" stroke="#8259c9" d="M0,238 C90,225 120,218 170,205 S270,170 330,178 S430,145 490,130 S585,110 700,95"/><path class="ma-line" stroke="#28a7a3" d="M0,245 C120,235 210,205 300,192 S465,155 555,130 S635,115 700,108"/><g id="candles"></g></svg><section class="supply-zone" aria-label="투자자별 수급 차트"><div class="supply-info">투자자별 누적 순매수<small>단위: 억원 · 교육용 데이터</small><div class="supply-legend"><span class="supply-foreign">외국인</span><span class="supply-inst">기관</span><span class="supply-retail">개인</span></div></div><svg class="supply-svg" viewBox="0 0 560 82" preserveAspectRatio="none"><line class="supply-zero" x1="0" y1="41" x2="560" y2="41"/><path id="foreignFlow" class="supply-line" stroke="#d73c50"/><path id="institutionFlow" class="supply-line" stroke="#257fc0"/><path id="retailFlow" class="supply-line" stroke="#7e56bd"/></svg></section></div><div><div class="bottom-tabs"><button class="bottom-tab active">종목 뉴스</button><button class="bottom-tab">기업정보</button><button class="bottom-tab">공시</button><button class="bottom-tab">투자의견</button></div><div class="news-list"><div class="news">삼성전자, 차세대 메모리 공급 확대 기대감에 강세 <time>14:18</time></div><div class="news">외국인 순매수 전환…반도체 업종 중심으로 매수세 <time>13:47</time></div><div class="news">코스피, 기관 매수에 상승폭 확대 <time>11:22</time></div></div></div></section>
       <aside class="right-col"><section class="window orderbook"><div class="titlebar"><span class="screen-no">0101</span>주식현재가 <span class="window-actions">— □ ✕</span></div><div class="book-info"><span>삼성전자</span><b id="bookPrice">71,200 ▲ 900</b><span>단위: 주</span></div><div class="book-head"><span>호가</span><span>잔량</span><span>가격</span><span>잔량</span></div><div id="orderBook"></div></section><section class="window order-box"><div class="titlebar"><span class="screen-no">0600</span>주식주문 <span class="window-actions">— □ ✕</span></div><div class="order-tabs"><button class="order-tab active">매수</button><button class="order-tab">매도</button><button class="order-tab">정정/취소</button></div><div class="order-form"><div class="form-row"><span>종목</span><input id="orderStock" value="삼성전자 (005930)" readonly></div><div class="form-row"><span>주문가격</span><input id="orderPrice" value="71,200" inputmode="numeric"></div><div class="form-row"><span>주문수량</span><input id="orderQty" value="1" inputmode="numeric"></div><div class="quick"><button data-qty="10">10%</button><button data-qty="25">25%</button><button data-qty="50">50%</button><button data-qty="100">최대</button></div><button class="submit-order" id="orderSubmit">매수 주문 연습하기</button></div></section></aside>
     </main>
-    <footer class="statusbar"><span class="live"></span><span>서버 연결됨</span><span>모의투자 모드</span><span id="statusScreen">현재 화면: 0130 관심종목</span><span>© EDUMGT</span></footer>
+    <div class="statusbar"><span class="live"></span><span>서버 연결됨</span><span>모의투자 모드</span><span id="statusScreen">현재 화면: 0130 관심종목</span></div>
+    <footer class="site-footer-unified">© 2026 (주)에듀엠지티 All rights reserved.</footer>
   </div><div id="toast"></div>
   <div class="order-modal-backdrop" id="htsOrderModal" role="dialog" aria-modal="true" aria-labelledby="htsOrderTitle"><section class="hts-order-modal"><header class="hts-order-title"><span class="screen-no">4990</span><span id="htsOrderTitle">주식 주문</span><button class="modal-close" id="orderModalClose" aria-label="주문창 닫기">×</button></header><div class="order-modal-tabs"><button class="modal-tab active buy" data-side="buy">매수 주문</button><button class="modal-tab" data-side="sell">매도 주문</button><button class="modal-tab" data-side="amend">정정 · 취소</button></div><div class="order-modal-body"><div class="order-fields"><label>계좌번호</label><div class="account-row"><select><option>123-45-****** 모의투자</option></select><input type="password" value="0000" aria-label="계좌 비밀번호"></div><label>종목</label><input id="modalOrderStock" readonly><label>주문유형</label><select id="modalOrderType"><option value="limit">보통 (지정가)</option><option value="market">시장가</option><option value="conditional">조건부지정가</option></select><label>주문가격</label><div class="modal-inline"><input id="modalOrderPrice" inputmode="numeric"><select><option>원</option></select></div><label>주문수량</label><div class="modal-inline"><input id="modalOrderQty" value="1" inputmode="numeric"><select><option>주</option></select></div><label>주문조건</label><select><option>없음</option><option>IOC</option><option>FOK</option></select></div><aside class="price-side"><div class="price-side-header">호가 클릭으로 가격 입력</div><div id="modalOrderBook"></div></aside></div><div class="modal-summary"><span>주문 예상금액 <strong id="modalOrderAmount">71,200원</strong></span><span>주문가능 <b>100,000,000원</b></span></div><div class="modal-actions"><button class="modal-cancel" id="modalCancel">취소</button><button class="modal-submit buy" id="modalSubmit">매수 주문 확인</button></div><div class="modal-notice">본 화면은 주문 절차를 익히기 위한 교육용 시뮬레이션입니다. 주문 확인 후에도 실제 거래는 실행되지 않습니다.</div></section></div>
-  <div class="analysis-backdrop" id="analysisModal" role="dialog" aria-modal="true" aria-labelledby="analysisTitle"><section class="analysis-modal"><header class="analysis-head"><span class="screen-no">0919</span><div class="analysis-company"><strong id="analysisTitle">기업분석</strong><span id="analysisCode">005930 · KOSPI</span></div><div class="analysis-score"><span>교육용 종합 점수</span><b id="analysisScore">78 / 100</b></div><button class="modal-close" id="analysisClose" aria-label="기업분석 창 닫기">×</button></header><div class="analysis-body"><nav class="analysis-tabs"><span class="active">기업개요</span><span>재무분석</span><span>투자지표</span><span>리스크</span></nav><div class="analysis-grid"><article class="analysis-card"><h3>사업 개요</h3><p id="analysisOverview">선택 종목의 사업 구조와 산업 내 경쟁 환경을 학습용 정보로 요약합니다.</p></article><article class="analysis-card"><h3>투자 체크포인트</h3><ul class="analysis-list" id="analysisPoints"></ul></article><article class="analysis-card"><h3>핵심 재무지표 <small style="font-weight:500;">(교육용 예시)</small></h3><div class="analysis-metrics"><div class="analysis-metric"><span>매출 성장률</span><b class="good" id="metricSales">+12.4%</b></div><div class="analysis-metric"><span>영업이익률</span><b id="metricMargin">18.7%</b></div><div class="analysis-metric"><span>ROE</span><b id="metricRoe">11.2%</b></div></div></article><article class="analysis-card"><h3>밸류에이션 · 수급</h3><div class="analysis-metrics"><div class="analysis-metric"><span>PER</span><b id="metricPer">14.8배</b></div><div class="analysis-metric"><span>PBR</span><b id="metricPbr">1.42배</b></div><div class="analysis-metric"><span>변동성</span><b id="metricVol">보통</b></div></div></article></div></div><footer class="analysis-foot">표시된 지표와 의견은 기업분석 절차를 익히기 위한 모의 데이터이며, 실제 공시·실적·투자의견을 대체하지 않습니다.</footer></section></div>
+  <div class="analysis-backdrop" id="analysisModal" role="dialog" aria-modal="true" aria-labelledby="analysisTitle"><section class="analysis-modal"><header class="analysis-head"><span class="screen-no">0919</span><div class="analysis-company"><strong id="analysisTitle">기업분석</strong><span id="analysisCode">005930 · KOSPI</span></div><div class="analysis-score"><span>교육용 종합 점수</span><b id="analysisScore">78 / 100</b></div><button class="modal-close" id="analysisClose" aria-label="기업분석 창 닫기">×</button></header><div class="analysis-body"><nav class="analysis-tabs"><span class="active">기업개요</span><span>재무분석</span><span>투자지표</span><span>리스크</span></nav><div class="analysis-grid"><article class="analysis-card"><h3>사업 개요</h3><p id="analysisOverview">선택 종목의 사업 구조와 산업 내 경쟁 환경을 학습용 정보로 요약합니다.</p></article><article class="analysis-card"><h3>투자 체크포인트</h3><ul class="analysis-list" id="analysisPoints"></ul></article><article class="analysis-card"><h3>핵심 재무지표 <small style="font-weight:500;">(교육용 예시)</small></h3><div class="analysis-metrics"><div class="analysis-metric"><span>매출 성장률</span><b class="good" id="metricSales">+12.4%</b></div><div class="analysis-metric"><span>영업이익률</span><b id="metricMargin">18.7%</b></div><div class="analysis-metric"><span>ROE</span><b id="metricRoe">11.2%</b></div></div></article><article class="analysis-card"><h3>밸류에이션 · 수급</h3><div class="analysis-metrics"><div class="analysis-metric"><span>PER</span><b id="metricPer">14.8배</b></div><div class="analysis-metric"><span>PBR</span><b id="metricPbr">1.42배</b></div><div class="analysis-metric"><span>변동성</span><b id="metricVol">보통</b></div></div></article></div></div><footer class="site-footer-unified">© 2026 (주)에듀엠지티 All rights reserved.</footer></section></div>
   <script>
     const stocks = [
       {name:'삼성전자', code:'005930', price:71200, rate:1.28, volume:'12,841,327', cap:'425.0조'},

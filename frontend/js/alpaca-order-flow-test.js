@@ -6,6 +6,28 @@
   const run = document.getElementById('run');
   const result = document.getElementById('result');
   if (!confirm || !run || !result) return;
+  // Check the broker's calendar on entry (holidays and DST included).
+  async function notifyMarketStatus() {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+      const response = await fetch(`${apiBase}/api/alpaca-test/market/clock`, {
+        credentials: 'include', cache: 'no-store', signal: controller.signal,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || typeof data.result?.isOpen !== 'boolean') {
+        throw new Error('시장 상태 조회 실패');
+      }
+      if (!data.result.isOpen) {
+        window.showToast?.('현재 미장 개장시간이 아닙니다.', { type: 'warn', duration: 5000 });
+      }
+    } catch (_) {
+      window.showToast?.('미장 개장 여부를 확인하지 못했습니다. 잠시 후 다시 확인해 주세요.', { type: 'warn', duration: 5000 });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  notifyMarketStatus();
   confirm.addEventListener('change', () => { run.disabled = !confirm.checked; });
   run.addEventListener('click', async () => {
     if (!confirm.checked) return;

@@ -504,9 +504,9 @@ function mountDatasetComposerModal() {
         '</label>' +
         '<div class="dataset-composer-meta"><div class="dataset-composer-count">0 / 2,000자</div><div data-slot="msg"></div></div>' +
       '</div>' +
-      '<footer class="dataset-composer-footer">' +
+      '<div class="dataset-composer-footer">' +
         '<button type="button" class="dataset-composer-cancel">취소</button>' +
-      '</footer>' +
+      '</div>' +
     '</section>';
 
   const slot = name => modal.querySelector(`[data-slot="${name}"]`);
@@ -882,7 +882,8 @@ function ensureSiteFooter() {
   if (document.body.querySelector(':scope > footer')) return;
   const footer = document.createElement('footer');
   footer.id = 'site-footer';
-  footer.innerHTML = '<div>EDUMGT · 투자 교육 플랫폼 <span aria-hidden="true">·</span> 외부 API 거래연습은 제공사의 Testbed·Paper 환경을 사용합니다.</div>';
+  footer.className = 'site-footer-unified';
+  footer.textContent = '© 2026 (주)에듀엠지티 All rights reserved.';
   document.body.appendChild(footer);
 }
 

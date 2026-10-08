@@ -598,3 +598,32 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 | 적용 범위 | 타이틀(h1·h2)만 강제. 본문·KPI 숫자 등 기존 18px 초과 선언은 그대로 두었다(아래 수치) — 가이드 2항에 따라 새 규칙에서는 금지, 기존 값은 화면별로 줄여 나간다 |
 
 같은 블록이 pr(`frontend/style.css`)·fd(`public/css/app.css`)·st(`frontend/css/style.css`, 가이드 주석은 `kis-practice.css` 에도)·iv(`frontend/style.css`, `investment-native/styles.css`) 에 들어 있다. 캐시 버전이 있는 링크는 각 페이지에서 갱신 필요(st `style.css?v=…`, pr/iv `style.css?v=…`); fd `/css` 는 no-cache.
+
+### 6-15. 2026-10-08 주식투자 4개 저장소 푸터 통일 — 검정 배경·높이 25px 고정·동일 문구 (사용자 요청)
+
+요구: 4개 저장소(pr `domain-rag-lab` / fd `lumina-invest` / st `stock-coin-trade` / iv `stock-kms-portal`)의 **모든 `<footer>`** 를 검정색·높이 25px 고정·동일 스타일·동일 문구로 통일. 적용 범위는 사용자가 "모든 `<footer>` 요소"로 지정했다(카드·모달·섹션 내부 푸터 포함).
+
+문구: `© 2026 (주)에듀엠지티 All rights reserved.`
+마크업: `<footer class="site-footer-unified">© 2026 (주)에듀엠지티 All rights reserved.</footer>`
+스타일: `height/min-height/max-height:25px` · `background:#000` · `color:#fff` · `font-size:11.5px` · 가운데 정렬 1줄 · `overflow:hidden` · `white-space:nowrap` · border/radius/shadow 제거. 기존 푸터 규칙과 테마 오버라이드를 덮어야 해서 전 속성 `!important`. 선택자는 `footer, .site-footer-unified` 로 동적 생성 푸터까지 걸리게 했다.
+
+| 변경 | 내용 |
+|------|------|
+| `frontend/css/style.css` | 맨 끝에 공통 푸터 블록 추가(종전 `#site-footer` 는 검정이지만 높이 가변) |
+| `frontend/*.html` 33개, `trade/*`, `learning/*`, `member/*` | 푸터 마크업 35곳 교체 |
+| `frontend/js/common.js` `ensureSiteFooter()` | 주입 푸터를 `className='site-footer-unified'` + 통일 문구로 |
+| `frontend/js/tr-pine-course.js`(8곳), `quant-schema-docs.js`, `tr-pine-advanced.js` | 템플릿 문자열 안의 푸터 교체 |
+| `frontend/hts.html` | 외부 스타일시트를 쓰지 않아 인라인 `<style>` 에 같은 블록을 넣었다 |
+| `vscode-kis-mcp/extension.js`, `media/panel.css` | 확장 웹뷰 푸터도 같은 규칙 |
+| **기능 복구** `frontend/lambda-db-practice.html` | 단계 이동 버튼(`#lambda-prev/#lambda-complete/#lambda-next`)이 `<footer>` 안에 있었다 → `div.lambda-step-actions` 로 옮겼다. 안 옮기면 `lambda-db-practice.js:269` 가 null 참조로 터진다. `css/lambda-db-practice.css` 에 종전 `.lambda-step-card>footer` 규칙을 새 클래스로 다시 지정(미디어쿼리 포함). 클래스명은 기존 `.lambda-step-nav`(좌측 단계 목록)와 충돌하지 않게 `lambda-step-actions` 로 했다 |
+| **기능 복구** `frontend/hts.html` | HTS 상태바가 `<footer class="statusbar">` 였다 → `div.statusbar` 로 복구(`#statusScreen`, `hts.html:194` 의 `.statusbar` 참조 유지). `© EDUMGT` 표기는 아래 통일 푸터가 대신한다 |
+| **기능 복구** `frontend/js/common.js` 데이터셋 작성 모달 | `footer.dataset-composer-footer`(취소 버튼 + 제출 버튼 슬롯) → `div` 로 복구. 안 하면 `common.js:526` 이 null 참조 |
+| 캐시 버전 | 변경 자산 전부 `?v=20261008-footer-25px` |
+
+**4개 저장소 합계**: `<footer>` 106곳 중 101곳을 통일 푸터로 교체, 5곳은 기능 요소라 `div` 로 바꿔 동작을 지켜냈다(위 "기능 복구" 항목). 통일 CSS 블록은 9곳(CSS 8개 + `hts.html` 인라인).
+
+**카드·모달 내부 푸터의 내용은 사라졌다**: 투자 판단 체크리스트 결론, 기업분석 모달 면책 문구, `day-offcanvas-footer` 의 Swagger·상태확인 링크, 공시/숫자 읽기 원칙, tr-pine 단계별 요약 코드(`guide.footer`) 등. "모든 `<footer>` 통일" 지시에 따른 결과이며, 되살리려면 해당 블록만 `div` 로 바꾸면 된다.
+
+검증: 남은 `<footer>` 101곳이 모두 동일 문자열, 변경 JS 전부 `node --check` 통과, 변경 CSS 중괄호 균형 일치, 푸터와 함께 사라진 id·class 중 JS가 참조하는 것 없음(`#footer-year` 만 남았고 null 가드 있음).
+
+**커밋 안 했다** — 변경만 남겨 두었다.

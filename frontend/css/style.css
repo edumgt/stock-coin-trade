@@ -741,3 +741,45 @@ small,sub,sup{font-size:max(13px,.9em)!important}
 :root { --title-size: 18px; --title-font: 'Pretendard Variable', 'Pretendard', 'Pretendard Hangul 110', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif; }
 h1, h2, .page-title { font-size: var(--title-size) !important; font-family: var(--title-font) !important; line-height: 1.3 !important; }
 h1 mark, h2 mark, h1 small, h2 small, h1 span, h2 span { font-size: inherit !important; }
+
+
+/* ══ 공통 푸터 통일 (주식투자 4개 저장소 동일 스타일) ═══════════════════════
+   높이 25px 고정 · 검정 배경 · 한 줄 중앙 정렬 · 동일 문구
+   문구: © 2026 (주)에듀엠지티 All rights reserved.
+   기존 푸터 규칙(테마 오버라이드 포함)을 덮으려면 !important가 필요하다. */
+footer,
+.site-footer-unified {
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-family: inherit !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  line-height: 25px !important;
+  letter-spacing: .02em !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+}
+footer a,
+.site-footer-unified a {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
