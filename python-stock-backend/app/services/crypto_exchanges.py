@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import threading
 import time
 from typing import Any
@@ -110,3 +111,38 @@ def get_korbit_orderbook(symbol: str) -> dict[str, Any]:
         raise BrokerApiError("Korbit 공개 호가 조회가 빈 응답을 반환했습니다.")
     book = body["data"]
     return {"exchange": "Korbit", "symbol": symbol, "timestamp": book.get("timestamp"), "bids": book.get("bids", [])[:10], "asks": book.get("asks", [])[:10]}
+
+
+CANDLE_INTERVALS = {"1m": "1", "5m": "5", "15m": "15", "30m": "30", "1h": "60", "4h": "240", "1d": "1D", "1w": "1W"}
+
+
+def get_exchange_candles(exchange: str, symbol: str, interval: str = "1h", limit: int = 200) -> dict[str, Any]:
+    if exchange not in {"binance", "korbit"} or interval not in CANDLE_INTERVALS or not 1 <= limit <= 200:
+        raise BrokerApiError("지원하지 않는 거래소·봉 주기 또는 조회 개수입니다. (최대 200개)")
+    if exchange == "binance":
+        body = _json(requests.get(f"{BINANCE_BASE_URL}/klines", params={"symbol": symbol, "interval": interval, "limit": limit}, timeout=15), "Binance")
+        if not isinstance(body, list):
+            raise BrokerApiError("Binance 캔들 응답 형식이 올바르지 않습니다.")
+        raw = [dict(zip(("timestamp", "open", "high", "low", "close", "volume"), row[:6])) for row in body if isinstance(row, list)]
+        source = f"{BINANCE_BASE_URL}/klines"
+    else:
+        body = _json(requests.get(f"{KORBIT_BASE_URL}/candles", params={"symbol": symbol, "interval": CANDLE_INTERVALS[interval], "limit": limit}, timeout=15), "Korbit")
+        if not isinstance(body, dict) or not body.get("success") or not isinstance(body.get("data"), list):
+            raise BrokerApiError("Korbit 캔들 조회가 유효한 응답을 반환하지 않았습니다.")
+        raw = body["data"]
+        source = f"{KORBIT_BASE_URL}/candles"
+    candles = {}
+    try:
+        for row in raw:
+            item = {key: float(row[key]) for key in ("open", "high", "low", "close", "volume")}
+            stamp = float(row["timestamp"])
+            if not all(math.isfinite(v) for v in [stamp, *item.values()]):
+                raise ValueError("non-finite candle")
+            item["time"] = int(stamp / 1000)
+            if item["time"] <= 0 or item["volume"] < 0 or item["low"] > min(item["open"], item["close"]) or item["high"] < max(item["open"], item["close"]):
+                raise ValueError("invalid candle")
+            candles[item["time"]] = item
+    except (KeyError, TypeError, ValueError, OverflowError) as exc:
+        raise BrokerApiError("거래소 캔들 데이터 형식이 올바르지 않습니다.") from exc
+    return {"exchange": "Binance Spot" if exchange == "binance" else "Korbit", "symbol": symbol, "interval": interval,
+            "source": source, "candles": [candles[t] for t in sorted(candles)][-limit:], "fetchedAt": int(time.time() * 1000)}

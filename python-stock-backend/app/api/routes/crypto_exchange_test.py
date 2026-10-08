@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.services.brokers.common import BrokerApiError
 from app.services.crypto_exchanges import (
+    get_exchange_candles,
     get_binance_orderbook,
     get_binance_symbols,
     get_binance_ticker,
@@ -79,3 +80,13 @@ def korbit_ticker(symbol: str = Query("btc_krw")):
 @router.get("/korbit/orderbook")
 def korbit_orderbook(symbol: str = Query("btc_krw")):
     return _run(lambda: get_korbit_orderbook(_korbit_symbol(symbol)))
+
+
+@router.get("/{exchange}/candles")
+def exchange_candles(exchange: str, symbol: str = Query(...), interval: str = Query("1h"), limit: int = Query(200, ge=1, le=200)):
+    def build():
+        if exchange not in {"binance", "korbit"}:
+            raise BrokerApiError("지원하지 않는 거래소입니다.")
+        normalized = _binance_symbol(symbol) if exchange == "binance" else _korbit_symbol(symbol)
+        return get_exchange_candles(exchange, normalized, interval, limit)
+    return _run(build)
