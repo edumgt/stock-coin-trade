@@ -627,3 +627,41 @@ docker exec -i fin-ai-app python - --order < /home/ubuntu/stock-coin-trade/scrip
 검증: 남은 `<footer>` 101곳이 모두 동일 문자열, 변경 JS 전부 `node --check` 통과, 변경 CSS 중괄호 균형 일치, 푸터와 함께 사라진 id·class 중 JS가 참조하는 것 없음(`#footer-year` 만 남았고 null 가드 있음).
 
 **커밋 안 했다** — 변경만 남겨 두었다.
+
+### 6-16. 2026-10-08 4개 저장소 공통 스타일 CSS 단일화 → www.edumgt.co.kr S3 `css/` 호스팅 (사용자 요청)
+
+요구: 4개 저장소(pr `domain-rag-lab` / fd `lumina-invest` / st `stock-coin-trade` / iv `stock-kms-portal`)의 공통 스타일 CSS 를 **하나로 만들어** `www.edumgt.co.kr` 의 S3 `css/` 폴더에 올리고, 네 사이트가 그것을 쓰도록 개편.
+
+**단일 정본**: `https://www.edumgt.co.kr/css/common.css` (`s3://www.edumgt.co.kr/css/common.css`, CloudFront 경유, `text/css; charset=utf-8`, `Cache-Control: public, max-age=300`)
+**소스 정본(버전 관리)**: `lumina-invest/shared-css/common.css` + `deploy.sh` + `README.md`. 스타일 변경은 소스를 고치고 `./shared-css/deploy.sh` 로 올린다. 최대 5분 뒤 전파된다(이 계정 IAM 에 `cloudfront:ListDistributions`/무효화 권한이 없어 max-age 로 처리).
+
+**공통 CSS 에 들어간 것**(4개 저장소에 바이트 단위로 동일하게 복제돼 있던 블록 + 한글 스케일):
+
+| 블록 | 종전 위치 |
+|------|-----------|
+| 공통 타이포그래피 가이드 주석(6-27) | 주 CSS 6개 맨 위에 8줄씩 중복 |
+| 타이틀 고정 — `--title-size:18px`, `h1·h2·.page-title` 18px `!important` | 주 CSS 5개 맨 끝에 중복 |
+| 공통 푸터 통일 — 25px·검정·1줄(6-34) | CSS 8개에 39줄씩 중복 |
+| 전역 최소 글자 크기 — `small,sub,sup{font-size:max(13px,.9em)!important}` | st `style.css` 에만 있었다 → 4개 사이트 전체 적용 |
+| 한글 글자 스케일 — `Pretendard Hangul 110` @font-face(`size-adjust:110%`) | pr `hangul-scale.css` 에만 있었다 → 4개 사이트 전체 적용 |
+
+**공통 CSS 에 넣지 않은 것**: 테마 토큰(색·배경·그림자·레이아웃)은 사이트마다 전혀 달라서 각 저장소 주 CSS 에 남겼다 — pr 다크+노란색(`#0a0a0a`/`#F5C518`), fd 라이트, st 라이트 TradingView 블루(`#F0F3FA`/`#2962FF`), iv 파랑/노랑(`#0058a3`/`#ffda1a`).
+
+**읽는 방법**: 모든 HTML 의 `</head>` 바로 앞에 **마지막 스타일시트**로 넣었다. 공통 블록이 각 사이트 CSS 를 덮어써야 하므로 순서가 중요하다.
+`<link rel="stylesheet" href="https://www.edumgt.co.kr/css/common.css?v=20261008-common-1" />`
+
+**예외 1곳**: `stock-coin-trade/vscode-kis-mcp/media/panel.css` 는 VSCode 웹뷰이고 CSP 가 `style-src ${webview.cspSource}` 라서 외부 CSS 를 못 읽는다. 공통 푸터 블록을 로컬에 유지했다.
+
+**사용자 결정**(작업 전 확인): 범위는 "이미 동일한 블록 + 한글 폰트 스케일", 폴백은 "S3 만 사용"(각 저장소에 런타임 사본을 두지 않음). 따라서 S3/CloudFront 장애 시 4개 사이트의 푸터·타이틀 고정·한글 스케일이 동시에 빠진다(테마·레이아웃은 로컬이라 유지).
+
+검증: ① 공통 블록이 로컬 CSS 에 남아있지 않음(panel.css 예외 1곳만) ② HTML 111곳 전부에서 `common.css` 가 마지막 스타일시트 ③ 변경 CSS 9개 중괄호 균형 일치 ④ S3 응답 200 + 소스와 `diff` 일치 ⑤ 4개 저장소에 CSP 설정 없음(외부 스타일시트 차단 없음) ⑥ CSS `?v=` 만 `20261008-common-1` 로 갱신, JS 버전은 그대로.
+
+**커밋 안 했다** — 변경만 남겨 두었다.
+**이 저장소의 변경**
+
+| 변경 | 내용 |
+|------|------|
+| `frontend/css/style.css` | 상단 가이드 주석 → 포인터, 맨 끝 타이틀 고정+공통 푸터 블록 제거, `min-text-floor` 2줄 제거(공통 CSS 로 이동) |
+| `frontend/css/kis-practice.css` | 상단 8줄 가이드 주석 → 정본 포인터 3줄 |
+| `vscode-kis-mcp/media/panel.css` | **그대로 유지** — 웹뷰 CSP 때문에 외부 CSS 불가 |
+| HTML 82개 | `</head>` 앞에 공통 CSS 링크 추가, CSS `?v=` 갱신(JS 버전은 유지) |
