@@ -21,7 +21,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from app.api.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.errors import install_exception_handlers
-from app.core.middleware import RequestAuditMiddleware
+from app.core.middleware import RequestAuditMiddleware, ExternalReadLimitMiddleware
 from app.core.sessions import MemorySessionStore, RedisSessionStore, ServerSessionMiddleware, SessionStore
 from app.services.audit import record_response
 
@@ -95,6 +95,7 @@ def create_app(settings: Settings | None = None, *, session_store: SessionStore 
         redoc_url=None,
         middleware=[
             Middleware(PathScopedCORSMiddleware, api_origin_regex=settings.cors_api_origin_regex),
+            Middleware(ExternalReadLimitMiddleware),
             Middleware(
                 ServerSessionMiddleware,
                 store=store,

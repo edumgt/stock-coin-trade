@@ -82,10 +82,17 @@ function upbitWebSocketUrl() {
 
 /* ── Auth ────────────────────────────────────────────────────────────────── */
 async function getCurrentUser() {
+  const controller = new AbortController();
+  const deadline = setTimeout(() => controller.abort(), 10000);
   try {
-    const res = await apiFetch('/api/member/me');
+    const res = await apiFetch('/api/member/me', { signal: controller.signal });
     if (res.ok) return await res.json();
-  } catch {}
+    if (res.status !== 401) return { loggedIn: false, authUnavailable: true };
+  } catch {
+    return { loggedIn: false, authUnavailable: true };
+  } finally {
+    clearTimeout(deadline);
+  }
   return { loggedIn: false };
 }
 
@@ -1064,6 +1071,12 @@ function mountCredentialSourceNote() {
 
 async function initPage({ requireAuth = false } = {}) {
   const user = await getCurrentUser();
+  if (user?.authUnavailable) {
+    renderHeader(user);
+    ensureSiteFooter();
+    window.showToast?.('서버 응답이 지연되고 있습니다. 잠시 후 새로고침해 주세요.', { type: 'warn', duration: 6000 });
+    if (requireAuth) return null;
+  }
   if (requireAuth && !user?.loggedIn) {
     location.href = '/member/login.html';
     return null;

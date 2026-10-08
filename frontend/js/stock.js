@@ -675,6 +675,11 @@ function setKisNotice(message) {
 }
 
 async function loadAccount() {
+  if (!currentUser?.loggedIn) {
+    setText('accountCash', '-'); setText('accountAsset', '-');
+    setEl('accountPnlRate', '-', 'var(--muted)');
+    return;
+  }
   if (tradeMode === 'kis') {
     let data;
     try { data = await fetchKisBalance(); }
@@ -705,6 +710,12 @@ async function loadAccount() {
 }
 
 async function loadPositions() {
+  if (!currentUser?.loggedIn) {
+    lastPositions = [];
+    const tbody = document.getElementById('positionsBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6">로그인 후 보유자산을 확인할 수 있습니다.</td></tr>';
+    return;
+  }
   if (tradeMode === 'kis') {
     try { lastPositions = (await fetchKisBalance()).positions; }
     catch { lastPositions = []; }
@@ -763,6 +774,10 @@ async function loadHistory() {
   try {
     const tbody = document.getElementById('historyBody');
     if (!tbody) return;
+    if (!currentUser?.loggedIn) {
+      tbody.innerHTML = '<tr><td colspan="5">로그인 후 거래 이력을 확인할 수 있습니다.</td></tr>';
+      return;
+    }
     let hist;
     if (tradeMode === 'kis') {
       try { hist = await fetchKisHistory(); }
@@ -1084,6 +1099,12 @@ document.getElementById('kisOrderType')?.addEventListener('change', event => {
   if (priceInput) { priceInput.hidden = !limit; if (limit && !priceInput.value && currentStockPrice) priceInput.value = currentStockPrice; }
 });
 
+async function refreshStockPanels(tasks) {
+  const results = await Promise.allSettled(tasks);
+  const failed = results.find(result => result.status === 'rejected');
+  if (failed) showMsg(failed.reason?.message || '데이터를 불러오지 못했습니다.', true);
+}
+
 /* ── 부트 ────────────────────────────────────────────────────────────────── */
 (async () => {
   relocateStockPanels();
@@ -1096,8 +1117,8 @@ document.getElementById('kisOrderType')?.addEventListener('change', event => {
   await setTradeMode(readInitialTradeMode(), { persist: false, reload: false });
 
   const sym = document.getElementById('stockSymbol')?.value;
-  await Promise.all([loadMarket(), loadQuote(sym), loadAccount(), loadPositions()]);
-  await Promise.all([loadChart(sym, currentPeriod), loadHistory(), loadBatchPrices()]);
+  await refreshStockPanels([loadMarket(), loadQuote(sym), loadAccount(), loadPositions()]);
+  await refreshStockPanels([loadChart(sym, currentPeriod), loadHistory(), loadBatchPrices()]);
 
   // 실시간 갱신
   setInterval(() => loadBatchPrices(),  5_000);
@@ -1106,9 +1127,7 @@ document.getElementById('kisOrderType')?.addEventListener('change', event => {
     if (s) loadQuote(s);
   }, 5_000);
   setInterval(() => {
-    loadMarket();
-    loadAccount();
-    loadPositions();
+    refreshStockPanels([loadMarket(), loadAccount(), loadPositions()]);
   }, 15_000);
   setInterval(() => loadHistory(), 30_000);
-})();
+})().catch(error => showMsg(error.message || '화면 초기화에 실패했습니다. 새로고침해 주세요.', true));

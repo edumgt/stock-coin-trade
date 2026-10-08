@@ -10,12 +10,14 @@
 from __future__ import annotations
 
 import contextlib
+import asyncio
 import json
 import time
 from collections.abc import Callable
 from typing import Any
 from urllib.parse import parse_qsl
 
+from starlette.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import Headers
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -115,3 +117,28 @@ class RequestAuditMiddleware:
         # 감사 기록 실패가 응답을 막으면 안 된다.
         with contextlib.suppress(Exception):
             await run_in_threadpool(self.recorder, info, state["status"], body, duration_ms, exc, query, track_usage)
+
+
+class ExternalReadLimitMiddleware:
+    """Keep slow broker reads from occupying all synchronous request workers."""
+
+    def __init__(self, app: ASGIApp, limit: int = 12):
+        self.app = app
+        self.slots = asyncio.Semaphore(limit)
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        limited = (scope["type"] == "http" and scope.get("method") == "GET"
+                   and scope.get("path", "").startswith(
+                       (*API_USAGE_PREFIXES, "/openapi/v1/kis/", "/api/stocks/")))
+        if not limited:
+            await self.app(scope, receive, send)
+            return
+        if self.slots.locked():
+            response = JSONResponse(
+                {"ok": False, "message": "시세 조회 요청이 많습니다. 잠시 후 다시 시도해 주세요."},
+                status_code=503, headers={"Retry-After": "2"},
+            )
+            await response(scope, receive, send)
+            return
+        async with self.slots:
+            await self.app(scope, receive, send)

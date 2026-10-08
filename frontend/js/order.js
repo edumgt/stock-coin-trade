@@ -310,16 +310,18 @@ async function updateAssetDisplay() {
 /* ── 퍼센트 버튼 ─────────────────────────────────────────────────────────── */
 document.querySelectorAll('#buyQuantityBtnGroup > button').forEach(btn =>
   btn.addEventListener('click', () => {
-    const asset = parseInt(document.getElementById('holdAsset').textContent.replaceAll(',', '')) || 0;
+    const asset = parseInt((document.getElementById('holdAsset')?.textContent || '0').replaceAll(',', '')) || 0;
     const pct   = parseInt(btn.textContent) / 100;
-    document.getElementById('buyKrw').value = new Intl.NumberFormat('ko-KR').format(Math.floor(asset * pct));
+    const input = document.getElementById('buyKrw');
+    if (input) input.value = new Intl.NumberFormat('ko-KR').format(Math.floor(asset * pct));
   })
 );
 document.querySelectorAll('#sellQuantityBtnGroup > button').forEach(btn =>
   btn.addEventListener('click', () => {
-    const count = parseFloat(document.getElementById('holdCryptoCount').textContent) || 0;
+    const count = parseFloat(document.getElementById('holdCryptoCount')?.textContent || '0') || 0;
     const pct   = parseInt(btn.textContent) / 100;
-    document.getElementById('sellCount').value = Math.round(count * pct * 1e8) / 1e8;
+    const input = document.getElementById('sellCount');
+    if (input) input.value = Math.round(count * pct * 1e8) / 1e8;
   })
 );
 
