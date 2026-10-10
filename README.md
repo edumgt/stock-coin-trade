@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Noah-TaeHwan/stock-coin-trade/actions/workflows/ci.yml/badge.svg)](https://github.com/Noah-TaeHwan/stock-coin-trade/actions/workflows/ci.yml)
 
-강사 원본(주식·코인 모의투자와 Open API 실습 플랫폼)을 포크했다. 그 위에 **데이터 출처, 백테스트 계산, AI 답변의 숫자를 모두 추적할 수 있는** 퀀트 리서치 데스크를 만든 개인 포트폴리오다. 원본 기능은 [아래 절](#원본-강의-기능-edumgt)에 따로 정리했다.
+원본 저장소 [edumgt/stock-coin-trade](https://github.com/edumgt/stock-coin-trade)(주식·코인 모의투자와 Open API 실습 플랫폼)를 포크했다. 그 위에 **데이터 출처, 백테스트 계산, AI 답변의 숫자를 모두 추적할 수 있는** 퀀트 리서치 데스크를 만든 개인 포트폴리오다. 원본 기능은 [아래 절](#원본-기능-edumgt)에 따로 정리했다.
 
 ## 세 층의 영수증
 
@@ -72,7 +72,7 @@ flowchart LR
 
 원본 코드 수정 허락은 [기록 문서](docs/provenance/PERMISSION.md)에 정리한다. 모든 검증 기록은 [색인](docs/evidence/README.md)에 있고, 설계 결정은 [ADR-0001 앱 팩토리](docs/adr/0001-app-factory.md), [ADR-0002 의존성 lock](docs/adr/0002-dependency-lock.md), [ADR-0003 AWS 구성](docs/adr/0003-aws-demo-topology.md)이다.
 
-## 원본 강의 기능 (edumgt)
+## 원본 기능 (edumgt)
 
 원본 앱은 Flask REST API와 Vanilla JavaScript로 만든 주식·암호화폐 모의투자 및 OpenAPI 학습 플랫폼입니다. 국내 주식·코인 모의 주문, 대체자산 실습, 외부 연동용 Open API, 증권사·Alpaca Paper API 연습 화면을 제공합니다.
 
