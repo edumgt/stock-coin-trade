@@ -249,3 +249,29 @@ def test_every_token_kind_is_priced_at_its_own_rate():
     assert pricing.cost_usd("claude-opus-5-5", usage) == pytest.approx(4.00 + 20.00 + 5.00 + 0.20)
     with pytest.raises(KeyError):
         pricing.cost_usd("gpt-4o", usage)
+
+
+def test_local_pricing_file_overlays_the_public_table(tmp_path):
+    row = "input = {0}\ncache_write_5m = 0.0\ncache_read = 0.0\noutput = {0}\n"
+    public = tmp_path / "p.toml"
+    public.write_text("[models.a]\n" + row.format(1.0), encoding="utf-8")
+    assert set(pricing.load(public)) == {"a"}
+    local = public.with_suffix(".local.toml")
+    local.write_text("[models.b]\n" + row.format(2.0), encoding="utf-8")
+    assert set(pricing.load(public)) == {"a", "b"}
+    local.write_text("# 주석만 있는 비공개 파일은 공개 가격표를 깨지 않는다\n", encoding="utf-8")
+    assert set(pricing.load(public)) == {"a"}
+
+
+def test_unpriced_model_is_unknown_cost_not_zero(monkeypatch):
+    monkeypatch.setattr(pricing, "load", lambda *args: {})
+    assert pricing.cost_usd_or_none("private-model", pricing.Usage(input_tokens=5)) is None
+    with pytest.raises(KeyError, match="llm_pricing.local.toml"):
+        pricing.cost_usd("private-model", pricing.Usage(input_tokens=5))
+
+
+def test_example_pricing_file_carries_no_price_values():
+    import tomllib
+
+    example = pricing.PRICING_FILE.with_name("llm_pricing.example.toml")
+    assert tomllib.loads(example.read_text(encoding="utf-8")) == {}

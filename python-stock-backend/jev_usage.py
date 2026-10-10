@@ -7,11 +7,14 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 
 from sqlalchemy import text
 
 from db import engine
+
+log = logging.getLogger(__name__)
 
 JEV_TABLE = """CREATE TABLE IF NOT EXISTS jev_usage (
   month CHAR(7) PRIMARY KEY,
@@ -35,8 +38,14 @@ def over_budget(budget_usd: float) -> bool:
     """이번 달 누적 비용이 예산 이상이면 True.
 
     @param budget_usd 월 예산(USD). 0 이하면 항상 초과로 본다.
-    @returns 예산 초과 여부
+    @returns 예산 초과 여부. 이 머신에 판정 모델 단가(config/llm_pricing.local.toml)가 없으면 비용을 못 재므로 True다
     """
+    from deskagent import pricing
+    from deskjev import MODEL
+
+    if MODEL not in pricing.load():  # 단가를 모르면 호출하지 않는다(호출 뒤 기록이 실패해 예산이 눈감는 것을 막는다)
+        log.warning("jev_usage: no price for %s in config/llm_pricing.local.toml; Jev calls refused", MODEL)
+        return True
     with engine.connect() as conn:
         spent = conn.execute(text("SELECT cost_usd FROM jev_usage WHERE month = :m"), {"m": _month()}).scalar()
     return float(spent or 0) >= budget_usd

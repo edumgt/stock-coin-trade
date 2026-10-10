@@ -58,6 +58,9 @@ venv/
 *.pem
 *.key
 
+# 비공개 외부 모델 단가(config/llm_pricing.example.toml 참고)
+config/*.local.toml
+
 *.zip
 /data
 

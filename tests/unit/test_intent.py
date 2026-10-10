@@ -137,6 +137,13 @@ def jev_client(app, monkeypatch):
     intent_api._route.cache_clear()
 
 
+def test_over_budget_refuses_when_the_model_has_no_price(monkeypatch):
+    from deskagent import pricing
+
+    monkeypatch.setattr(pricing, "load", lambda *args: {})
+    assert jev_usage.over_budget(10.0) is True
+
+
 def test_endpoint_is_off_unless_enabled(client):
     assert client.post("/api/intent", json={"text": "홈"}).get_json() == {"enabled": False}
 

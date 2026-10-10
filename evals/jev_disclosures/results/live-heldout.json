@@ -100,10 +100,10 @@
    "jev_calls": 23,
    "tokens_per_call": 1774,
    "tokens_measured": true,
-   "usd_per_day": 0.001714,
-   "usd_per_month": 0.036
+   "usd_per_day": null,
+   "usd_per_month": null
   },
-  "cost_usd": 0.004099,
+  "cost_usd": null,
   "mode": "live",
   "cases_file": "heldout.jsonl",
   "model": "jev-1.13.0",

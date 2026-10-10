@@ -120,7 +120,7 @@
      "p50": 208,
      "p95": 250
     },
-    "monthly_usd_estimate": 0.00709
+    "monthly_usd_estimate": null
    },
    "rules+jev": {
     "cases": 155,
@@ -183,7 +183,7 @@
      "p50": 0,
      "p95": 234
     },
-    "monthly_usd_estimate": 0.00071
+    "monthly_usd_estimate": null
    }
   },
   "real_only": {
@@ -379,8 +379,8 @@
   },
   "jev_calls": 155,
   "input_tokens": 136994,
-  "cost_usd": 0.005754,
-  "cost_per_call_usd": 3.71e-05,
+  "cost_usd": null,
+  "cost_per_call_usd": null,
   "jev_call_latency_ms": {
    "p50": 208,
    "p95": 250

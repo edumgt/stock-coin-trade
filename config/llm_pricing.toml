@@ -30,10 +30,5 @@ cache_write_5m = 1.25
 cache_read = 0.10
 output = 5.00
 
-# TypeSafe Jev(자연어 명령 라우터, src/deskjev): 입력만 과금하고 출력은 무료다. 캐시 과금은 없다.
-# Source: https://docs.typesafe.ai/models ($0.042 per million input tokens, checked 2026-09-26).
-[models."jev-1.13.0"]
-input = 0.042
-cache_write_5m = 0.0
-cache_read = 0.0
-output = 0.0
+# 외부 판정 모델(src/deskjev)의 단가는 비공개라 이 파일에 두지 않는다.
+# 이 Mac에서는 llm_pricing.local.toml(git 제외)이 이 표 위에 덧씌워진다. 형식은 llm_pricing.example.toml 참고.

@@ -1,0 +1,10 @@
+# 비공개 단가 양식. 이 파일을 llm_pricing.local.toml로 복사해 값을 채운다(local은 git에 올리지 않는다).
+# 단위는 100만 토큰당 USD. 아래 블록의 주석을 풀고 <...>를 숫자로 바꾼다.
+# 0.0을 임시로 넣지 않는다: 가격이 0으로 읽혀 월 예산 한도가 작동하지 않는다.
+# local에 없는 모델은 "가격 미확인"으로 취급해 판정 모델 호출을 거절한다(python-stock-backend/jev_usage.py).
+#
+# [models."jev-1.13.0"]
+# input = <입력 100만 토큰당 USD>
+# cache_write_5m = <없으면 0.0>
+# cache_read = <없으면 0.0>
+# output = <출력 100만 토큰당 USD>

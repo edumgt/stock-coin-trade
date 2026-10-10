@@ -154,7 +154,8 @@ def run(client, cases: list[dict], max_usd: float | None = None) -> list[dict]:
         start = time.perf_counter()
         got = disclosures.judge(case["report_nm"], case["rm"], case["corp_cls"], client)
         ms = round((time.perf_counter() - start) * 1000)
-        spent += pricing.cost_usd(disclosures.MODEL, pricing.Usage(input_tokens=got.input_tokens))
+        if max_usd is not None:  # 상한이 있을 때만 쌓는다. 단가가 없으면 KeyError로 멈춘다
+            spent += pricing.cost_usd(disclosures.MODEL, pricing.Usage(input_tokens=got.input_tokens))
         rows.append(
             {
                 "id": case["id"],
@@ -188,6 +189,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "live":
         if args.max_usd <= 0:
             parser.error("--mode live needs --max-usd (the spend cap Noah approved)")
+        pricing.cost_usd(disclosures.MODEL, pricing.Usage())  # 단가가 없으면 과금 호출 전에 멈춘다
         from typesafe_sdk import TypeSafeClient
 
         client = TypeSafeClient()
@@ -196,7 +198,8 @@ def main(argv: list[str] | None = None) -> int:
     rows = run(client, cases, args.max_usd if args.mode == "live" else None)
     summary = summarize(rows)
     usage = pricing.Usage(input_tokens=summary["input_tokens"])
-    summary["cost_usd"] = round(pricing.cost_usd(disclosures.MODEL, usage), 6)
+    cost = pricing.cost_usd_or_none(disclosures.MODEL, usage)  # 비공개 단가가 없는 환경은 None(미확인)
+    summary["cost_usd"] = round(cost, 6) if cost is not None else None
     summary.update(
         mode=args.mode,
         cases_file=args.cases.name,

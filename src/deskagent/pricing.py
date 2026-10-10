@@ -33,14 +33,24 @@ class Usage:
 
 
 def load(path: Path = PRICING_FILE) -> dict[str, dict[str, float]]:
+    """공개 가격표에, 있으면 이 머신 전용 비공개 가격표(<이름>.local.toml, git 제외)를 덧씌운다.
+
+    @param path 공개 가격표 경로
+    @returns 모델명 → 단가표
+    """
     with path.open("rb") as handle:
-        return tomllib.load(handle)["models"]
+        models = tomllib.load(handle)["models"]
+    local = path.with_suffix(".local.toml")
+    if local.exists():
+        with local.open("rb") as handle:
+            models = {**models, **tomllib.load(handle).get("models", {})}
+    return models
 
 
 def cost_usd(model: str, usage: Usage, prices: dict[str, dict[str, float]] | None = None) -> float:
     prices = prices if prices is not None else load()
     if model not in prices:
-        raise KeyError(f"no price for {model!r} in config/llm_pricing.toml")
+        raise KeyError(f"no price for {model!r} in config/llm_pricing.toml or config/llm_pricing.local.toml")
     rate = prices[model]
     return (
         usage.input_tokens * rate["input"]
@@ -48,3 +58,13 @@ def cost_usd(model: str, usage: Usage, prices: dict[str, dict[str, float]] | Non
         + usage.cache_read_input_tokens * rate["cache_read"]
         + usage.output_tokens * rate["output"]
     ) / 1_000_000
+
+
+def cost_usd_or_none(model: str, usage: Usage) -> float | None:
+    """가격표에 모델이 없으면 None(비용 미확인). 비공개 단가가 없는 환경에서도 오프라인 평가가 돌게 한다.
+
+    @param model 모델명
+    @param usage 토큰 사용량
+    @returns USD 비용 또는 None
+    """
+    return cost_usd(model, usage) if model in load() else None

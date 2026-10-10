@@ -110,7 +110,7 @@
    "p95": 303
   },
   "input_tokens": 262911,
-  "cost_usd": 0.011042,
+  "cost_usd": null,
   "mode": "live",
   "model": "jev-1.13.0",
   "run_at": "2026-09-27T02:57:55+00:00"

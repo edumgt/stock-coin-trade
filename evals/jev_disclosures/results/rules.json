@@ -223,8 +223,8 @@
    "jev_calls": 23,
    "tokens_per_call": 700,
    "tokens_measured": false,
-   "usd_per_day": 0.000676,
-   "usd_per_month": 0.0142
+   "usd_per_day": null,
+   "usd_per_month": null
   },
   "cost_usd": 0.0,
   "mode": "rules",

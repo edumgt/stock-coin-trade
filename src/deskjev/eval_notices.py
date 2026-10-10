@@ -185,7 +185,8 @@ def run(client, cases: list[dict], max_usd: float | None = None) -> list[dict]:
             answers, tokens = notices.ask(client, case)
             row["ms"] = round((time.perf_counter() - start) * 1000)
             row["input_tokens"] = tokens
-            spent += pricing.cost_usd(notices.MODEL, pricing.Usage(input_tokens=tokens))
+            if max_usd is not None:  # 상한이 있을 때만 쌓는다. 단가가 없으면 KeyError로 멈춘다
+                spent += pricing.cost_usd(notices.MODEL, pricing.Usage(input_tokens=tokens))
             jev = notices.decide(answers, case, tokens)
             row["p"]["jev"] = _entry(case, jev)
             row["p"]["rules+jev"] = _entry(case, rule or jev)
@@ -212,8 +213,8 @@ def summarize(rows: list[dict], cases: list[dict]) -> dict:
     policies = [p for p in POLICIES if rows and p in rows[0]["p"]]
     calls = [r for r in rows if "jev" in r["p"]]
     tokens = sum(r["input_tokens"] for r in calls)
-    cost = pricing.cost_usd(notices.MODEL, pricing.Usage(input_tokens=tokens))
-    per_call = cost / len(calls) if calls else None
+    cost = pricing.cost_usd_or_none(notices.MODEL, pricing.Usage(input_tokens=tokens))  # 단가가 없으면 None(미확인)
+    per_call = cost / len(calls) if calls and cost is not None else None
     per_day = notices_per_day(cases)
     real = [r for r in rows if r["source"] == "real"]
     summary = {
@@ -226,7 +227,7 @@ def summarize(rows: list[dict], cases: list[dict]) -> dict:
         "thresholds": {p: threshold_table(rows, p) for p in policies if p != "rules"},
         "jev_calls": len(calls),
         "input_tokens": tokens,
-        "cost_usd": round(cost, 6),
+        "cost_usd": round(cost, 6) if cost is not None else None,
         "cost_per_call_usd": round(per_call, 7) if per_call is not None else None,
         "jev_call_latency_ms": (
             {"p50": _pct([r["ms"] for r in calls], 0.5), "p95": _pct([r["ms"] for r in calls], 0.95)} if calls else None
@@ -252,6 +253,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "live":
         if args.max_usd <= 0:
             parser.error("--mode live needs --max-usd (the spend cap Noah approved)")
+        pricing.cost_usd(notices.MODEL, pricing.Usage())  # 단가가 없으면 과금 호출 전에 멈춘다
         from typesafe_sdk import TypeSafeClient
 
         client = TypeSafeClient()
