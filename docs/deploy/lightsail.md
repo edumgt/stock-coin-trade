@@ -1,6 +1,6 @@
 # Lightsail 공개 데모 운영
 
-2026-09-28부터 공개 데모는 Amazon Lightsail 인스턴스 한 대에서 돈다. 포트폴리오 두 개(이 저장소와 [ai-quant-8th-advisor-lab](https://github.com/Noah-TaeHwan/ai-quant-8th-advisor-lab))를 같은 서버에 올려 월 비용을 $12로 고정했다. 이전 EC2 구성은 [AWS 배포 절차](aws.md)와 [ADR-0003](../adr/0003-aws-demo-topology.md)에 기록으로 남긴다. 옮긴 과정과 검증은 [이전 기록](../evidence/lightsail-migration-2026-09-28.md)에 있다.
+2026-09-28부터 공개 데모는 Amazon Lightsail 인스턴스 한 대에서 돈다. 포트폴리오 두 개(이 저장소와 비공개 실험실 앱)를 같은 서버에 올려 월 비용을 $12로 고정했다. 이전 EC2 구성은 [AWS 배포 절차](aws.md)와 [ADR-0003](../adr/0003-aws-demo-topology.md)에 기록으로 남긴다. 옮긴 과정과 검증은 [이전 기록](../evidence/lightsail-migration-2026-09-28.md)에 있다.
 
 ## 구성
 
