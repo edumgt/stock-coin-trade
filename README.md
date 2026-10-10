@@ -68,7 +68,7 @@ flowchart LR
 - 백테스트 엔진 재작성(`src/quantlab`): 종가 신호 → 다음 봉 시가 체결, bp 단위 비용, 일별 자산곡선 기반 Sharpe·MDD·CAGR, 같은 비용의 매수 후 보유 비교, 입력 해시·파라미터·엔진 버전으로 만든 계산 영수증과 멱등 저장, 워크포워드 검증과 재현 가능한 리서치 리포트. 구 엔진의 계산 오류 7개를 회귀 테스트로 고정
 - 자체 MCP 서버(`src/deskmcp`): 모의계좌 조회·백테스트·영수증 조회를 MCP 도구로 제공, 주문 도구는 명시적으로 켤 때만 등록, Open API 키별 요청 제한을 공유 저장소(Redis)로 이동
 - 초대 코드 전용 AI 리서치(`src/deskagent`): 공식 Anthropic SDK 도구 루프, 답변의 숫자는 서버가 계산 영수증에서 채우고 영수증 없는 숫자는 차단, 초대 코드별 한도와 월 예산, 코드 채점 eval(완벽 모델 100%, 숫자를 지어내는 모델 3종 0%)
-- AWS 공개 데모 준비: CloudFormation(80·443만 열고 SSH 없음, IMDSv2, 암호화·스냅샷 데이터 볼륨, 예산 알림), Caddy 자동 HTTPS(클라이언트 IP 보존), OIDC 배포 역할, 헬스 체크 실패 시 자동 롤백하는 배포 스크립트 — 2026-09-25 실제 배포(t3.small, 월 약 $28)
+- AWS 공개 데모 준비: CloudFormation(80·443만 열고 SSH 없음, IMDSv2, 암호화·스냅샷 데이터 볼륨, 예산 알림), Caddy 자동 HTTPS(클라이언트 IP 보존), OIDC 배포 역할, 헬스 체크 실패 시 자동 롤백하는 배포 스크립트 — 2026-09-25 실제 배포(t3.small)
 
 원본 코드 수정 허락은 [기록 문서](docs/provenance/PERMISSION.md)에 정리한다. 모든 검증 기록은 [색인](docs/evidence/README.md)에 있고, 설계 결정은 [ADR-0001 앱 팩토리](docs/adr/0001-app-factory.md), [ADR-0002 의존성 lock](docs/adr/0002-dependency-lock.md), [ADR-0003 AWS 구성](docs/adr/0003-aws-demo-topology.md)이다.
 
@@ -220,7 +220,7 @@ Nginx는 `/api/*`, `/openapi/*`를 Flask로 프록시합니다. 브라우저에�
 postgresql+psycopg://<QUANT_DB_USER>:<QUANT_DB_PASSWORD>@postgres:5432/<QUANT_DB_NAME>
 ```
 
-공개 데모는 `compose.public.yml` + `compose.edge.yml`(Caddy HTTPS) + `compose.lightsail.yml`(로컬 태그 이미지, 두 번째 포트폴리오 중계)을 Lightsail 한 대(2 GB, 월 $12)에 올리는 구성입니다([운영 절차](docs/deploy/lightsail.md)). 2026-09-25~27에는 같은 앱을 EC2로 운영했습니다. 인프라는 `infra/cloudformation/stockdesk.yaml`, 배포는 GitHub OIDC → ECR → SSM Run Command → `scripts/ec2/deploy.sh`(헬스 체크 실패 시 자동 롤백)였고([ADR-0003](docs/adr/0003-aws-demo-topology.md), [배포 절차](docs/deploy/aws.md), [배포 기록](docs/evidence/aws-deploy-2026-09-25.md)), 2026-09-28에 비용을 줄이려고 Lightsail로 옮겼습니다([이전 기록](docs/evidence/lightsail-migration-2026-09-28.md)). 예전 `docker-compose.prod.yml`은 키·socket 마운트를 물려받으므로 공개 배포에 쓰지 않습니다.
+공개 데모는 `compose.public.yml` + `compose.edge.yml`(Caddy HTTPS) + `compose.lightsail.yml`(로컬 태그 이미지, 두 번째 포트폴리오 중계)을 Lightsail 한 대(2 GB)에 올리는 구성입니다([운영 절차](docs/deploy/lightsail.md)). 2026-09-25~27에는 같은 앱을 EC2로 운영했습니다. 인프라는 `infra/cloudformation/stockdesk.yaml`, 배포는 GitHub OIDC → ECR → SSM Run Command → `scripts/ec2/deploy.sh`(헬스 체크 실패 시 자동 롤백)였고([ADR-0003](docs/adr/0003-aws-demo-topology.md), [배포 절차](docs/deploy/aws.md), [배포 기록](docs/evidence/aws-deploy-2026-09-25.md)), 2026-09-28에 Lightsail로 옮겼습니다([이전 기록](docs/evidence/lightsail-migration-2026-09-28.md)). 예전 `docker-compose.prod.yml`은 키·socket 마운트를 물려받으므로 공개 배포에 쓰지 않습니다.
 
 ### 세션 API
 
