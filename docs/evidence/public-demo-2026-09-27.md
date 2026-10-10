@@ -28,7 +28,7 @@
 | `docker run --rm -v "$PWD":/repo -w /repo sct-test:dev python -m pytest -q -m 'not integration'` | exit 0, **520 passed, 1 skipped, 91 deselected, 4 subtests passed** | `demo-implementation/full-unit-final.log` |
 | 새 데모 테스트 형식 정리 후 재실행 | exit 0, 13 passed | `demo-implementation/demo-after-format.log` |
 | `ruff check .`, CI 범위 `ruff format --check`, `node --check frontend/js/auth-pages.js`, `git diff --check` | 모두 exit 0 | `demo-implementation/ruff-final.log`, `format-final.log`, 리더 도구 응답 |
-| 전용 스택 기동·doctor | local / Jev false / 3334, exit 0 | `public-demo/receipt.json` |
+| 전용 스택 기동·doctor | local / 판정 모델 false / 3334, exit 0 | `public-demo/receipt.json` |
 | 데모 생성 전 API·화면 | demoReady false, 390/768/1024 안내 숨김 | `public-demo/before/`, `20260927T083010Z-fb47-demo-before/transcript.json` |
 | 실제 검증 DB에서 `flask --app app create-demo` 2회 | exit 0, created → unchanged | `public-demo/receipt.json` |
 | 데모 로그인·보호 API | 유효 쿠키·CSRF로 DEMO_ACCOUNT 403 확인. isDemo true, isAdmin false, canUseKisAccount false. 현재 세션 로그아웃 200 | `public-demo/20260927T083146Z-7cee-demo-after/transcript.json` |

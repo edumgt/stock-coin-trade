@@ -95,7 +95,7 @@ function renderKindOptions() {
 }
 
 /**
- * 판정 칸: 규칙이면 '규칙', Jev면 'Jev'와 모델 판단 확률.
+ * 판정 칸: 규칙이면 '규칙', 모델이면 '모델'과 모델 판단 확률.
  * @param {object} item API 항목
  * @returns {string} HTML
  */
@@ -103,7 +103,7 @@ function judgedCell(item) {
   if (item.judgedBy !== 'jev') return '<span class="by">규칙</span>';
   const probs = [item.kindProb != null ? `유형 ${pct(item.kindProb)}` : '', item.riskProb != null ? `위험 ${pct(item.riskProb)}` : '']
     .filter(Boolean).join(' · ');
-  return `<span class="by" title="TypeSafe Jev 모델 판단 확률">Jev ${discEsc(probs)}</span>`;
+  return `<span class="by" title="판정 모델 판단 확률">모델 ${discEsc(probs)}</span>`;
 }
 
 /**

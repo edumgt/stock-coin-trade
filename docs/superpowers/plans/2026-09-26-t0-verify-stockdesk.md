@@ -768,7 +768,7 @@ description: stock-coin-trade 앱(Flask + nginx + MariaDB + PostgreSQL)을 전�
 ## Doctor
 
 `scripts/verify/stack.sh doctor`
-- 포트 3334의 주인이 이 프로젝트 컨테이너인지, `/health`, init 종료 코드 0, 프로필, Jev 상태를 확인한다.
+- 포트 3334의 주인이 이 프로젝트 컨테이너인지, `/health`, init 종료 코드 0, 프로필, 판정 모델 상태를 확인한다.
 - `ok`가 아니면(종료 코드 2) 주행하지 않고 원인을 보고한다.
 
 ## Drive
@@ -814,7 +814,7 @@ description: stock-coin-trade 앱(Flask + nginx + MariaDB + PostgreSQL)을 전�
 ## 공통 전제
 
 - `scripts/verify/stack.sh doctor`가 `ok`, 프로필 `local`, 주소 `http://127.0.0.1:3334`.
-- 외부 과금 기능(Jev, DART 수집)은 검증 스택에서 꺼져 있다.
+- 외부 과금 기능(판정 모델, DART 수집)은 검증 스택에서 꺼져 있다.
 
 ## 증거 규칙
 

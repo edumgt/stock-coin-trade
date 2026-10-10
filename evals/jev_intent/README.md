@@ -1,4 +1,4 @@
-# 자연어 명령 라우터 평가 (TypeSafe Jev)
+# 자연어 명령 라우터 평가 (외부 판정 모델)
 
 터미널 명령 바에 한국어 문장을 넣었을 때 `src/deskjev/intent.py`가 맞는 화면·종목·전략으로 보내는지 잰다. 자동 이동 임계값(`GO`)과 제안 임계값(`SUGGEST`)은 이 평가로 정한다.
 
@@ -18,7 +18,7 @@
 ```bash
 # 오프라인·무료: 정답을 돌려주는 가짜 모델. 100%가 아니면 채점기나 사례가 틀렸다.
 PYTHONPATH=src:python-stock-backend python -m deskjev.eval --mode oracle
-# 실제 Jev(과금). 비용 상한 없이는 실행하지 않는다. 119건 한 번에 약 $0.005.
+# 실제 판정 모델(과금). 비용 상한 없이는 실행하지 않는다. 119건 한 번에 실행한다.
 PYTHONPATH=src:python-stock-backend TYPESAFE_API_KEY=... python -m deskjev.eval --mode live --max-usd 1
 ```
 

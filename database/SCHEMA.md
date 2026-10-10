@@ -100,8 +100,8 @@ worker가 5분마다 OpenDART 오늘 목록을 읽어 상장사(유가·코스�
 | `report_nm`, `rm`, `flr_nm` | 공시 제목(연속 공백 정리), 비고 코드, 제출인 |
 | `first_seen_at` | 수집기가 처음 본 시각(UTC). 화면은 KST로 보여 준다 |
 | `kind`, `corrected` | 교육용 유형(`src/deskjev/disclosures.py` KINDS)과 정정 공시 여부 |
-| `risk`, `kind_prob`, `risk_prob` | 매매 불가 위험 표시와 Jev가 정한 항목의 모델 판단 확률(규칙이 정하면 NULL) |
-| `judged_by`, `model`, `judged_at` | 판정 주체(`rules`·`jev`), Jev 모델 버전, 판정 시각(UTC) |
+| `risk`, `kind_prob`, `risk_prob` | 매매 불가 위험 표시와 판정 모델이 정한 항목의 모델 판단 확률(규칙이 정하면 NULL) |
+| `judged_by`, `model`, `judged_at` | 판정 주체(`rules`·`jev`), 판정 모델 버전, 판정 시각(UTC) |
 
 ## PostgreSQL Quant ERD
 
@@ -132,4 +132,4 @@ factor_returns ──[분석 입력]──> factor_exposures
 4. `api_usage_log`는 KIS·KB증권·Alpaca·Binance·Korbit·AWS SSM 테스트 경로만 기록한다. 요청 쿼리, 응답 본문, 실패 메시지는 민감값을 마스킹하고 각각 길이 제한을 둔다. 조회 화면은 로그인한 회원 자신의 이력만 반환한다.
 5. MariaDB와 PostgreSQL은 서로 FK를 만들지 않는다. 서비스 API가 데이터 경계와 권한 검사를 담당한다.
 6. Qdrant는 관계형 DB가 아니므로 FK가 없다. 문서 식별자와 카테고리는 검색 결과의 메타데이터로 관리한다.
-7. `dart_disclosures`에는 OpenDART 인증키를 넣지 않는다. Jev에는 공시 제목·비고·시장만 보내고 회사명은 보내지 않는다.
+7. `dart_disclosures`에는 OpenDART 인증키를 넣지 않는다. 판정 모델에는 공시 제목·비고·시장만 보내고 회사명은 보내지 않는다.

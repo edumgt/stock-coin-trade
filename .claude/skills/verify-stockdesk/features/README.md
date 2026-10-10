@@ -5,7 +5,7 @@
 ## 공통 전제
 
 - `scripts/verify/stack.sh doctor`가 `ok`, 프로필 `local`, 주소 `http://127.0.0.1:3334`.
-- 외부 과금·호출 기능(Jev, DART 수집 worker)은 검증 스택에서 꺼져 있다.
+- 외부 과금·호출 기능(판정 모델, DART 수집 worker)은 검증 스택에서 꺼져 있다.
 
 ## 증거 규칙
 

@@ -681,7 +681,7 @@ function renderJevConsent(text, first, version) {
   actions.className = 'term-consent-actions';
   actions.append(agree, decline, policy);
   box.replaceChildren(
-    line('Jev', '자연어 명령은 뜻을 해석하려고 미국 TypeSafe AI, Inc.로 보냅니다.'),
+    line('국외 이전', '자연어 명령은 뜻을 해석하려고 미국 TypeSafe AI, Inc.로 보냅니다.'),
     line('보내는 것', '입력한 문장(최대 200자)만 보냅니다. 회원 정보는 보내지 않고, 이 서비스는 문장을 저장하지 않습니다.'),
     line('주의', '명령 바에 이름·연락처 같은 개인정보를 입력하지 마세요. 동의하지 않으면 문장을 보내지 않습니다. 메뉴 이름이나 종목코드는 동의 없이도 됩니다.'),
     actions,
@@ -700,7 +700,7 @@ async function routeByIntent(text, first, consent = readJevConsent()) {
     return;
   }
   const input = document.getElementById('term-cmd-input');
-  if (input) { input.disabled = true; input.placeholder = 'Jev가 명령을 해석하는 중…'; }
+  if (input) { input.disabled = true; input.placeholder = '명령을 해석하는 중…'; }
   let result = null;
   try {
     const res = await apiFetch('/api/intent', {
@@ -726,7 +726,7 @@ async function routeByIntent(text, first, consent = readJevConsent()) {
 function renderIntentSuggestions(options) {
   const box = document.getElementById('term-cmd-help');
   if (!box) return;
-  box.innerHTML = '<div><b>Jev</b><span>어느 화면을 찾으시나요? (모델 판단 확률)</span></div>' + options.map(alt =>
+  box.innerHTML = '<div><b>명령 해석</b><span>어느 화면을 찾으시나요? (모델 판단 확률)</span></div>' + options.map(alt =>
     `<div data-href="${escapeHtml(alt.path)}"><b>${escapeHtml(INTENT_LABELS[alt.screen] || alt.screen)}</b><span>${Math.round(alt.probability * 100)}%</span></div>`
   ).join('');
   box.classList.add('open');

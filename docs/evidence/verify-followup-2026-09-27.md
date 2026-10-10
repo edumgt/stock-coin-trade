@@ -13,7 +13,7 @@
 | #41 PR-B | 동의 전 전송 0(`/me`에 `privacyVersion`·`jevEnabled`·`aiEnabled`), 계정 화면 외부 자원 0, 첫 화면 안내 문구, HSTS | `bf7fd3c` |
 | #42 PR-C | AMI 고정, 템플릿 ASCII, 백업 만료 21일, AWS 가동·백업 감시(Lambda 5분 + 경보 2개 + 메일), GitHub 예약 실행 제거 | CloudFormation 변경 세트로 적용. 서버 교체 없음 |
 | #43 PR-D | 합성 데이터 표시, 공개 사이트 코인 흔적 제거, 백테스트 링크 (가), 공개 백테스트는 6자리 종목만 | `c10ff59`(run 36289339552) |
-| #44 PR-E | Jev 화면 목록에 공시 레이더 추가, 바로 이동 기준 0.85→0.90, AI가 꺼지면 AI 리서치 숨김 | `18d0733`(run 36290324900) |
+| #44 PR-E | 판정 모델 화면 목록에 공시 레이더 추가, 바로 이동 기준 0.85→0.90, AI가 꺼지면 AI 리서치 숨김 | `18d0733`(run 36290324900) |
 
 배포 전에는 매번 `backup-db.sh`로 백업했다. 마지막 백업은 03:03 UTC이고, 아래 3절에서 채운 공시가 들어 있다. PR마다 CI 3개가 통과한 뒤 머지했다.
 
@@ -27,7 +27,7 @@
 | 2 | 합성 데이터 표시 누락 | PR-D | 시장 개요 "합성 데이터 · 실제 지수 아님"<br>등락 상위·주식 모니터에 "합성 데이터" 배지<br>티커 "합성 데이터 · 실제 시세 아님"<br>백테스트 결과 위 배지<br>"실제 OHLCV" 문구 0 | `…prD-public/index-desktop.json`, `quant.json` |
 | 3 | 코인 흔적 | PR-D, PR-A | `[data-local-only]` 7개 모두 숨김<br>코인 요청 0<br>코인 경로 4곳 404<br>제목 "Noah Trading Desk — 데이터로 판단하는 투자자를 위한 도구"<br>PR-D 배포 뒤 `/api/crypto` 오류 기록 0행 | `…prD-public/index-desktop.json`, `…prE-public/final-reprobe.txt` |
 | 4 | 처리방침 문구와 실제의 차이 | (a) PR-C (b)~(d) PR-B | (a) 만료 21일 + 이전 버전 7일로 약 30일(35일 안)<br>(b) 문장 입력 시 동의 안내만 뜨고 `/api/intent` 0건, 거절해도 0건(PR-E 배포 뒤 다시 확인)<br>(c) 안내 문구 수정<br>(d) API 키 화면 CSP `style-src 'self' 'unsafe-inline'; font-src 'self'` | `20260927T022705Z-prC/post-apply.txt`, `20260927T015150Z-prB/`, `…prE-public/ui.json` |
-| 5 | Jev 후보에 공시 레이더 없음 | PR-E | "삼성전자 공시 보여줘" → 바로 이동 `/events.html?symbol=005930`(0.99)<br>"하이닉스 최근 공시" → `?symbol=000660`(0.99) | `…prE-public/intent-api.jsonl` |
+| 5 | 판정 모델 후보에 공시 레이더 없음 | PR-E | "삼성전자 공시 보여줘" → 바로 이동 `/events.html?symbol=005930`(0.99)<br>"하이닉스 최근 공시" → `?symbol=000660`(0.99) | `…prE-public/intent-api.jsonl` |
 | 6 | 가동 확인 예약 실행 0건 | PR-C | 경보 2개 OK(11:28 KST부터)<br>`SiteUp`이 11:30~12:10 KST 동안 5분마다 1.0(PR-D·E 배포 구간 포함)<br>당시 메일 구독 확인 대기 → 같은 날 15:43 확인 완료, ALARM·OK 메일 받은편지함 수신(7절) | `…prC/post-apply.txt`, [후속 복원 기록](mobile-recovery-2026-09-27.md) |
 | 7 | 옛 이미지가 쌓임 | PR-A | 오늘 배포 3번 뒤 이미지 6개, 회수 가능 8MB, 디스크 8% | `…prE-public/final-reprobe.txt` |
 | 8 | JSON 배열 본문 → 500 | PR-A | `/api/member/login`·`/api/intent`에 `[]`·`null` → 400 ×4 | `…prE-public/final-reprobe.txt` |
@@ -41,7 +41,7 @@
 - **결과**
   - 영업일 17일, 6,721건(합계 7,141건). 삼성전자 11건, SK하이닉스 4건이다.
   - DART 호출 119회
-  - Jev 판정 535회: 규칙으로 가르지 못한 약 8%다. 9월 Jev 사용액은 $0.0024에서 $0.042로 늘었다(월 예산 $5).
+  - 판정 모델 판정 535회: 규칙으로 가르지 못한 약 8%다. 9월 판정 모델 사용량이 늘었다(월 예산 한도 안).
 - **부수 효과 없음**: 공시 표를 읽는 알림 작업은 없다. 관심 종목은 브라우저에만 저장된다.
 - 증거: `…prD-public/dart-backfill.txt`
 
@@ -50,7 +50,7 @@
 | PR | 모델 | 지적 | 처리 |
 |---|---|---|---|
 | A | gpt-6-sol | Medium 1: 405 기록 누락<br>Low 1: `null`·깨진 JSON | 둘 다 반영(테스트 추가) |
-| B | gpt-6-sol | High 2: `/me` 실패 시 전송, 폴백의 `?q=` | 반영: `/me`가 없으면 보내지 않는다. Jev가 꺼지면 국외 전송이 없다 |
+| B | gpt-6-sol | High 2: `/me` 실패 시 전송, 폴백의 `?q=` | 반영: `/me`가 없으면 보내지 않는다. 판정 모델이 꺼지면 국외 전송이 없다 |
 | C | gpt-6-astra high | High 0<br>Medium 1: 수명주기<br>Low 3 | 반영: 만료 21일, 주석, `--region`, `--cli-binary-format` |
 | D | gpt-6-sol | Medium 4<br>Low 1 | 반영: 숨김 CSS를 먼저 적용, 등락 표 자체 출처, 공개 퀀트 조회 전반, `backtestable` 기준 |
 | E | gpt-6-sol high | High 0<br>Medium 2<br>Low 2 | AI 메뉴·명령 경로, `..` 경로, 평가 재측정은 반영했다. 필터는 5절 한계로 남긴다 |
@@ -61,7 +61,7 @@
 - 명령 바에서 동의한 뒤의 화면 이동은 브라우저로 끝까지 주행하지 않았다. 노아의 브라우저에서 국외 이전 동의를 대신 누르지 않았기 때문이다.
   - 대신 공개 API의 판정과, 배포된 `intentPath`의 판정을 확인했다(`ui.json`).
   - 동의→전송 1건 흐름은 PR-B 때 쿠키 없는 Playwright로 확인했다.
-- Jev 바로 이동 기준 0.90: 127문장을 두 번 쟀다. i082(정답 quant)는 0.86·0.83으로 0.85 경계를 오갔다. 0.90에서는 두 번 모두 잘못 이동 0건이었다(`evals/jev_intent/results/live.json`).
+- 판정 모델 바로 이동 기준 0.90: 127문장을 두 번 쟀다. i082(정답 quant)는 0.86·0.83으로 0.85 경계를 오갔다. 0.90에서는 두 번 모두 잘못 이동 0건이었다(`evals/jev_intent/results/live.json`).
 - 퀀트 "시세가 부족합니다" 문구의 끝 날짜가 다음 날(2026-09-28)로 나온다. 기존 동작이며 고치지 않았다.
 - 첫 화면 기능 런치패드는 공개 사이트에서 타일이 5개라 한 칸이 빈다. 모양만의 문제다.
 - 모바일 아래 상태 줄은 오른쪽 끝의 "NOAH TRADING DESK"가 잘린다. 기존 동작이다.

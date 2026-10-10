@@ -51,7 +51,7 @@
 
 | 실행 | 결과 | 증거 (`.verify-artifacts/mobile-recovery/` 아래) |
 |---|---|---|
-| `scripts/verify/stack.sh doctor` | exit 0, local, Jev false, 포트 3334 | `receipt.json` 및 리더 도구 응답 |
+| `scripts/verify/stack.sh doctor` | exit 0, local, 판정 모델 false, 포트 3334 | `receipt.json` 및 리더 도구 응답 |
 | `node .verify-artifacts/mobile-recovery/mobile-layout-check.cjs after-v3 360,390,768,900,901,1022,1023,1024,1280` | exit 0, 63조합. 문서폭 일치·제목 겹침 0·주요 터치 높이 충족. 페이지 스크립트 오류 0 | `after-v3/summary.json` 및 PNG |
 | `node .verify-artifacts/mobile-recovery/mobile-layout-check.cjs leader-check 390,1023,1024` | 리더 직접 exit 0, 21조합 PASS | `leader-check.log`, `leader-check/` |
 | `node .verify-artifacts/mobile-recovery/mobile-auth-check.cjs auth-after-v3` | exit 0. 가입→Mailpit 인증→로그인→보유·거래이력·계정 화면(360/390/768), 로그인 헤더 경계 1022/1023/1024, 임시 계정 탈퇴 | `auth-after-v3/results.json` 및 PNG |
@@ -68,7 +68,7 @@ Node는 기존 설치된 Playwright를 사용했다. 모듈 탐색이 필요한 
 - 물타기 모달의 비율 버튼 4개는 같은 CSS가 적용되지만, 현재 샘플 데이터에서는 모달이 열리지 않아 실제 조작은 미검증이다.
 - 로그인한 보유 화면은 경로·제목·너비를 확인했지만 자산 차트 렌더링은 확인하지 못했다. 별도 비로그인 진단에서 Highcharts CDN 403을 관측했으나 인증 세션의 원인으로 확정할 수 없다. 거래이력은 0건 상태로 검증했다.
 - 작은 단축키·종목 코드·STEP 배지는 유지했다. 모든 텍스트를 확대하는 디자인 변경이나 전체 기능 검증은 수행하지 않았다.
-- 소스 리뷰 영수증: `review-receipt.json`, `review-decisions.tsv`. 워커 실제 역할·모델·effort 및 라우팅 기록: `../mobile-recovery-routing/spawned.json`. JEV 낮은 확신 후 명시적 리더 예외 배정을 사용했으며 JEV 선택 성공으로 보고하지 않는다.
+- 소스 리뷰 영수증: `review-receipt.json`, `review-decisions.tsv`. 워커 실제 역할·모델·effort 및 라우팅 기록: `../mobile-recovery-routing/spawned.json`. 모델 라우팅의 낮은 확신 뒤 명시적 리더 예외 배정을 사용했으며 라우팅 선택 성공으로 보고하지 않는다.
 
 ## 검증 해석
 

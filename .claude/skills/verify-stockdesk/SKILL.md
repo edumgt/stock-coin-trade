@@ -27,7 +27,7 @@ description: stock-coin-trade 앱(Flask + nginx + MariaDB + PostgreSQL)을 전�
 ## Doctor
 
 `scripts/verify/stack.sh doctor`
-- 이 체크아웃이 띄운 스택인지(working_dir 라벨), 포트 3334의 주인이 이 프로젝트 컨테이너인지, `/health`, init 종료 코드 0, 프로필 `local`, Jev 꺼짐을 확인한다.
+- 이 체크아웃이 띄운 스택인지(working_dir 라벨), 포트 3334의 주인이 이 프로젝트 컨테이너인지, `/health`, init 종료 코드 0, 프로필 `local`, 판정 모델 꺼짐을 확인한다.
 - `ok`가 아니면(종료 코드 2) 주행하지 않고 원인을 보고한다.
 
 ## Drive

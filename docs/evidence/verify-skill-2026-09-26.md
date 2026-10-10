@@ -61,7 +61,7 @@ Codex가 중요 5건, 사소 2건을 찾았다. 중요 5건은 먼저 재현(RED
 |---|---|---|---|
 | 실패 메시지에 응답 본문이 들어가 csrf 값이 증거에 남음 | 단위 테스트 | 문장 속 "키: 값"의 값도 가림 | `test_run_keeps_failure_evidence_free_of_secrets` 등 통과 |
 | 예상 밖 예외(HTML 응답의 `.get`)는 증거 없이 중단됨 | 단위 테스트 | 모든 예외를 FAIL로 기록 | `test_run_turns_unexpected_errors_into_recorded_failures` 통과 |
-| 셸 변수가 검증 스택으로 샘 | 셸 `FRONTEND_PORT=9999`로 up하니 9999에 뜸 | `env -i`로 셸 환경을 비우고 docker 연결 변수만 넘김, doctor가 Jev·프로필을 판정 | 변수 4개를 넣고 up해도 3334·`jev=false`로 정상 |
+| 셸 변수가 검증 스택으로 샘 | 셸 `FRONTEND_PORT=9999`로 up하니 9999에 뜸 | `env -i`로 셸 환경을 비우고 docker 연결 변수만 넘김, doctor가 판정 모델·프로필을 판정 | 변수 4개를 넣고 up해도 3334·`jev=false`로 정상 |
 | down이 남의 스택까지 지우고, env 파일이 없으면 성공 처리 | 코드 확인 | 소유 기록(`owner`), 남의 스택은 거부(2), env 파일 없으면 실패(1) | 소유 기록을 바꾸자 doctor·down·up 모두 2, 컨테이너 4개 유지. env 파일을 치우자 down 1 |
 | 가드 우회(주석 속 `-v`, 이중 공백, `["innerHTML"]`, `Column( Float`) | 반례 테스트 | 주석 제거 후 판정, 공백·괄호 형태 허용 | 반례 테스트 통과, 기준값 변화 없음 |
 
