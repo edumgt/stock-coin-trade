@@ -81,7 +81,7 @@ attribution = "금융위원회 주식시세정보(공공데이터포털)"
 notes = "계획 단계 조사에서 공공누리 제4유형(출처표시·상업적 이용금지·변경금지)으로 확인했다. 가공 데이터 공개가 '변경'에 해당하는지 해석이 필요하다. 어댑터 없음."
 enabled = { local = false, public = false }
 
-# ── 기존 코드가 쓰는 비공식·미확인 소스(원본 강사 코드). 모두 public에서 끈다. ──
+# ── 기존 코드가 쓰는 비공식·미확인 소스(원본 코드). 모두 public에서 끈다. ──
 
 [sources.yfinance]
 name = "Yahoo Finance(yfinance 라이브러리)"
