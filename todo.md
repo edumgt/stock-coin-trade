@@ -860,3 +860,65 @@ KIS 원문이라 숫자가 `"70,900.0"` 같은 **문자열**로 오므로 `kisNu
 로그인 세션이 필요하다. 로그인 후 탭을 열어 차트·표가 의도대로 보이는지 봐 주면 좋겠다.
 
 **커밋 안 했다** — 변경만 남겨 두었다.
+
+### 6-21. 2026-10-12 보유 종목 그리드를 ag-Grid 로 교체 + 탭 막대 들뜸 수정 (사용자 요청)
+
+**ag-Grid 교체**: 6-20 에서 만든 KIS 모의투자 탭의 하단 표(`<table class="dark-table">`)를 ag-Grid 로 바꿨다.
+같은 `trade/` 폴더의 `history.html` 과 같은 방식으로 맞췄다 — `ag-grid-community@36.0.2`, `--ag-*` 테마 변수
+(`.kis-portfolio-grid`, 값은 `.history-grid` 와 동일), `defaultColDef` 에 정렬·필터·리사이즈, 페이지네이션 20/50/100.
+
+컬럼: 종목(시세 링크) · 종목코드 · 섹터(배지) · 보유수량 · 매수평균가 · 현재가 · 평가금액(기본 내림차순 정렬) ·
+평가손익 · 수익률. **금액·수익률은 `valueFormatter` 로만 가공해 셀 값은 숫자로 유지**했다 — 그래야 정렬과
+숫자 필터가 문자열이 아니라 값 기준으로 동작한다. 보유 0건·비로그인·오류는 `overlayNoRowsTemplate` +
+`showNoRowsOverlay()` 로 그리드 안에 안내한다.
+
+검증(Node 스텁 하네스): 그리드 1회만 생성(재조회 시 재생성 없음), `715,000원`·`+6,000원`(#E11D48)·
+`-25,000원`(#2563EB)·`-2.78%`·`70,900원`(소수 반올림)·`10주` 포맷, 종목 셀 링크 `/trade/stock.html?symbol=005930`,
+보유 0건·401 오버레이 문구 확인.
+
+**탭 막대 들뜸 수정**: 세로 스크롤 시 `.hold-tabs` 가 떠 보이는 문제.
+
+- 원인: `margin:0 0 20px`. sticky 로 고정된 바에 **투명한 20px 띠가 붙어 함께 따라다니고**, 스크롤되는 내용이
+  그 틈으로 지나가면서 바와 내용이 분리돼 보였다. `border-radius:12px` 의 둥근 네 구석으로도 내용이 비쳤다.
+- 조치: 바의 `margin` 을 0 으로 하고 간격을 `.hold-panel.active { padding-top:20px }` 로 옮겼다. 그 여백은
+  내용에 속하므로 스크롤되면 함께 올라가고 카드가 바 아래에 붙는다. `border-radius` 는 0(툴바 형태).
+  배경 `--surface` 는 `#FFFFFF` 로 불투명해서 내용이 바를 통과해 보이지는 않는다(확인).
+- `main` 이 스크롤 주체인 것은 `common.js:1092` 가 `> main` + `> footer` 조건으로 `app-shell-layout` 을 붙이기
+  때문이고, hold.html 은 둘 다 있어 해당된다 → `top:0` 은 main 스크롤포트 기준으로 동작한다.
+
+### 6-22. 2026-10-12 trade/stock.html 이 14종목만 열리던 문제 — 임의 종목코드 조회 가능하도록 (사용자 요청)
+
+**증상**: `/trade/stock.html?symbol=000040` 처럼 파라미터로 종목을 지정해도 일부 종목만 동작했다.
+
+**원인**: 종목 마스터가 **내장 폴백 14종목**뿐이었다.
+
+- `get_krx_stocks()` 는 KRX KIND 상장법인 목록(`https://kind.krx.co.kr/corpgeneral/corpList.do?method=download`)을
+  받아 쓰는데, 이 EC2 에서 **HTTP 403 Access Denied** 가 돌아온다(컨테이너 안에서 직접 확인, 응답 408바이트
+  `<TITLE>Access Denied</TITLE>`). 로컬 WSL 에서는 같은 요청이 성공해서 재현되지 않는다 — **AWS IP 차단**으로 보인다.
+- 실패 시 내장 `STOCKS`(14종목)로 폴백하는데, 그 폴백을 **24시간 캐시**했다. 일시적 차단도 하루치 "14종목뿐" 상태로 굳었다.
+- 종목 조회·시세·차트·가상주문·KIS 실습 주문이 **모두 `get_stock_info()` 를 통과**하므로, 목록에 없으면
+  `지원하지 않는 KRX 종목입니다` 로 전부 막혔다. 실측: `/api/stocks/list?limit=30` → 14건,
+  `/api/stocks/search?q=000040` → `[]`, `/api/stocks/quote?symbol=000040` → 404,
+  `/api/stocks/prices?symbols=000040,005930` → 005930 만 반환.
+
+**조치** (`python-stock-backend/app/services/stock_market.py`)
+
+- `resolve_krx_symbol(code)` 추가: 목록에 없는 6자리 코드를 **네이버 종목 기본정보**(`m.stock.naver.com/api/stock/{code}/basic`)
+  로 해석해 `{symbol, name, market, sector:'기타', ticker}` 를 만든다. 시세(`_fetch_naver_quote`)와
+  차트(`_fetch_naver_chart`)는 이미 네이버로 임의 종목을 지원하므로 **부족한 것은 메타데이터뿐**이었다.
+  성공은 24시간, 실패(오타·상장폐지)는 10분 캐시해 반복 조회를 막는다. 6자리 숫자가 아니면 즉시 `None`.
+- `get_stock_info()` 가 마지막에 이 해석기를 쓴다 → **한 곳만 고쳐 시세·차트·주문·KIS 실습이 함께 열린다.**
+- `search_krx_stocks()`: 6자리 코드로 검색했는데 목록에 없으면 해석 결과를 맨 앞에 끼워 넣는다.
+  프런트 종목 선택기(`stock.js loadStockList`)가 이 응답으로 URL 의 `symbol` 을 찾으므로 **프런트 수정은 불필요**.
+- 폴백 캐시 TTL 분리: `KRX_LIST_FALLBACK_TTL = 1800`(30분). 폴백 중일 때만 짧게 잡아 KIND 가 풀리면 스스로 복구된다.
+
+**검증**: 로컬에서 `resolve_krx_symbol('000040')` → `{'name':'KR모터스','market':'KOSPI','ticker':'000040.KS'}`,
+없는 코드(`999999`)·형식 오류(`ABC`) → `None`, `search_krx_stocks('000040')` 에 해당 종목 포함.
+**st 백엔드 전체 92개 통과**(6-19 의 신규 4건 포함).
+
+**아직 적용 안 됨 — `crypto-mock-python` 재시작 필요.** 파일은 호스트 소스와 컨테이너 양쪽에 올려 뒀고
+(백업 `/opt/css-common-backup-20261012/stock_market.py.bak`), 6-19 의 `api_usage.py`(시각 오프셋)와 함께
+**재시작 한 번으로 둘 다 적용**된다. 14:40 KST 장중이고 이 컨테이너가 fd 자동매매의 KIS 게이트웨이라
+15:30 장 마감 후가 안전하다.
+
+**커밋 안 했다** — 변경만 남겨 두었다.

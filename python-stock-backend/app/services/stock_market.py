@@ -50,8 +50,10 @@ SHARES_OUTSTANDING = {
 _quote_cache = {}
 _chart_cache = {}
 _index_cache = {}
-_krx_stock_cache = {"ts": 0.0, "data": []}
+_krx_stock_cache = {"ts": 0.0, "data": [], "fallback": False}
 _krx_stock_lock = threading.Lock()
+_resolved_symbol_cache: dict[str, dict | None] = {}
+_resolved_symbol_lock = threading.Lock()
 _dashboard_quote_cache = {"ts": 0.0, "data": {}}
 _dashboard_quote_lock = threading.Lock()
 
@@ -59,6 +61,11 @@ QUOTE_TTL = 60
 CHART_TTL = 300
 INDEX_TTL = 60
 KRX_LIST_TTL = 86_400
+# KIND 다운로드가 막혀 내장 폴백(14종목)을 쓰는 동안에는 하루가 아니라 30분마다 다시 시도한다.
+# 예전에는 폴백도 24시간 캐시해서, 일시적 차단이 하루치 "종목 14개뿐" 상태로 굳었다.
+KRX_LIST_FALLBACK_TTL = 1_800
+RESOLVED_SYMBOL_TTL = 86_400       # 해석 성공한 종목 메타데이터 보관
+RESOLVED_SYMBOL_MISS_TTL = 600     # 없는 코드(오타·상장폐지)를 반복 조회하지 않도록
 KRX_LIST_URL = "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download"
 NAVER_STOCK_API = "https://m.stock.naver.com/api/stock"
 NAVER_CHART_API = "https://api.finance.naver.com/siseJson.naver"
@@ -95,13 +102,20 @@ def _parse_krx_list(raw: bytes) -> list[dict]:
 def get_krx_stocks() -> list[dict]:
     """KRX KIND 공식 상장법인 목록을 가져오고 하루 동안 메모리에 보관한다."""
     now = time.time()
-    cached = _krx_stock_cache["data"]
-    if cached and now - _krx_stock_cache["ts"] < KRX_LIST_TTL:
-        return cached
+
+    def _fresh() -> list[dict] | None:
+        data = _krx_stock_cache["data"]
+        ttl = KRX_LIST_FALLBACK_TTL if _krx_stock_cache.get("fallback") else KRX_LIST_TTL
+        return data if data and now - _krx_stock_cache["ts"] < ttl else None
+
+    fresh = _fresh()
+    if fresh is not None:
+        return fresh
     with _krx_stock_lock:
+        fresh = _fresh()
+        if fresh is not None:
+            return fresh
         cached = _krx_stock_cache["data"]
-        if cached and now - _krx_stock_cache["ts"] < KRX_LIST_TTL:
-            return cached
         try:
             response = requests.get(KRX_LIST_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
             response.raise_for_status()
@@ -109,7 +123,7 @@ def get_krx_stocks() -> list[dict]:
             if not stocks:
                 raise ValueError("KRX 상장법인 목록이 비어 있습니다.")
             stocks.sort(key=lambda stock: ({"KOSPI": 0, "KOSDAQ": 1, "KONEX": 2}.get(stock["market"], 9), stock["symbol"]))
-            _krx_stock_cache.update({"ts": now, "data": stocks})
+            _krx_stock_cache.update({"ts": now, "data": stocks, "fallback": False})
             return stocks
         except Exception:
             # 이미 받은 목록이 있으면 네트워크 일시 실패에도 검색 기능을 계속 제공한다.
@@ -125,7 +139,7 @@ def get_krx_stocks() -> list[dict]:
                 {"KOSPI": 0, "KOSDAQ": 1, "KONEX": 2}.get(stock["market"], 9),
                 stock["symbol"],
             ))
-            _krx_stock_cache.update({"ts": now, "data": fallback_stocks})
+            _krx_stock_cache.update({"ts": now, "data": fallback_stocks, "fallback": True})
             return fallback_stocks
 
 
@@ -150,7 +164,68 @@ def search_krx_stocks(query: str, limit: int = 20) -> list[dict]:
         if not any(keyword in value.lower() for value in values):
             continue
         (starts_with if stock["name"].lower().startswith(keyword) or stock["symbol"].lower().startswith(keyword) else contains).append(stock)
-    return (starts_with + contains)[:max(1, min(limit, 50))]
+    matches = starts_with + contains
+    # 6자리 코드로 검색했는데 목록에 없으면(KIND 차단 시 폴백 14종목뿐) 네이버로 해석해 끼워 넣는다.
+    # 프런트 종목 선택기(stock.js loadStockList)가 이 응답으로 URL 의 symbol 을 찾는다.
+    if not any(stock["symbol"].lower() == keyword for stock in matches):
+        resolved = resolve_krx_symbol(keyword)
+        if resolved:
+            matches = [resolved] + matches
+    return matches[:max(1, min(limit, 50))]
+
+
+def resolve_krx_symbol(symbol: str) -> dict | None:
+    """상장법인 목록에 없는 6자리 KRX 코드를 네이버 종목 기본정보로 해석한다.
+
+    왜 필요한가: KIND 상장법인 목록(`corpList.do`)은 이 EC2 에서 **HTTP 403 Access Denied** 로 막혀
+    `get_krx_stocks()` 가 내장 폴백 14종목만 돌려준다(2026-10-12 확인). 종목 조회·시세·차트·주문이 모두
+    `get_stock_info()` 를 통과해야 하므로, 목록에만 의존하면 `/trade/stock.html?symbol=000040` 같은
+    임의 종목이 "지원하지 않는 KRX 종목입니다" 로 막혔다.
+
+    시세(`_fetch_naver_quote`)와 차트(`_fetch_naver_chart`)는 이미 네이버로 임의 종목을 지원한다.
+    그래서 부족한 것은 메타데이터(이름·시장)뿐이고, 그것만 같은 경로에서 받아 채운다.
+    섹터는 네이버 기본정보에 없으므로 '기타'로 둔다.
+    """
+    symbol = (symbol or "").strip().upper()
+    if not re.fullmatch(r"\d{6}", symbol):
+        return None
+    now = time.time()
+    hit = _resolved_symbol_cache.get(symbol)
+    if hit is not None:
+        ttl = RESOLVED_SYMBOL_TTL if hit["data"] else RESOLVED_SYMBOL_MISS_TTL
+        if now - hit["ts"] < ttl:
+            return hit["data"]
+    with _resolved_symbol_lock:
+        hit = _resolved_symbol_cache.get(symbol)
+        if hit is not None:
+            ttl = RESOLVED_SYMBOL_TTL if hit["data"] else RESOLVED_SYMBOL_MISS_TTL
+            if now - hit["ts"] < ttl:
+                return hit["data"]
+        info = None
+        try:
+            response = requests.get(
+                f"{NAVER_STOCK_API}/{symbol}/basic",
+                headers={"User-Agent": "Mozilla/5.0", "Referer": "https://m.stock.naver.com/"},
+                timeout=8,
+            )
+            response.raise_for_status()
+            row = response.json()
+            name = str(row.get("stockName") or "").strip()
+            exchange = str(row.get("stockExchangeName") or "").strip().upper()
+            if not exchange:
+                exchange = str((row.get("stockExchangeType") or {}).get("nameEng") or "").strip().upper()
+            if name and exchange in {"KOSPI", "KOSDAQ", "KONEX"}:
+                info = {
+                    "symbol": symbol,
+                    "name": name,
+                    "market": exchange,
+                    "sector": "기타",
+                    "ticker": f"{symbol}.{'KS' if exchange == 'KOSPI' else 'KQ'}",
+                }
+        except Exception:
+            info = None
+        _resolved_symbol_cache[symbol] = {"ts": now, "data": info}
+        return info
 
 
 def get_stock_info(symbol: str) -> dict | None:
@@ -158,7 +233,11 @@ def get_stock_info(symbol: str) -> dict | None:
     # 기존 실습 종목은 오프라인 시뮬레이션을 위해 보존한다.
     if symbol in STOCKS:
         return {"symbol": symbol, **STOCKS[symbol]}
-    return next((stock for stock in get_krx_stocks() if stock["symbol"] == symbol), None)
+    found = next((stock for stock in get_krx_stocks() if stock["symbol"] == symbol), None)
+    if found:
+        return found
+    # 목록(KIND)이 막혀도 코드로 직접 들어온 종목은 열 수 있어야 한다.
+    return resolve_krx_symbol(symbol)
 
 
 def _to_number(value, default=0):

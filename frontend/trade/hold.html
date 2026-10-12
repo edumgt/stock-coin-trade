@@ -18,8 +18,14 @@
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.0.2/dist/ag-grid-community.min.js"></script>
   <style>
     /* 탭 막대는 main(공용 app-shell-layout이 스크롤을 담당하는 유일한 영역) 안에서
-       sticky로 고정하고, 탭을 전환해도 필요할 때만 그 안에서 스크롤되게 한다. */
-    .hold-tabs { position:sticky; top:0; z-index:5; display:flex; gap:8px; margin:0 0 20px; padding:10px; border-bottom:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow-sm); overflow-x:auto; }
+       sticky로 고정하고, 탭을 전환해도 필요할 때만 그 안에서 스크롤되게 한다.
+
+       margin-bottom 을 주면 안 된다 — 고정된 바에 **투명한 20px 띠**가 붙어 함께 따라다니고,
+       스크롤되는 내용이 그 틈으로 지나가면서 바가 떠 보인다(2026-10-12 사용자 보고).
+       간격은 아래 .hold-panel.active 의 padding-top 으로 옮겼다. 그 여백은 내용에 속하므로
+       스크롤되면 함께 올라가고, 카드가 바 아래에 딱 붙는다.
+       border-radius 도 0 으로 둔다 — 둥근 모서리의 투명한 네 구석으로 내용이 비친다. */
+    .hold-tabs { position:sticky; top:0; z-index:5; display:flex; gap:8px; margin:0; padding:10px; border-bottom:1px solid var(--border); border-radius:0; background:var(--surface); box-shadow:var(--shadow-sm); overflow-x:auto; }
     .hold-tab { flex:0 0 auto; padding:10px 18px; border:1px solid transparent; border-radius:9px; color:var(--muted); background:transparent; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; transition:background .15s,border-color .15s,color .15s; }
     .hold-tab:hover { color:var(--accent-dark); background:var(--accent-light); border-color:rgba(41,98,255,.18); }
     .hold-tab.active { color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); border-color:var(--accent-dark); box-shadow:0 4px 12px rgba(41,98,255,.26); }
@@ -27,7 +33,7 @@
     .kis-portfolio-grid { --ag-font-family:Pretendard, sans-serif; --ag-font-size:13px; --ag-background-color:#fff; --ag-foreground-color:#172033; --ag-header-background-color:#F7F9FC; --ag-header-foreground-color:#64748B; --ag-border-color:#E2E8F0; --ag-row-border-color:#E8EDF4; --ag-odd-row-background-color:#FBFCFE; --ag-selected-row-background-color:#EFF6FF; --ag-accent-color:#2563EB; }
     .kis-portfolio-grid .ag-header-cell-label { font-weight:800; }
     .hold-panel { display:none; }
-    .hold-panel.active { display:block; }
+    .hold-panel.active { display:block; padding-top:20px; }
   </style>
 <link rel="stylesheet" href="https://www.edumgt.co.kr/css/common.css?v=20261012-common-3" />
 </head>
