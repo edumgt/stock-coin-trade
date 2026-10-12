@@ -34,6 +34,7 @@
     <button type="button" class="hold-tab active" data-tab="summary" onclick="switchHoldTab('summary')" role="tab" aria-selected="true" aria-controls="panel-summary">요약</button>
     <button type="button" class="hold-tab" data-tab="analysis" onclick="switchHoldTab('analysis')" role="tab" aria-selected="false" aria-controls="panel-analysis">✦ 포트폴리오 분석</button>
     <button type="button" class="hold-tab" data-tab="stock" onclick="switchHoldTab('stock')" role="tab" aria-selected="false" aria-controls="panel-stock">주식</button>
+    <button type="button" class="hold-tab" data-tab="kis" onclick="switchHoldTab('kis')" role="tab" aria-selected="false" aria-controls="panel-kis">KIS 모의투자</button>
     <button type="button" class="hold-tab" data-tab="crypto" onclick="switchHoldTab('crypto')" role="tab" aria-selected="false" aria-controls="panel-crypto">코인</button>
     <button type="button" class="hold-tab" data-tab="alt" onclick="switchHoldTab('alt')" role="tab" aria-selected="false" aria-controls="panel-alt">대체자산</button>
   </nav>
@@ -126,6 +127,49 @@
     </section>
   </div>
 
+  <!-- KIS 모의투자 포트폴리오 (한국투자증권 Testbed 실계좌 조회) -->
+  <div id="panel-kis" class="hold-panel">
+    <section class="glass-card overflow-hidden">
+      <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-3" style="border-bottom:1px solid var(--border);">
+        <div>
+          <h3 class="text-base font-black" style="color:var(--fg);">KIS 모의투자 포트폴리오</h3>
+          <p class="mt-1 text-sm" style="color:var(--muted);">한국투자증권 Testbed 모의계좌의 실제 보유 종목과 평가 비중입니다.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="badge badge-muted">모의투자 · paper</span>
+          <button id="kisPortfolioRefresh" class="hold-tab" type="button" style="padding:7px 12px;border-color:var(--border);color:var(--fg);font-size:13.5px;">↻ 새로고침</button>
+          <a href="/kis-practice.html" class="text-sm font-bold" style="color:var(--accent);text-decoration:none;">매매 실습 →</a>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-4">
+        <div class="stat-card"><div class="stat-label">보유 종목</div><div class="stat-value"><span id="kisPositionCount">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">종목</span></div></div>
+        <div class="stat-card"><div class="stat-label">예수금</div><div class="stat-value"><span id="kisCashBalance">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div></div>
+        <div class="stat-card"><div class="stat-label">총평가금액</div><div class="stat-value"><span id="kisTotalEval">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div></div>
+        <div class="stat-card"><div class="stat-label">총평가손익</div><div class="stat-value"><span id="kisTotalPnl">-</span><span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:4px;">KRW</span></div></div>
+      </div>
+      <div class="grid grid-cols-1 gap-4 px-4 pb-4 lg:grid-cols-2">
+        <div class="rounded-lg p-3" style="border:1px solid var(--border);background:var(--surface-2);">
+          <div class="mb-1 flex items-center justify-between"><h4 class="text-sm font-extrabold" style="color:var(--fg);">종목별 평가 비중</h4><span class="text-sm" style="color:var(--muted);">평가금액 기준</span></div>
+          <div id="kisAllocationChart" class="min-h-[270px]"></div>
+        </div>
+        <div class="rounded-lg p-3" style="border:1px solid var(--border);background:var(--surface-2);">
+          <div class="mb-1 flex items-center justify-between"><h4 class="text-sm font-extrabold" style="color:var(--fg);">섹터별 평가금액</h4><span class="text-sm" style="color:var(--muted);">보유 종목 합산</span></div>
+          <div id="kisSectorChart" class="min-h-[270px]"></div>
+        </div>
+      </div>
+      <div id="kisSectorSummary" class="px-4 pb-4"></div>
+      <p id="kisPortfolioStatus" class="px-5 pb-3 text-sm" style="color:var(--muted);">탭을 열면 조회합니다.</p>
+      <div class="overflow-x-auto" style="border-top:1px solid var(--border);">
+        <table class="dark-table min-w-full">
+          <thead><tr>
+            <th class="text-left">종목</th><th class="text-left">섹터</th><th class="text-right">보유수량</th><th class="text-right">매수평균가</th><th class="text-right">현재가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th><th class="text-right">수익률</th>
+          </tr></thead>
+          <tbody id="kisPortfolioBody"><tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--muted);">탭을 열면 조회합니다.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
   <!-- 보유 코인 -->
   <div id="panel-crypto" class="hold-panel">
     <section class="glass-card overflow-hidden">
@@ -174,10 +218,14 @@ function switchHoldTab(name) {
     tab.classList.toggle('active', active);
     tab.setAttribute('aria-selected', String(active));
   });
+  // KIS 조회는 st 게이트웨이의 KIS 호출 전역 직렬화(1.05초 간격)를 타므로 페이지 로드 때가 아니라
+  // 탭을 실제로 열 때만 보낸다. 숨은 패널에서는 Highcharts 가 폭 0 으로 그려지는 문제도 함께 피한다.
+  if (name === 'kis' && typeof loadKisPortfolio === 'function') loadKisPortfolio();
 }
 </script>
 <script src="/js/config.js"></script>
 <script src="/js/common.js?v=20261008-footer-25px"></script>
 <script src="/js/hold_crypto.js?v=20260906-tabs-1-f13"></script>
+<script src="/js/hold_kis.js?v=20261012-kis-tab-1"></script>
 </body>
 </html>
