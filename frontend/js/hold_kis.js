@@ -16,6 +16,7 @@ const KIS_PALETTE = ['#2563EB', '#7C3AED', '#059669', '#EA580C', '#DB2777', '#08
 let kisPortfolioLoaded = false;
 let kisPortfolioLoading = false;
 let kisSectorMap = null;
+let kisPortfolioGridApi = null;
 
 /** KIS 응답은 숫자가 문자열("1,234" 포함)로 온다. */
 function kisNum(value) {
@@ -29,9 +30,13 @@ function kisStatus(message) {
   if (el) el.textContent = message;
 }
 
+/** 빈 그리드에 안내 문구를 띄운다(행이 없을 때 ag-Grid 오버레이로 표시). */
 function kisTableMessage(message) {
-  const tbody = document.getElementById('kisPortfolioBody');
-  if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--muted);">${message}</td></tr>`;
+  const api = ensureKisPortfolioGrid();
+  if (!api) return;
+  api.setGridOption('overlayNoRowsTemplate', `<span style="padding:16px;color:#64748B;">${message}</span>`);
+  api.setGridOption('rowData', []);
+  api.showNoRowsOverlay();
 }
 
 function kisChartsMessage(message) {
@@ -139,27 +144,61 @@ function renderKisPortfolioCharts(rows, totalEval) {
   });
 }
 
+/* ── 보유 종목 ag-Grid ──────────────────────────────────────────────────────
+   같은 trade/ 폴더의 history.html 과 같은 방식(ag-grid-community 36.0.2, --ag-* 테마 변수,
+   defaultColDef 에 정렬·필터·리사이즈, 페이지네이션)으로 맞춘다.
+   금액 컬럼은 valueFormatter 로만 가공해 **원본 숫자를 셀 값으로 유지**한다 — 그래야 정렬과
+   숫자 필터가 문자열이 아니라 값 기준으로 동작한다. */
+function kisPortfolioColumnDefs() {
+  const pnlStyle = params => ({ fontWeight: '800', color: Number(params.value) >= 0 ? '#E11D48' : '#2563EB' });
+  const signedKrw = params => `${Number(params.value) >= 0 ? '+' : ''}${fmt(Number(params.value))}원`;
+  return [
+    { headerName:'종목', field:'name', minWidth:190, flex:1.2,
+      cellRenderer: params => `<a href="/trade/stock.html?symbol=${encodeURIComponent(params.data.symbol)}" title="${params.value} 시세·매매" style="font-weight:800;color:var(--fg);text-decoration:none;">${params.value} <span style="font-size:13px;color:var(--accent);">시세 ↗</span></a>` },
+    { headerName:'종목코드', field:'symbol', width:112, cellStyle:{ color:'var(--accent)', fontWeight:'700' } },
+    { headerName:'섹터', field:'sector', minWidth:140,
+      cellRenderer: params => `<span class="badge badge-muted" style="font-size:13px;">${params.value || '기타'}</span>` },
+    { headerName:'보유수량', field:'quantity', width:118, type:'rightAligned',
+      valueFormatter: params => `${fmt(Number(params.value))}주` },
+    { headerName:'매수평균가', field:'avgPrice', minWidth:130, type:'rightAligned',
+      valueFormatter: params => `${fmt(Math.round(Number(params.value)))}원` },
+    { headerName:'현재가', field:'currentPrice', minWidth:120, type:'rightAligned',
+      valueFormatter: params => `${fmt(Number(params.value))}원` },
+    { headerName:'평가금액', field:'evalAmount', minWidth:140, type:'rightAligned', sort:'desc',
+      valueFormatter: params => `${fmt(Number(params.value))}원`,
+      cellStyle:{ fontWeight:'800', color:'var(--accent-dark)' } },
+    { headerName:'평가손익', field:'profitLoss', minWidth:135, type:'rightAligned',
+      valueFormatter: signedKrw, cellStyle: pnlStyle },
+    { headerName:'수익률', field:'profitLossRate', width:112, type:'rightAligned',
+      valueFormatter: params => `${Number(params.value) >= 0 ? '+' : ''}${Number(params.value).toFixed(2)}%`,
+      cellStyle: pnlStyle },
+  ];
+}
+
+/** 그리드를 한 번만 만들고 API 를 캐시한다. 탭이 열린 뒤에 호출되므로 폭이 0 이 아니다. */
+function ensureKisPortfolioGrid() {
+  if (kisPortfolioGridApi) return kisPortfolioGridApi;
+  const element = document.getElementById('kisPortfolioGrid');
+  if (!element || !window.agGrid) return null;
+  kisPortfolioGridApi = agGrid.createGrid(element, {
+    columnDefs: kisPortfolioColumnDefs(),
+    rowData: [],
+    defaultColDef: { sortable:true, filter:true, resizable:true, suppressHeaderMenuButton:true },
+    animateRows: true,
+    pagination: true,
+    paginationPageSize: 20,
+    paginationPageSizeSelector: [20, 50, 100],
+    overlayNoRowsTemplate: '<span style="padding:16px;color:#64748B;">탭을 열면 조회합니다.</span>',
+  });
+  return kisPortfolioGridApi;
+}
+
 function renderKisPortfolioTable(rows) {
-  const tbody = document.getElementById('kisPortfolioBody');
-  if (!tbody) return;
+  const api = ensureKisPortfolioGrid();
+  if (!api) return;
   if (!rows.length) { kisTableMessage('KIS 모의계좌에 보유 종목이 없습니다.'); return; }
-  tbody.innerHTML = rows.map(row => {
-    const color = row.profitLoss >= 0 ? '#E11D48' : '#2563EB';
-    const tradeUrl = `/trade/stock.html?symbol=${encodeURIComponent(row.symbol)}`;
-    return `<tr>
-      <td><a href="${tradeUrl}" title="${row.name} 시세·매매" style="display:inline-block;text-decoration:none;">
-        <div class="font-bold" style="color:var(--fg);">${row.name} <span style="font-size:13px;color:var(--accent);">시세 보기 ↗</span></div>
-        <div class="text-sm" style="color:var(--accent);">${row.symbol}</div>
-      </a></td>
-      <td><span class="badge badge-muted" style="font-size:13px;">${row.sector || '기타'}</span></td>
-      <td class="text-right font-semibold" style="color:var(--fg);">${fmt(row.quantity)}주</td>
-      <td class="text-right" style="color:var(--fg);">${fmt(Math.round(row.avgPrice))}원</td>
-      <td class="text-right" style="color:var(--fg);">${fmt(row.currentPrice)}원</td>
-      <td class="text-right font-bold" style="color:var(--accent);">${fmt(row.evalAmount)}원</td>
-      <td class="text-right font-bold" style="color:${color};">${row.profitLoss >= 0 ? '+' : ''}${fmt(row.profitLoss)}원</td>
-      <td class="text-right font-bold" style="color:${color};">${row.profitLossRate >= 0 ? '+' : ''}${row.profitLossRate.toFixed(2)}%</td>
-    </tr>`;
-  }).join('');
+  api.setGridOption('rowData', rows);
+  api.hideOverlay();
 }
 
 /** 탭을 열 때 호출된다(hold.html switchHoldTab). force=true 면 캐시를 무시하고 다시 받는다. */

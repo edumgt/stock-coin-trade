@@ -15,6 +15,7 @@
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','Apple SD Gothic Neo','Malgun Gothic','sans-serif']}}}}</script>
   <link rel="stylesheet" href="/css/style.css?v=20261012-common-3">
   <script src="https://code.highcharts.com/11.1.0/highcharts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.0.2/dist/ag-grid-community.min.js"></script>
   <style>
     /* 탭 막대는 main(공용 app-shell-layout이 스크롤을 담당하는 유일한 영역) 안에서
        sticky로 고정하고, 탭을 전환해도 필요할 때만 그 안에서 스크롤되게 한다. */
@@ -22,6 +23,9 @@
     .hold-tab { flex:0 0 auto; padding:10px 18px; border:1px solid transparent; border-radius:9px; color:var(--muted); background:transparent; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; transition:background .15s,border-color .15s,color .15s; }
     .hold-tab:hover { color:var(--accent-dark); background:var(--accent-light); border-color:rgba(41,98,255,.18); }
     .hold-tab.active { color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); border-color:var(--accent-dark); box-shadow:0 4px 12px rgba(41,98,255,.26); }
+    /* ag-Grid 테마 — trade/history.html .history-grid 와 같은 값으로 맞춘다. */
+    .kis-portfolio-grid { --ag-font-family:Pretendard, sans-serif; --ag-font-size:13px; --ag-background-color:#fff; --ag-foreground-color:#172033; --ag-header-background-color:#F7F9FC; --ag-header-foreground-color:#64748B; --ag-border-color:#E2E8F0; --ag-row-border-color:#E8EDF4; --ag-odd-row-background-color:#FBFCFE; --ag-selected-row-background-color:#EFF6FF; --ag-accent-color:#2563EB; }
+    .kis-portfolio-grid .ag-header-cell-label { font-weight:800; }
     .hold-panel { display:none; }
     .hold-panel.active { display:block; }
   </style>
@@ -159,13 +163,9 @@
       </div>
       <div id="kisSectorSummary" class="px-4 pb-4"></div>
       <p id="kisPortfolioStatus" class="px-5 pb-3 text-sm" style="color:var(--muted);">탭을 열면 조회합니다.</p>
-      <div class="overflow-x-auto" style="border-top:1px solid var(--border);">
-        <table class="dark-table min-w-full">
-          <thead><tr>
-            <th class="text-left">종목</th><th class="text-left">섹터</th><th class="text-right">보유수량</th><th class="text-right">매수평균가</th><th class="text-right">현재가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th><th class="text-right">수익률</th>
-          </tr></thead>
-          <tbody id="kisPortfolioBody"><tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--muted);">탭을 열면 조회합니다.</td></tr></tbody>
-        </table>
+      <div class="px-4 pb-4" style="border-top:1px solid var(--border);padding-top:14px;">
+        <p class="grid-hint mb-2 text-sm" style="color:var(--muted);">컬럼 헤더를 눌러 정렬하고, 헤더 메뉴의 필터로 종목·섹터를 좁힐 수 있습니다.</p>
+        <div id="kisPortfolioGrid" class="kis-portfolio-grid" style="height:420px;width:100%"></div>
       </div>
     </section>
   </div>
@@ -226,6 +226,6 @@ function switchHoldTab(name) {
 <script src="/js/config.js"></script>
 <script src="/js/common.js?v=20261008-footer-25px"></script>
 <script src="/js/hold_crypto.js?v=20260906-tabs-1-f13"></script>
-<script src="/js/hold_kis.js?v=20261012-kis-tab-1"></script>
+<script src="/js/hold_kis.js?v=20261012-kis-aggrid-1"></script>
 </body>
 </html>
