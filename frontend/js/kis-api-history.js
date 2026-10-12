@@ -1,7 +1,24 @@
 let kisHistoryGrid;
 let kisHistoryRows = [];
 const kh = id => document.getElementById(id);
-const khDate = value => value ? new Date(value).toLocaleString('ko-KR', { hour12:false }) : '-';
+/* 서버(MariaDB CURRENT_TIMESTAMP)는 UTC 기준 naive DATETIME 을 오프셋 없이 보낼 수 있다.
+   오프셋이 없는 ISO 문자열은 브라우저가 **로컬 시각**으로 해석하므로 그대로 두면 9시간 틀어진다.
+   → 오프셋이 없으면 UTC 로 못 박아 읽고, 표시는 항상 한국 시간(Asia/Seoul)으로 한다. */
+const khInstant = value => {
+  if (!value) return null;
+  const raw = String(value);
+  const d = new Date(/(?:Z|[+-]\d{2}:?\d{2})$/.test(raw) ? raw : `${raw}Z`);
+  return Number.isNaN(d.valueOf()) ? null : d;
+};
+const khDate = value => {
+  const d = khInstant(value);
+  return d ? d.toLocaleString('ko-KR', { hour12:false, timeZone:'Asia/Seoul' }) : '-';
+};
+/* 한국 시간 기준 달력 날짜(자정~자정)를 UTC 밀리초로 환산 — 표시 시간대와 필터 기준을 일치시킨다. */
+const khSeoulDay = instant => {
+  const kst = new Date(instant.getTime() + 9 * 3600 * 1000);
+  return Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate());
+};
 
 function resultBadge(value) {
   const color = value ? '#15803D' : '#E11D48';
@@ -18,12 +35,11 @@ const khDateFilter = {
   filter:'agDateColumnFilter', floatingFilter:true,
   filterParams:{
     buttons:['clear'], debounceMs:200, browserDatePicker:true, minValidYear:2020, maxValidYear:2100,
-    // 셀 값은 ISO 문자열이므로 날짜(시각 제외)로 바꿔 필터의 자정 기준 날짜와 비교한다.
+    // 셀 값은 ISO 문자열이므로 **한국 시간 기준** 날짜(시각 제외)로 바꿔 필터의 자정 기준 날짜와 비교한다.
     comparator:(filterDate, cellValue) => {
-      if (!cellValue) return -1;
-      const cell = new Date(cellValue); if (Number.isNaN(cell.valueOf())) return -1;
-      const day = new Date(cell.getFullYear(), cell.getMonth(), cell.getDate()).valueOf();
-      const target = filterDate.valueOf();
+      const cell = khInstant(cellValue); if (!cell) return -1;
+      const day = khSeoulDay(cell);
+      const target = Date.UTC(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate());
       return day === target ? 0 : day < target ? -1 : 1;
     },
   },
@@ -32,7 +48,7 @@ const khDateFilter = {
 function createGrid() {
   return agGrid.createGrid(kh('grid'), {
     columnDefs: [
-      { headerName:'호출 시각', field:'calledAt', minWidth:190, sort:'desc', valueFormatter:p => khDate(p.value), ...khDateFilter },
+      { headerName:'호출 시각 (KST)', field:'calledAt', minWidth:190, sort:'desc', valueFormatter:p => khDate(p.value), ...khDateFilter },
       { headerName:'계층', field:'layer', minWidth:130, ...khText },
       { headerName:'TR ID', field:'trId', minWidth:135, valueFormatter:p => p.value || '-', ...khText },
       { headerName:'시도', field:'attempt', width:92, type:'rightAligned', valueFormatter:p => p.value || '-', ...khNumber },

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from http import HTTPStatus
 from typing import Any
 
@@ -169,13 +170,25 @@ def record_alpaca_gateway_call(*, method, path, label, request_data,
 _LAYERS = {"KIS Gateway": "KIS 외부 호출", "KB Gateway": "KB 외부 호출", "Alpaca Gateway": "Alpaca 외부 호출"}
 
 
+def iso_utc(value: datetime | None) -> str | None:
+    """시각을 **UTC 오프셋이 붙은** ISO 문자열로 내보낸다.
+
+    `called_at` 은 MariaDB `DATETIME`(tz 정보 없음) + `CURRENT_TIMESTAMP` 이고 컨테이너가 UTC 로 도니
+    값 자체는 UTC 다. 그런데 오프셋 없이 `2026-10-12T03:28:02` 로 보내면 브라우저의 `new Date()` 가
+    **로컬 시각**으로 해석해 한국에서 9시간 과거로 보인다(2026-10-12 확인). 오프셋을 붙여 계산 기준을 못 박는다.
+    """
+    if value is None:
+        return None
+    return (value if value.tzinfo else value.replace(tzinfo=timezone.utc)).isoformat()
+
+
 def serialize_log(row: ApiUsageLog, detail: bool = False) -> dict:
     try:
         meta = json.loads(row.request_meta) if row.request_meta else {}
     except (TypeError, ValueError):
         meta = {}
     data = {
-        "id": row.api_usage_log_id, "calledAt": row.called_at.isoformat() if row.called_at else None,
+        "id": row.api_usage_log_id, "calledAt": iso_utc(row.called_at),
         "provider": row.provider, "operation": row.operation, "method": row.method, "path": row.path,
         "requestMeta": row.request_meta, "status": row.http_status, "success": bool(row.success),
         "durationMs": row.duration_ms, "summary": row.result_summary,
