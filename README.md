@@ -197,7 +197,7 @@ docker compose exec python-backend python crawl_major_ohlcv.py
 docker compose exec python-backend python crawl_major_ohlcv.py --ticker 005930 --start 2020-01-01
 ```
 
-최초 적재가 끝나면 전체·연도·시장 집계를 `ohlcv_*_summary` 스냅샷 테이블에 한 번 생성합니다. 이후 백엔드 스케줄러는 기본적으로 매일 18:20(Asia/Seoul)에 현재 연도를 증분 갱신하고 같은 배치 안에서 집계 스냅샷도 한 번 갱신합니다. `ohlcv_daily_batch_runs.batch_date` PK가 같은 날짜의 중복 실행을 막으며, 대시보드 `/summary`는 원본 `ohlcv`를 매 요청마다 집계하지 않습니다. 수집 범위는 `.env`의 `OHLCV_SYNC_TICKERS`로 설정합니다.
+최초 적재가 끝나면 전체·연도·시장 집계를 `ohlcv_*_summary` 스냅샷 테이블에 한 번 생성합니다. 이후 백엔드 스케줄러는 기본적으로 매일 09:50·12:50·16:50(Asia/Seoul, EC2 운용 시간 08:40~17:50 이내)에 현재 연도를 증분 갱신하고 같은 배치 안에서 집계 스냅샷도 한 번 갱신합니다. 정기 작업은 `run_incremental_sync`로 매 회차 수집·집계를 실행하며, 대시보드 `/summary`는 원본 `ohlcv`를 매 요청마다 집계하지 않습니다. 수집 범위는 `.env`의 `OHLCV_SYNC_TICKERS`로 설정합니다.
 
 ```text
 OHLCV_SYNC_TICKERS=major          # 내장 주요 24종목

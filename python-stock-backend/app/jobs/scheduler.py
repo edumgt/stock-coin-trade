@@ -70,6 +70,11 @@ def sync_upbit_markets() -> None:
 def _ohlcv_schedule_hours() -> str:
     """설정된 간격에 맞는 결정적인 Asia/Seoul cron 시(hour) 목록을 돌려준다."""
     settings = get_settings()
+    if settings.ohlcv_sync_hours.strip():
+        hours = sorted({int(value.strip()) for value in settings.ohlcv_sync_hours.split(",")})
+        if any(hour < 0 or hour > 23 for hour in hours):
+            raise ValueError("OHLCV_SYNC_HOURS must contain hours between 0 and 23")
+        return ",".join(str(hour) for hour in hours)
     base_hour = settings.ohlcv_sync_hour
     interval_hours = settings.ohlcv_sync_interval_hours
     if not 0 <= base_hour <= 23:

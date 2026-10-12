@@ -115,16 +115,17 @@ services:
       DB_USER: ${MARIADB_USER:-mockinv}
       DB_PASSWORD: ${MARIADB_PASSWORD:-12345678!!}
       QUANT_DATABASE_URL: ${QUANT_DATABASE_URL:-postgresql+psycopg://${QUANT_DB_USER:-quant}:${QUANT_DB_PASSWORD:-quant}@postgres:5432/${QUANT_DB_NAME:-quant_research}}
-      # pg-stock 원본은 12시간 배치로 갱신하고 대시보드는 별도 집계 스냅샷을 읽는다.
+      # pg-stock 원본은 매일 09:50·12:50·16:50 KST 배치로 갱신하고 대시보드는 별도 집계 스냅샷을 읽는다.
       OHLCV_DATABASE_URL: ${OHLCV_DATABASE_URL:-postgresql+psycopg://admin:admin1234@pg-stock:5432/admin}
       OHLCV_SYNC_ENABLED: ${OHLCV_SYNC_ENABLED:-true}
       OHLCV_SYNC_TICKERS: ${OHLCV_SYNC_TICKERS:-major}
       OHLCV_SYNC_PROVIDER: ${OHLCV_SYNC_PROVIDER:-naver}
       OHLCV_SYNC_START_YEAR: ${OHLCV_SYNC_START_YEAR:-2020}
       OHLCV_SYNC_CORRECTION_DAYS: ${OHLCV_SYNC_CORRECTION_DAYS:-7}
-      OHLCV_SYNC_HOUR: ${OHLCV_SYNC_HOUR:-18}
-      OHLCV_SYNC_INTERVAL_HOURS: ${OHLCV_SYNC_INTERVAL_HOURS:-12}
-      OHLCV_SYNC_MINUTE: ${OHLCV_SYNC_MINUTE:-20}
+      OHLCV_SYNC_HOURS: ${OHLCV_SYNC_HOURS:-9,12,16}
+      OHLCV_SYNC_HOUR: ${OHLCV_SYNC_HOUR:-16}
+      OHLCV_SYNC_INTERVAL_HOURS: ${OHLCV_SYNC_INTERVAL_HOURS:-24}
+      OHLCV_SYNC_MINUTE: ${OHLCV_SYNC_MINUTE:-50}
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       REDIS_SESSION_KEY_PREFIX: ${REDIS_SESSION_KEY_PREFIX:-stock-coin-trade:session:}

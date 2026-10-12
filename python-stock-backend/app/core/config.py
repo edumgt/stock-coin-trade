@@ -77,9 +77,10 @@ class Settings(BaseSettings):
     ohlcv_sync_provider: str = "naver"
     ohlcv_sync_start_year: int = 2020
     ohlcv_sync_correction_days: int = 7
-    ohlcv_sync_hour: int = 18
-    ohlcv_sync_interval_hours: int = 12
-    ohlcv_sync_minute: int = 20
+    ohlcv_sync_hours: str = "9,12,16"
+    ohlcv_sync_hour: int = 16
+    ohlcv_sync_interval_hours: int = 24
+    ohlcv_sync_minute: int = 50
     ohlcv_sync_max_tickers: int = 0
 
     # ── 외부 서비스 ─────────────────────────────────────────────────────
