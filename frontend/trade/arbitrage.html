@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>코인 차익거래 — EDUMGT</title>
+  <link rel="icon" href="/img/favicon.png">
+  <style>
+    @font-face { font-family:'Pretendard'; font-weight:400; font-display:swap; src:url('/fonts/Pretendard-Regular.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:600; font-display:swap; src:url('/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:700; font-display:swap; src:url('/fonts/Pretendard-Bold.woff2') format('woff2'); }
+    @font-face { font-family:'Pretendard'; font-weight:800; font-display:swap; src:url('/fonts/Pretendard-ExtraBold.woff2') format('woff2'); }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','Apple SD Gothic Neo','Malgun Gothic','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="/css/style.css?v=20261012-common-3">
+  <style>
+    #site-footer { position:fixed; bottom:0; left:0; right:0; z-index:50; margin-top:0; }
+    body { padding-bottom: 40px; }
+    .calc-label { font-size:13px; font-weight:700; color:var(--fg-2); margin-bottom:.35rem; display:block; }
+    .calc-row { margin-bottom:14px; }
+    .result-row { display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--border); }
+    .result-row:last-child { border-bottom:none; }
+    .result-label { font-size:13px; color:var(--muted); font-weight:600; }
+    .result-value { font-size:16px; font-weight:800; color:var(--fg); }
+  </style>
+<link rel="stylesheet" href="https://www.edumgt.co.kr/css/common.css?v=20261012-common-3" />
+<link rel="stylesheet" href="/css/arbitrage.css?v=20261013-live-1"></head>
+<body class="min-h-screen"><div id="header-mount"></div>
+<main class="w-full px-4 py-6"><section class="arb-heading"><div><a href="/index.html">← 대시보드</a><h1>BTC 코인 차익거래</h1><p>업비트 · 빗썸 · 코인원 · 코빗의 실제 BTC/KRW 가격을 비교합니다.</p></div><button id="refreshPrices" class="btn-gold" type="button">시세 갱신</button></section>
+<div class="arb-meta"><span class="badge badge-gold">BTC / KRW · 추천 기준 ≥ 0.5%</span><span id="quoteStatus" role="status">시세 조회 중</span><span id="quoteTime">갱신 시각 확인 중</span></div>
+<section id="exchangeCards" class="arb-exchanges" aria-label="4개 거래소 실제 BTC 가격"></section>
+<section class="glass-card arb-visual"><div class="arb-section-heading"><h2>거래소 간 가격 흐름</h2><span>10초 간격 자동 조회 · 최근 체결가 기준</span></div><canvas id="arbitrageCanvas" role="img" aria-label="거래소 가격 비교와 추천 매수·매도 방향"></canvas><p id="recommendation" aria-live="polite">실제 시세를 기다리는 중입니다.</p></section>
+<div class="arb-details"><section class="glass-card p-6"><h2 class="text-base font-black mb-4">거래소 조합별 차이</h2><div id="pairList"></div><p class="arb-help">차이율 = (높은 가격 − 낮은 가격) ÷ 낮은 가격 × 100. 0.5% 이상은 최근 체결가 기준 매매 검토 신호입니다. 실제 체결은 매수 호가·매도 호가와 잔고·전송 가능 여부를 확인하세요.</p></section>
+<section class="glass-card p-6"><h2 class="text-base font-black mb-4">추천 방향의 비용 반영 예상 차익</h2><p class="arb-help" id="selectedPair">비교 가능한 시세를 기다리는 중입니다.</p><form id="arbitrageForm"><div class="arb-inputs">
+<div><label class="calc-label" for="quantity">거래 수량 (BTC)</label><input class="dark-input" type="number" id="quantity" min="0" step="0.00000001" value="1" required></div><div><label class="calc-label" for="buyFee">가정 매수 수수료 (%)</label><input class="dark-input" type="number" id="buyFee" min="0" step="0.001" value="0.05" required></div><div><label class="calc-label" for="sellFee">가정 매도 수수료 (%)</label><input class="dark-input" type="number" id="sellFee" min="0" step="0.001" value="0.05" required></div><div><label class="calc-label" for="transferCost">가정 전송·기타 비용 (KRW)</label><input class="dark-input" type="number" id="transferCost" min="0" step="1" value="1000" required></div></div><button class="btn-ghost mt-4" type="submit">비용 다시 계산</button><p id="calculationError" role="alert"></p></form><div id="arbitrageResult" aria-live="polite"></div><p class="arb-help">수수료 입력값은 가정이며 계정별 실제 수수료가 아닙니다. 호가·슬리피지와 전송 중 가격 변화는 예상 차익에 포함되지 않습니다.</p></section></div>
+<section class="glass-card p-6 mt-6"><h2 class="text-base font-black mb-3">시세 출처</h2><div class="arb-sources"><a href="https://api.upbit.com/v1/ticker?markets=KRW-BTC" target="_blank" rel="noopener">업비트 Public API</a><a href="https://api.bithumb.com/public/ticker/BTC_KRW" target="_blank" rel="noopener">빗썸 Public API</a><a href="https://api.coinone.co.kr/public/v2/ticker_new/KRW/BTC" target="_blank" rel="noopener">코인원 Public API</a><a href="https://api.korbit.co.kr/v1/ticker/detailed?currency_pair=btc_krw" target="_blank" rel="noopener">코빗 Public API</a></div><p class="arb-help">거래소 API의 최근 체결가를 조회한 결과이며, 동시 체결 가능한 호가를 의미하지 않습니다. 갱신이 45초 이상 지연되면 추천을 중단합니다.</p></section>
+</main><footer class="site-footer-unified">© 2026 (주)에듀엠지티 All rights reserved.</footer><script src="/js/config.js"></script><script src="/js/common.js?v=20261008-footer-25px"></script><script src="/js/arbitrage.js?v=20261013-live-1"></script></body></html>
