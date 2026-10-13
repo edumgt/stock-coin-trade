@@ -1,4 +1,4 @@
-# KIS 자동매매 연동 API 계약 (v0.5, 2026-10-02)
+# KIS 자동매매 연동 API 계약 (v0.6, 2026-10-13)
 
 > 이 문서는 domain-rag-lab / lumina-invest / stock-coin-trade 세 저장소에 **동일한 내용**으로 복사되어 있다.
 > 변경 시 세 저장소를 함께 갱신하고 버전을 올린다. 변경 이력은 문서 끝에 적는다.
@@ -27,6 +27,7 @@ Base: `https://<domain-rag-lab>/backtests`
 | GET | `/strategies` | 백테스트 합격 전략 목록 |
 | GET | `/strategies/{strategy_id}` | 최신 합격 버전 스펙 |
 | GET | `/strategies/{strategy_id}/versions/{version}` | 특정 버전 스펙 |
+| GET | `/strategies/{strategy_id}/versions` | **(v0.6)** 모든 버전(불합격 포함)과 판정 사유. `{strategy_id, latest_passed_version, versions:[{version, name, passed, failed[], universe_size, entry, backtest_result, created_at}]}`. 파일이 없으면 404. lumina 전략설정 「버전 이력」·수익율검증이 사용 |
 | POST | `/strategies/{strategy_id}/revalidate` | 최신 합격 스펙의 규칙·파라미터로 백테스트 재실행(`{ticker?, start_date?, end_date?, criteria?}`) → 새 버전 저장. 201/422 |
 | POST | `/strategies` | 백테스트 실행 → 합격 판정 → 저장. 본문 `{strategy_id, name?, universe[], backtest: BacktestRequest, criteria?, signal_weights?, position_sizing?}`. 201=합격 스펙, 422=불합격(`detail.failed`) |
 
@@ -52,6 +53,15 @@ Base: `https://<domain-rag-lab>/backtests`
 }
 ```
 목록 응답: `{"strategies": [ {strategy_id, version, name, backtest_result 요약, created_at} ]}`
+
+### 인증 (v0.6)
+`STRATEGY_API_KEY` 가 설정된 pr 에서는 `X-API-Key` 가 일치하거나 **pr 로그인 세션의 `Authorization: Bearer <token>`** 이 유효하면 통과한다.
+Bearer 는 pr LEAN 백테스트 화면의 「이 조건을 전략 스펙으로 저장」(브라우저에서 `POST /strategies`)을 위한 것이며, lumina 서버 간 호출은 계속 `X-API-Key` 를 쓴다.
+
+### lumina 측 사용 (v0.6)
+- 전략설정 「운영 모드」 가 **② 백테스트 기반 규칙** 일 때만 스펙 entry/exit 가 매매를 결정한다(①공격 모드는 종목 교집합·사유 표시, ③사용자 설정은 미사용). `QUANT_SPEC_UNIVERSE_STRICT=true` 면 universe 교집합이 비었을 때 매수하지 않는다.
+- 전략설정 카드가 `GET /strategies/{id}`·`/versions` 로 규칙·백테스트 결과·버전 이력을 보여 주고, 「최근 기간으로 재검증」 이 `POST /strategies/{id}/revalidate` 를 중계한다(`/api/quant/strategy/revalidate`).
+- 「pr 에서 이 전략 백테스트 열기」 링크: `https://pr.edumgt.co.kr/?view=backtest&strategy=<indicator>&ticker=<6자리>&short=&long=&breakout=&interval=&start=&from_fd=<strategy_id>` — pr 화면이 조건을 미리 채운다.
 
 ## 2. 주문 API — lumina-invest → stock-coin-trade
 
@@ -153,6 +163,7 @@ Base: `https://<stock-coin-trade>/openapi/v1/kis`  (기존 `/openapi/v1/orders`�
 - domain-rag-lab: 1절 전부 구현 (`app/api/routes/strategies.py`)
 
 ## 4. 변경 이력
+- v0.6 (2026-10-13) `GET /strategies/{id}/versions`(불합격 포함 이력), Bearer 세션 인증 허용(pr 화면 export), lumina 운영 모드 3분할(②에서만 스펙 적용)·유니버스 엄격 적용·재검증 중계·pr 백테스트 프리필 링크 명시
 - v0.5 (2026-10-02) 권한을 `api_key.scopes` 로 일원화(env 폐기), 미결 사항 확정(폴링·가상 /orders 유지)
 - v0.4 (2026-10-02) 체결 조회 `lookup`/`inference` 필드, 모의투자 체결 목록 제약 명시
 - v0.3 (2026-10-02) `api_key.scopes` 스코프 우선, `revalidate`, 연속조회 페이지네이션 반영, `win_rate_pct` 채움
