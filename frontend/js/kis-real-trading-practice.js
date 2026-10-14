@@ -10,6 +10,7 @@
   let quote = null;
   let chartRows = [];
   let chartPeriod = '1m';
+  let chart, candleSeries, volumeSeries, chartController, chartSequence = 0;
   let accountState = { cash: 0, totalAsset: 0 };
   let positionsState = [];
   let stocksState = [];
@@ -112,50 +113,91 @@
     updateQuoteView();
   }
 
+  function ensureChart() {
+    if (chart) return;
+    const L = window.LightweightCharts;
+    if (!L) throw new Error('차트 라이브러리를 불러오지 못했습니다. 새로고침해 주세요.');
+    let host = el('priceChart');
+    // Preserve compatibility with hosts that still embed the previous canvas markup.
+    if (host.tagName === 'CANVAS') {
+      const container = document.createElement('div'); container.id = host.id;
+      container.setAttribute('aria-label', '선택 종목 캔들 및 거래량 차트');
+      host.replaceWith(container); host = container;
+    }
+    chart = L.createChart(host, {
+      autoSize: true,
+      layout: { background: { color: '#ffffff' }, textColor: '#66758a', attributionLogo: true },
+      grid: { vertLines: { color: '#f1f5f9' }, horzLines: { color: '#f1f5f9' } },
+      localization: { locale: 'ko-KR', priceFormatter: value => number(Math.round(value)) },
+      timeScale: { timeVisible: false, borderColor: '#e4eaf2' },
+      rightPriceScale: { borderColor: '#e4eaf2', scaleMargins: { top: .08, bottom: .27 } },
+    });
+    candleSeries = chart.addSeries(L.CandlestickSeries, {
+      upColor: '#e11d48', downColor: '#2563eb', borderVisible: false,
+      wickUpColor: '#e11d48', wickDownColor: '#2563eb',
+      priceFormat: { type: 'price', precision: 0, minMove: 1 },
+    });
+    volumeSeries = chart.addSeries(L.HistogramSeries, { priceScaleId: 'volume', priceFormat: { type: 'volume' } });
+    chart.priceScale('volume').applyOptions({ scaleMargins: { top: .8, bottom: 0 } });
+    chart.subscribeCrosshairMove(event => {
+      const row = event.seriesData.get(candleSeries);
+      if (row) showChartDetail(row, event.seriesData.get(volumeSeries)?.value);
+      else if (chartRows.length) showChartDetail(chartRows.at(-1), chartRows.at(-1).volume);
+    });
+  }
+
+  function showChartDetail(row, volume) {
+    const date = typeof row.time === 'string' ? row.time : `${row.time.year}-${String(row.time.month).padStart(2, '0')}-${String(row.time.day).padStart(2, '0')}`;
+    if (el('chartDetail')) el('chartDetail').textContent = `${date} · 시가 ${won(row.open)} · 고가 ${won(row.high)} · 저가 ${won(row.low)} · 종가 ${won(row.close)} · 거래량 ${number(volume ?? row.volume)}주`;
+  }
+
+  function clearChart() {
+    chartRows = []; candleSeries?.setData([]); volumeSeries?.setData([]);
+    if (el('chartDetail')) el('chartDetail').textContent = '';
+    if (el('chartMeta')) el('chartMeta').textContent = '';
+  }
+
   async function loadChart() {
+    const sequence = ++chartSequence;
+    chartController?.abort(); chartController = new AbortController();
     const state = el('chartState');
     state.textContent = '차트 불러오는 중…'; state.classList.remove('hidden');
+    clearChart();
     try {
+      ensureChart();
       const days = { '1w':7, '1m':30, '3m':90, '1y':365 }[chartPeriod] || 30;
-      const data = await jsonFetch(`/api/broker-test/kis/chart?symbol=${encodeURIComponent(selectedSymbol())}&days=${days}`);
-      chartRows = (data.chart?.candles || []).map(row => ({ x:`${String(row.date).slice(0,4)}-${String(row.date).slice(4,6)}-${String(row.date).slice(6,8)}`, c:Number(row.close) })).reverse();
-      drawChart();
+      const symbol = selectedSymbol();
+      const data = await jsonFetch(`/api/broker-test/kis/chart?symbol=${encodeURIComponent(symbol)}&days=${days}`, { signal: chartController.signal });
+      if (sequence !== chartSequence) return;
+      const byDate = new Map();
+      for (const row of data.chart?.candles || []) {
+        const raw = String(row.date || '').replace(/-/g, '');
+        if (!/^\d{8}$/.test(raw)) continue;
+        const time = `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`;
+        const date = new Date(time + 'T00:00:00Z');
+        if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0,10) !== time) continue;
+        const item = { time, open: Number(row.open), high: Number(row.high), low: Number(row.low), close: Number(row.close), volume: Number(row.volume) };
+        if (![item.open,item.high,item.low,item.close,item.volume].every(Number.isFinite) || item.low <= 0 || item.volume < 0 || item.low > Math.min(item.open,item.close) || item.high < Math.max(item.open,item.close)) continue;
+        byDate.set(time, item);
+      }
+      chartRows = [...byDate.values()].sort((a,b) => a.time.localeCompare(b.time));
+      candleSeries.setData(chartRows.map(({ time,open,high,low,close }) => ({ time,open,high,low,close })));
+      volumeSeries.setData(chartRows.map(row => ({ time: row.time, value: row.volume, color: row.close >= row.open ? '#e11d4866' : '#2563eb66' })));
+      chart.timeScale().fitContent();
       state.classList.toggle('hidden', chartRows.length > 0);
       if (!chartRows.length) state.textContent = '표시할 차트 데이터가 없습니다.';
-    } catch (error) { chartRows = []; state.textContent = error.message; }
+      else {
+        showChartDetail(chartRows.at(-1), chartRows.at(-1).volume);
+        if (el('chartMeta')) el('chartMeta').textContent = `KIS Testbed · ${symbol} · ${chartRows.length}개 일봉 · ${chartRows[0].time} ~ ${chartRows.at(-1).time} · 조회 ${new Date().toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul' })} KST`;
+      }
+    } catch (error) {
+      if (sequence !== chartSequence || error.name === 'AbortError') return;
+      clearChart(); state.textContent = error.message;
+    }
   }
 
   async function loadSelectedStock() {
     await Promise.all([loadQuote(), loadChart()]);
-  }
-
-  function drawChart() {
-    const canvas = el('priceChart');
-    if (!canvas || !chartRows.length) return;
-    const rect = canvas.getBoundingClientRect();
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.max(1, Math.round(rect.width * ratio)); canvas.height = Math.max(1, Math.round(rect.height * ratio));
-    const context = canvas.getContext('2d'); context.scale(ratio, ratio);
-    const width = rect.width, height = rect.height, pad = { left:12, right:68, top:14, bottom:24 };
-    const closes = chartRows.map(row => Number(row.c)).filter(Number.isFinite);
-    const low = Math.min(...closes), high = Math.max(...closes), spread = Math.max(high - low, high * .01, 1);
-    const x = index => pad.left + index / Math.max(chartRows.length - 1, 1) * (width - pad.left - pad.right);
-    const y = value => pad.top + (high + spread * .08 - value) / (spread * 1.16) * (height - pad.top - pad.bottom);
-    context.clearRect(0, 0, width, height); context.font = '10px Pretendard, sans-serif';
-    for (let line = 0; line < 4; line++) {
-      const lineY = pad.top + line / 3 * (height - pad.top - pad.bottom);
-      context.beginPath(); context.moveTo(pad.left, lineY); context.lineTo(width - pad.right, lineY); context.strokeStyle = '#edf1f6'; context.stroke();
-      const label = high + spread * .08 - line / 3 * spread * 1.16;
-      context.fillStyle = '#8794a6'; context.fillText(number(Math.round(label)), width - pad.right + 8, lineY + 3);
-    }
-    const rising = closes.at(-1) >= closes[0], color = rising ? '#e11d48' : '#2563eb';
-    context.beginPath(); chartRows.forEach((row, index) => index ? context.lineTo(x(index), y(Number(row.c))) : context.moveTo(x(index), y(Number(row.c))));
-    context.lineWidth = 2; context.strokeStyle = color; context.stroke();
-    const gradient = context.createLinearGradient(0, pad.top, 0, height - pad.bottom); gradient.addColorStop(0, rising ? 'rgba(225,29,72,.18)' : 'rgba(37,99,235,.18)'); gradient.addColorStop(1, 'rgba(255,255,255,0)');
-    context.lineTo(x(chartRows.length - 1), height - pad.bottom); context.lineTo(x(0), height - pad.bottom); context.closePath(); context.fillStyle = gradient; context.fill();
-    const firstDate = new Date(chartRows[0].x), lastDate = new Date(chartRows.at(-1).x);
-    context.fillStyle = '#8794a6'; context.fillText(firstDate.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}), pad.left, height - 5);
-    const lastLabel = lastDate.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}); context.fillText(lastLabel, width - pad.right - 35, height - 5);
   }
 
   function updateEstimate() {
@@ -299,7 +341,7 @@
     el('searchBtn').addEventListener('click', () => loadStocks(el('symbolSearch').value.trim()).catch(error => setMessage(error.message))); el('symbolSearch').addEventListener('keydown', event => { if (event.key === 'Enter') el('searchBtn').click(); });
     el('quoteRefreshBtn').addEventListener('click', async event => { setLoading(event.currentTarget, true); try { await loadSelectedStock(); } catch (error) { setMessage(error.message); } finally { setLoading(event.currentTarget, false); } });
     el('refreshAllBtn').addEventListener('click', async event => { setLoading(event.currentTarget, true); try { await Promise.all([loadMarket(),refreshAccount(),loadSelectedStock()]); } catch (error) { setMessage(error.message); } finally { setLoading(event.currentTarget, false); } });
-    let resizeTimer; window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawChart, 120); });
+    el('chartFit')?.addEventListener('click', () => chart?.timeScale().fitContent());
   }
 
   let booted = false;

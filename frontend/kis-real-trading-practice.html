@@ -5,7 +5,7 @@
   <title>KIS 모의투자 — EDUMGT</title>
   <link rel="icon" href="/img/favicon.png">
   <link rel="stylesheet" href="/css/style.css?v=20261012-common-3">
-  <link rel="stylesheet" href="/css/kis-practice.css?v=20261008-common-2">
+  <link rel="stylesheet" href="/css/kis-practice.css?v=20261014-fhd-2">
 <link rel="stylesheet" href="https://www.edumgt.co.kr/css/common.css?v=20261012-common-3" />
 </head>
 <body class="trade-app-body">
@@ -42,9 +42,9 @@
       <section class="trade-card quote-panel">
         <header class="quote-header"><div><div class="quote-identity"><h2 id="quoteName">삼성전자</h2><span id="quoteSymbol">005930</span><em id="quoteMarket">KOSPI</em></div><div class="quote-main"><strong id="quotePrice">현재가 조회 중…</strong><span id="quoteChange">-</span></div></div><button id="quoteRefreshBtn" class="icon-button" type="button" aria-label="현재가 새로고침"><i class="fa-solid fa-rotate"></i></button></header>
         <div class="quote-stats"><div><span>전일 종가</span><b id="quotePrevClose">-</b></div><div><span>전일 대비</span><b id="quoteDelta">-</b></div><div><span>거래량</span><b id="quoteVolume">-</b></div><div><span>데이터 원장</span><b>KIS Testbed</b></div></div>
-        <div class="chart-toolbar"><b>일봉 차트</b><div role="group" aria-label="차트 기간"><button data-period="1w">1주</button><button class="active" data-period="1m">1개월</button><button data-period="3m">3개월</button><button data-period="1y">1년</button></div></div>
-        <div class="chart-frame"><canvas id="priceChart" aria-label="선택 종목 가격 차트"></canvas><div id="chartState" class="chart-state">차트 불러오는 중…</div></div>
-        <p class="data-note"><i class="fa-solid fa-circle-info"></i> 주문 직전 서버가 KIS 최신 가격과 모의계좌 예수금·보유수량을 다시 검증합니다.</p>
+        <div class="chart-toolbar"><b>TradingView · 일봉</b><div role="group" aria-label="차트 기간"><button data-period="1w">1주</button><button id="chartFit" type="button">전체 보기</button><button class="active" data-period="1m">1개월</button><button data-period="3m">3개월</button><button data-period="1y">1년</button></div></div>
+        <div class="chart-frame"><div id="priceChart" aria-label="선택 종목 캔들 및 거래량 차트"></div><div id="chartState" class="chart-state">차트 불러오는 중…</div></div>
+        <p id="chartDetail" class="data-note" aria-live="polite"></p><p id="chartMeta" class="data-note" role="status"></p><p class="data-note"><i class="fa-solid fa-circle-info"></i> 주문 직전 서버가 KIS 최신 가격과 모의계좌 예수금·보유수량을 다시 검증합니다.</p>
       </section>
       <aside class="trade-card order-panel">
         <header><div><span class="card-eyebrow">KIS ORDER TICKET</span><h2>모의주문</h2></div><span class="paper-chip">TESTBED</span></header>
@@ -66,7 +66,7 @@
       <div data-tab-panel="positions" class="table-wrap"><table class="data-table"><thead><tr><th>종목</th><th>보유수량</th><th>평균단가</th><th>현재가</th><th>평가금액</th><th>평가손익</th><th>수익률</th></tr></thead><tbody id="positionsBody"><tr><td colspan="7" class="empty">불러오는 중…</td></tr></tbody></table></div>
       <div data-tab-panel="orders" class="table-wrap" hidden><table class="data-table"><thead><tr><th>체결시각</th><th>종목</th><th>구분</th><th>수량</th><th>체결가</th><th>체결금액</th></tr></thead><tbody id="historyBody"><tr><td colspan="6" class="empty">불러오는 중…</td></tr></tbody></table></div>
     </section>
-    <details class="trade-card real-account-panel" open>
+    <details class="trade-card real-account-panel">
       <summary><div><span class="card-eyebrow">KIS PAPER · CONNECTION</span><h2>KIS 모의계좌 연결 상태</h2><p>키와 계좌번호는 서버에만 보관되며 브라우저로 노출되지 않습니다.</p></div><span class="readonly-chip"><i class="fa-solid fa-shield-halved"></i> Testbed 전용</span></summary>
       <div class="real-account-body">
         <div class="real-actions"><div class="setup-grid"><div id="realAppKeyState" class="setup-item">○ 모의 App Key/Secret</div><div id="realAccountState" class="setup-item">○ 모의 계좌번호</div><div id="realOwnerState" class="setup-item">○ Paper 환경</div><div id="realSecretState" class="setup-item">○ Testbed 도메인</div></div><button id="realBalanceBtn" class="real-button" type="button">모의 잔고 새로고침</button></div>
@@ -74,6 +74,6 @@
       </div>
     </details>
   </main>
-  <script src="/js/config.js"></script><script src="/js/common.js?v=20261008-footer-25px"></script><script src="/js/kis-real-trading-practice.js?v=20261007-embed-tab"></script>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20261008-footer-25px"></script><script src="/js/vendor/lightweight-charts/lightweight-charts-5.2.1.min.js"></script><script src="/js/kis-real-trading-practice.js?v=20261014-fhd-2"></script>
 </body>
 </html>
