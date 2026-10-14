@@ -647,14 +647,14 @@ async function runAiAnalysis() {
     augmented = `${marketCtx}\n\n📚 Qdrant 지식 베이스에서 검색된 관련 지식:\n${ragSection}`;
   }
 
-  box.innerHTML = '<div style="text-align:center;padding:1rem 0;color:var(--muted);font-size:13px;">✨ Qwen이 분석 중입니다...</div>';
+  box.innerHTML = '<div style="text-align:center;padding:1rem 0;color:var(--muted);font-size:13px;"><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i> 필요한 데이터를 조회하며 분석 중입니다...</div>';
 
   // ④ 공통 Qwen API
   try {
     const res = await apiFetch('/api/ai/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ context: augmented, type }),
+      body: JSON.stringify({ context: augmented, type, question: document.getElementById('marketContextInput')?.value?.trim() || '제공된 시장 자료를 분석하고 필요한 근거를 추가 조회해 주세요.' }),
     });
     if (!res.ok) throw new Error('분석 서비스 오류');
 

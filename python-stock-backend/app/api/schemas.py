@@ -75,6 +75,7 @@ class QdrantAddBody(BaseModel):
 class AiAnalyzeBody(BaseModel):
     context: Any = None
     type: Any = None
+    question: str = Field(default="제공된 시장 자료를 분석하고 필요한 근거를 추가 조회해 주세요.", max_length=4000)
 
 
 class CrawlBody(BaseModel):

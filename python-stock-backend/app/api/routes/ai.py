@@ -1,62 +1,64 @@
-"""시세·RAG 근거를 공통 Docker Qwen(기본 qwen2.5:3b, QWEN_MODEL 로 교체)으로 분석한다."""
-
+"""Qwen ReAct market analysis; existing text streaming API remains compatible."""
 from __future__ import annotations
 
-import json
-from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
+from queue import Empty, Queue
+from threading import BoundedSemaphore
 
-import requests
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import StreamingResponse
 
-from app.core.config import get_settings
-
 from ..schemas import AiAnalyzeBody
-from app.services.qwen_remote import MODEL as _QWEN_MODEL
+from app.services.react_agent import MODEL, run_react
 
-router = APIRouter(prefix="/api/ai", tags=["ai"])
-
-SYSTEM_PROMPT = (
-    "당신은 한국 금융 시장 전문가입니다. 제공된 실시간 시세 데이터를 분석하여 한국어로 명확하고 실용적인 투자 조언을 제공합니다. "
-    "이 내용은 투자 교육 목적이며, 실제 투자 결정은 본인 판단에 따라야 함을 고지합니다."
-)
+router = APIRouter(prefix='/api/ai', tags=['ai'])
+_slots = BoundedSemaphore(1)
+_workers = ThreadPoolExecutor(max_workers=1, thread_name_prefix='react-agent')
 
 
-def _build_prompt(type_: str, context: str) -> str:
-    label = {"crypto": "코인 시장", "stock": "주식 시장"}.get(type_, "전체 금융 시장")
-    return (
-        f"다음은 현재 {label}의 실시간 시세 데이터입니다:\n\n{context}\n\n"
-        "위 데이터를 바탕으로 다음을 분석해주세요:\n"
-        "1. 시장 전반적인 분위기와 트렌드\n"
-        "2. 주목할 만한 종목이나 코인과 그 이유\n"
-        "3. 단기 관점에서의 유의 사항\n"
-        "4. 리스크 관리 조언\n\n"
-        "간결하고 실용적으로 답변해주세요. (교육 목적)"
-    )
+def _reserve():
+    if not _slots.acquire(blocking=False):
+        raise HTTPException(status_code=429, detail='AI 분석이 진행 중입니다. 완료 후 다시 시도하세요.')
 
 
-def _stream_qwen(prompt: str) -> Iterator[str]:
-    from concurrent.futures import ThreadPoolExecutor, TimeoutError
-    from app.services.qwen_remote import MODEL, completion
-    yield f'Qwen({MODEL})이 검색 근거를 분석하고 있습니다…\n\n'
-    with ThreadPoolExecutor(max_workers=1) as pool:
-        future = pool.submit(completion, {'messages':[
-            {'role':'system','content':SYSTEM_PROMPT + ' 제공된 근거에 없는 사실을 만들지 말고, 출처 제목을 언급하세요. 300자 이내로 답하세요.'},
-            {'role':'user','content':prompt[:12000]}], 'max_tokens':200})
-        while True:
-            try:
-                result = future.result(timeout=15)
-                yield result['choices'][0]['message']['content']
-                break
-            except TimeoutError:
-                yield '\n'
-            except Exception:
-                yield 'Qwen 분석 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-                break
+def _run(payload, emit=lambda _: None):
+    try:
+        return run_react(payload.question, str(payload.context or '')[:4000], str(payload.type or 'general'), emit)
+    finally:
+        _slots.release()
+
+
+def _stream(payload):
+    events = Queue()
+    future = _workers.submit(_run, payload, events.put)
+    yield f'Qwen({MODEL}) · ReAct 읽기 전용 분석\n\n'
+    while not future.done() or not events.empty():
+        try:
+            yield events.get(timeout=10)
+        except Empty:
+            yield '\n'
+    try:
+        result = future.result()
+        yield '\n### 분석 결과\n' + result['answer']
+        if result['references']:
+            yield '\n\n### 조회 출처\n'
+            for ref in result['references']:
+                yield f'- {ref["source"]} · {ref["as_of"] or ref["fetched_at"]} · {ref["status"]}\n'
+        if result['status'] != 'complete':
+            yield '\n일부 조회가 실패했거나 데이터가 오래되어 분석이 제한되었습니다.\n'
+    except Exception:
+        yield '\n분석에 실패했습니다. 잠시 후 다시 시도하세요.\n'
 
 
 @router.post('/analyze')
-def analyze(payload: AiAnalyzeBody = Body(default_factory=AiAnalyzeBody)) -> StreamingResponse:
-    context = str(payload.context or '시세 데이터 없음')
-    type_ = str(payload.type or 'general')
-    return StreamingResponse(_stream_qwen(_build_prompt(type_,context)), media_type='text/plain; charset=utf-8', headers={'X-LLM-Model':_QWEN_MODEL,'X-Accel-Buffering':'no'})
+def analyze(payload: AiAnalyzeBody = Body(default_factory=AiAnalyzeBody)):
+    _reserve()
+    return StreamingResponse(_stream(payload), media_type='text/plain; charset=utf-8',
+                             headers={'X-LLM-Model': MODEL, 'X-AI-Agent': 'react-read-only', 'X-Accel-Buffering': 'no', 'Cache-Control': 'no-store'})
+
+
+@router.post('/react')
+def react(payload: AiAnalyzeBody = Body(default_factory=AiAnalyzeBody)):
+    """Structured answer plus tool execution traces; no internal reasoning text."""
+    _reserve()
+    return _run(payload)
