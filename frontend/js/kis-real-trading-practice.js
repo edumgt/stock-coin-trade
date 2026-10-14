@@ -126,15 +126,15 @@
     }
     chart = L.createChart(host, {
       autoSize: true,
-      layout: { background: { color: '#ffffff' }, textColor: '#66758a', attributionLogo: true },
-      grid: { vertLines: { color: '#f1f5f9' }, horzLines: { color: '#f1f5f9' } },
+      layout: { background: { color: '#ffffff' }, textColor: '#5d7389', fontSize: 13, attributionLogo: true },
+      grid: { vertLines: { color: '#edf2f6' }, horzLines: { color: '#edf2f6' } },
       localization: { locale: 'ko-KR', priceFormatter: value => number(Math.round(value)) },
-      timeScale: { timeVisible: false, borderColor: '#e4eaf2' },
-      rightPriceScale: { borderColor: '#e4eaf2', scaleMargins: { top: .08, bottom: .27 } },
+      timeScale: { timeVisible: false, borderColor: '#bdcbd9' },
+      rightPriceScale: { borderColor: '#bdcbd9', scaleMargins: { top: .08, bottom: .27 } },
     });
     candleSeries = chart.addSeries(L.CandlestickSeries, {
-      upColor: '#e11d48', downColor: '#2563eb', borderVisible: false,
-      wickUpColor: '#e11d48', wickDownColor: '#2563eb',
+      upColor: '#e84250', downColor: '#287ccb', borderVisible: false,
+      wickUpColor: '#e84250', wickDownColor: '#287ccb',
       priceFormat: { type: 'price', precision: 0, minMove: 1 },
     });
     volumeSeries = chart.addSeries(L.HistogramSeries, { priceScaleId: 'volume', priceFormat: { type: 'volume' } });
@@ -182,7 +182,7 @@
       }
       chartRows = [...byDate.values()].sort((a,b) => a.time.localeCompare(b.time));
       candleSeries.setData(chartRows.map(({ time,open,high,low,close }) => ({ time,open,high,low,close })));
-      volumeSeries.setData(chartRows.map(row => ({ time: row.time, value: row.volume, color: row.close >= row.open ? '#e11d4866' : '#2563eb66' })));
+      volumeSeries.setData(chartRows.map(row => ({ time: row.time, value: row.volume, color: row.close >= row.open ? '#e8425066' : '#287ccb66' })));
       chart.timeScale().fitContent();
       state.classList.toggle('hidden', chartRows.length > 0);
       if (!chartRows.length) state.textContent = '표시할 차트 데이터가 없습니다.';

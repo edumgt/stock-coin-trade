@@ -5,32 +5,24 @@
   <title>KIS 모의투자 — EDUMGT</title>
   <link rel="icon" href="/img/favicon.png">
   <link rel="stylesheet" href="/css/style.css?v=20261012-common-3">
-  <link rel="stylesheet" href="/css/kis-practice.css?v=20261014-fhd-2">
+  <link rel="stylesheet" href="/css/kis-practice.css?v=20261014-summary-3">
 <link rel="stylesheet" href="https://www.edumgt.co.kr/css/common.css?v=20261012-common-3" />
+  <link rel="stylesheet" href="/css/kis-hts.css?v=20261014-quote-row-3">
+  <link rel="stylesheet" href="/css/korean-typography.css?v=20261014-ko90-1">
 </head>
 <body class="trade-app-body">
   <div id="header-mount"></div>
   <main class="trader-shell">
-    <section class="trader-hero">
-      <div class="trader-hero-copy"><div class="trader-kicker">KIS TESTBED · PAPER TRADING</div><h1>KIS 모의투자</h1><p>한국투자증권 Testbed 모의계좌의 예수금과 보유종목을 조회하고, 모의 매수·매도 주문을 전송합니다.</p></div>
-      <div class="ledger-badge"><i class="fa-solid fa-shield-halved"></i><span>KIS PAPER</span><b>한국투자증권 Testbed 모의계좌</b></div>
-    </section>
-    <section class="account-boundary" aria-label="거래 환경 안내">
-      <div><i class="fa-solid fa-wallet"></i><span><b>계좌 원장</b> KIS 모의투자 계좌 · Testbed 잔고/보유종목</span></div>
-      <div><i class="fa-solid fa-building-columns"></i><span><b>주문 경로</b> 서버 → KIS Testbed · 실전 도메인 사용 안 함</span></div>
-      <div><i class="fa-solid fa-lock"></i><span><b>주문 보호</b> 로그인 · CSRF · 확인 · 60초 일회성 승인</span></div>
-    </section>
-    <section class="market-strip" aria-label="시장 지수">
-      <div class="market-status"><span class="status-dot"></span><b>KRX MARKET</b><small id="marketTimestamp">시세 연결 중</small></div>
-      <div class="market-index"><span>KOSPI</span><b id="kospiValue">-</b><em id="kospiChange">-</em></div>
-      <div class="market-index"><span>KOSDAQ</span><b id="kosdaqValue">-</b><em id="kosdaqChange">-</em></div>
+    <section class="desk-summary" aria-label="모의투자 계좌 및 시장 요약">
+      <div class="desk-title"><h1>KIS 모의투자</h1><span class="paper-chip">TESTBED</span></div>
+      <div class="desk-metric"><span>주문 가능 예수금</span><strong id="cash">-</strong></div>
+      <div class="desk-metric"><span>총 평가자산</span><strong id="totalAsset">-</strong></div>
+      <div class="desk-metric"><span>평가손익</span><strong id="pnlRate">-</strong></div>
+      <div class="desk-metric"><span>보유 종목</span><strong id="positionCount">-</strong></div>
+      <div class="desk-index"><span>KOSPI</span><b id="kospiValue">-</b><em id="kospiChange">-</em></div>
+      <div class="desk-index"><span>KOSDAQ</span><b id="kosdaqValue">-</b><em id="kosdaqChange">-</em></div>
+      <details class="desk-guide"><summary><i class="fa-solid fa-circle-info" aria-hidden="true"></i> 안내</summary><div class="desk-guide-body"><b>KIS Testbed 모의계좌</b><p>예수금·보유종목·평가손익은 KIS 모의계좌 잔고 기준입니다.</p><p id="holdingValue">평가금액 -</p><p id="marketTimestamp">시세 연결 중</p><p>주문은 KIS Testbed로 전송하며 로그인·CSRF·확인·60초 일회성 승인으로 보호합니다.</p></div></details>
       <button id="refreshAllBtn" class="icon-button" type="button" aria-label="전체 새로고침"><i class="fa-solid fa-rotate"></i></button>
-    </section>
-    <section class="account-overview" aria-label="모의계좌 요약">
-      <article><span>주문 가능 예수금</span><strong id="cash">-</strong><small>KIS 모의계좌</small></article>
-      <article><span>총 평가자산</span><strong id="totalAsset">-</strong><small>예수금 + 주식 평가액</small></article>
-      <article><span>평가손익</span><strong id="pnlRate">-</strong><small>KIS 잔고 응답 기준</small></article>
-      <article><span>보유 종목</span><strong id="positionCount">-</strong><small id="holdingValue">평가금액 -</small></article>
     </section>
     <section class="trading-workspace">
       <aside class="trade-card symbol-panel">
@@ -40,8 +32,12 @@
         <div class="watch-head"><b>빠른 종목</b><small>선택하면 시세가 변경됩니다</small></div><div id="watchlistBody" class="watchlist"><div class="watch-skeleton">종목을 불러오는 중…</div></div>
       </aside>
       <section class="trade-card quote-panel">
-        <header class="quote-header"><div><div class="quote-identity"><h2 id="quoteName">삼성전자</h2><span id="quoteSymbol">005930</span><em id="quoteMarket">KOSPI</em></div><div class="quote-main"><strong id="quotePrice">현재가 조회 중…</strong><span id="quoteChange">-</span></div></div><button id="quoteRefreshBtn" class="icon-button" type="button" aria-label="현재가 새로고침"><i class="fa-solid fa-rotate"></i></button></header>
-        <div class="quote-stats"><div><span>전일 종가</span><b id="quotePrevClose">-</b></div><div><span>전일 대비</span><b id="quoteDelta">-</b></div><div><span>거래량</span><b id="quoteVolume">-</b></div><div><span>데이터 원장</span><b>KIS Testbed</b></div></div>
+        <header class="quote-header quote-unified">
+          <div class="quote-identity"><h2 id="quoteName">삼성전자</h2><span id="quoteSymbol">005930</span><em id="quoteMarket">KOSPI</em></div>
+          <div class="quote-main"><strong id="quotePrice">현재가 조회 중…</strong><span id="quoteChange">-</span></div>
+          <div class="quote-stats"><div><span>전일 종가</span><b id="quotePrevClose">-</b></div><div><span>전일 대비</span><b id="quoteDelta">-</b></div><div><span>거래량</span><b id="quoteVolume">-</b></div><div><span>데이터 원장</span><b>KIS Testbed</b></div></div>
+          <button id="quoteRefreshBtn" class="icon-button" type="button" aria-label="현재가 새로고침"><i class="fa-solid fa-rotate"></i></button>
+        </header>
         <div class="chart-toolbar"><b>TradingView · 일봉</b><div role="group" aria-label="차트 기간"><button data-period="1w">1주</button><button id="chartFit" type="button">전체 보기</button><button class="active" data-period="1m">1개월</button><button data-period="3m">3개월</button><button data-period="1y">1년</button></div></div>
         <div class="chart-frame"><div id="priceChart" aria-label="선택 종목 캔들 및 거래량 차트"></div><div id="chartState" class="chart-state">차트 불러오는 중…</div></div>
         <p id="chartDetail" class="data-note" aria-live="polite"></p><p id="chartMeta" class="data-note" role="status"></p><p class="data-note"><i class="fa-solid fa-circle-info"></i> 주문 직전 서버가 KIS 최신 가격과 모의계좌 예수금·보유수량을 다시 검증합니다.</p>
@@ -74,6 +70,6 @@
       </div>
     </details>
   </main>
-  <script src="/js/config.js"></script><script src="/js/common.js?v=20261008-footer-25px"></script><script src="/js/vendor/lightweight-charts/lightweight-charts-5.2.1.min.js"></script><script src="/js/kis-real-trading-practice.js?v=20261014-fhd-2"></script>
+  <script src="/js/config.js"></script><script src="/js/common.js?v=20261008-footer-25px"></script><script src="/js/vendor/lightweight-charts/lightweight-charts-5.2.1.min.js"></script><script src="/js/kis-real-trading-practice.js?v=20261014-hts-1"></script>
 </body>
 </html>

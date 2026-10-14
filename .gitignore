@@ -75,3 +75,5 @@ deploy.md
 /mydbtest-sam/
 
 **.aws-sam/
+
+**/**/pg-stock-data.sql

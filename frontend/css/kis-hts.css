@@ -1,0 +1,96 @@
+/* HTS appearance, scoped to the KIS trading desk. */
+body.trade-app-body{--trade-bg:#eef2f7;--trade-ink:#172033;--trade-muted:#62788c;--trade-line:#bdcbd9;--trade-red:#d9354d;--trade-blue:#1476c3;background:#eef2f7;color:#172033}
+.trade-app-body #site-header{background:linear-gradient(90deg,#0e2546,#183b66);border-bottom:1px solid #345274;box-shadow:none;color:#eff6ff}
+.trade-app-body #site-header .gnb-brand{color:#eaf6ff!important}
+.trade-app-body #site-header .gnb-shortcuts a{color:#d3eafa!important;border-radius:3px}
+.trade-app-body #site-header .gnb-shortcuts a:hover{background:#ffffff18}
+.trade-app-body #site-header .site-header-left>button,.trade-app-body #site-header .site-header-actions>button{color:#eaf6ff!important;background:#ffffff12!important;border-color:#6684a3!important;border-radius:3px!important}
+.trade-app-body #site-header .site-header-actions{color:#eff6ff}
+.trade-app-body #site-header .site-header-actions>a{color:#eaf6ff!important}
+.trade-app-body .trade-card,.trade-app-body .desk-summary{border:1px solid #aebdcb;border-radius:4px;box-shadow:0 1px 2px #192f481a}
+.trade-app-body .desk-summary{background:#f9fbfd;gap:10px}
+.trade-app-body .desk-title h1{color:#173658;font-size:16px!important}
+.trade-app-body .desk-metric>strong{font-variant-numeric:tabular-nums;font-size:17px}
+.trade-app-body .desk-metric>span,.trade-app-body .desk-index>span{color:#6d7e91}
+.trade-app-body .paper-chip,.trade-app-body .readonly-chip{border:1px solid #9bcce8;border-radius:3px;color:#0b659e;background:#e8f6ff;padding:3px 6px}
+.trade-app-body .trade-card>header{color:#173658;background:linear-gradient(#fafdff,#e7f0f8);border-bottom:1px solid #bdcbd9;padding:8px 10px}
+.trade-app-body .card-eyebrow{color:#0f609b;font-size:13px;letter-spacing:.03em}
+.trade-app-body .trade-card h2{color:#173658;font-size:16px}
+.trade-app-body .symbol-panel>header{border-bottom:1px solid #bdcbd9}
+.trade-app-body .symbol-search{margin:8px 9px}
+.trade-app-body .symbol-search input{height:34px;border-color:#c8d4df;border-radius:3px 0 0 3px;background:#fff}
+.trade-app-body .symbol-search button{width:36px;border-radius:0 3px 3px 0;background:#237fbd}
+.trade-app-body .select-label{margin-left:10px;color:#62788c}
+.trade-app-body .symbol-panel select{height:32px;width:calc(100% - 18px);margin:0 9px 8px;border:1px solid #c8d4df;border-radius:3px;background:#f8fbfd}
+.trade-app-body .watch-head{padding:7px 9px;background:#f2f6f9;border-color:#d7e0e8}
+.trade-app-body .watch-item{padding:8px 9px;border-bottom-color:#e4eaf0}
+.trade-app-body .watch-item.active{background:#e9f5ff;box-shadow:inset 3px 0 #238aca}
+.trade-app-body .watch-item:hover{background:#f4faff}
+.trade-app-body .watch-item span{color:#126cac}
+.trade-app-body .quote-panel>.quote-header{background:#fff;padding:9px 12px}
+.trade-app-body .quote-identity h2{color:#132d4d}.trade-app-body .quote-identity span,.trade-app-body .quote-identity em{border-radius:3px;background:#e8f6ff;color:#0b659e}
+.trade-app-body .quote-main strong{font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.trade-app-body .quote-stats{border-color:#ccd8e2;background:#fafcfe}.trade-app-body .quote-stats>div{border-color:#e1e8ee}
+.trade-app-body .chart-toolbar{padding:6px 10px;background:#f4f7fa;border-bottom:1px solid #d7e0e8}
+.trade-app-body .chart-toolbar>b{color:#426079}.trade-app-body .chart-toolbar button{border:1px solid transparent;border-radius:3px;padding:4px 8px;color:#35475b}
+.trade-app-body .chart-toolbar button:hover,.trade-app-body .chart-toolbar button.active{background:#e6f3ff;color:#075996;border-color:#acd5f4}
+.trade-app-body .chart-frame{margin:0 8px}.trade-app-body .data-note{color:#73869a}
+.trade-app-body .icon-button{border-color:#b9cad8;border-radius:3px;color:#506d84;background:#fff}
+.trade-app-body .side-switch{gap:0;border-bottom:1px solid #cdd8e2}
+.trade-app-body .side-btn{border:1px solid #dce4eb;border-radius:0;background:#f5f8fa;color:#60768b}
+.trade-app-body .side-btn[data-side=BUY].active{color:#d52d43;background:#fff;border-color:#dce4eb;border-top:2px solid #dc3950}
+.trade-app-body .side-btn[data-side=SELL].active{color:#1476c3;background:#fff;border-color:#dce4eb;border-top:2px solid #287ccb}
+.trade-app-body .order-context{border:1px solid #dce4eb;border-radius:3px;background:#f8fbfd}
+.trade-app-body .order-select,.trade-app-body .order-price,.trade-app-body .quantity-control button,.trade-app-body .quantity-control input{border-color:#c4d0da;border-radius:2px;color:#263e55}
+.trade-app-body .quantity-control button{background:#f7fafc}
+.trade-app-body .order-breakdown{background:#f8fbfd;border-color:#d8e2ea}
+.trade-app-body .submit{border-radius:2px;background:linear-gradient(#e8576a,#ce2d43);box-shadow:0 2px 3px #cd2d4322}
+.trade-app-body .submit.sell{background:linear-gradient(#3794d3,#1476c3)}
+.trade-app-body .portfolio-tabs{gap:2px;padding:0 10px;background:#f4f7fa;border-color:#bdcbd9}
+.trade-app-body .portfolio-tabs button{margin-right:0;padding:7px 13px;border:1px solid transparent;border-bottom:0;border-radius:0;color:#66798d}
+.trade-app-body .portfolio-tabs button.active{color:#155f98;background:#fff;border-color:#bdcbd9}
+.trade-app-body .data-table th{background:#f2f6f9;color:#6d7e91}.trade-app-body .data-table td{border-color:#e4eaf0;font-variant-numeric:tabular-nums}
+.trade-app-body .data-table tbody tr:nth-child(even){background:#fafcfe}.trade-app-body .data-table tbody tr[data-symbol]:hover{background:#f4faff}
+.trade-app-body .real-account-panel>summary{background:linear-gradient(#fafdff,#e7f0f8);color:#173658;border-radius:3px}
+.trade-app-body .desk-guide-body,.trade-app-body .real-account-panel[open]>.real-account-body{border-color:#aebdcb;border-radius:4px}
+.trade-app-body .setup-item,.trade-app-body .real-button,.trade-app-body .message{border-radius:3px}.trade-app-body .real-button{background:#237fbd}
+.trade-app-body button:focus-visible,.trade-app-body summary:focus-visible,.trade-app-body select:focus-visible,.trade-app-body input:focus-visible{outline:2px solid #5ca9df;outline-offset:2px}
+@media(min-width:1280px) and (min-height:850px){body.trade-app-body>.trader-shell{padding:6px!important;gap:6px;grid-template-rows:58px minmax(0,1fr) 148px 38px}.trade-app-body .trading-workspace{gap:6px}.trade-app-body .real-account-panel>summary{height:36px}.trade-app-body .real-account-panel[open]>.real-account-body{bottom:38px}}
+
+/* HTS color hierarchy: navy account bar, blue-grey window titles, white data area. */
+.trade-app-body .trader-shell{background:#e6edf4}
+.trade-app-body .desk-summary{background:linear-gradient(90deg,#0e2546,#183b66);border-color:#345274;color:#eff6ff;box-shadow:none}
+.trade-app-body .desk-title h1{color:#eff6ff}
+.trade-app-body .desk-metric{border-left-color:#45617f}
+.trade-app-body .desk-metric>span,.trade-app-body .desk-index>span{color:#b6cce1}
+.trade-app-body .desk-metric>strong,.trade-app-body .desk-index>b{color:#eff6ff}
+.trade-app-body .desk-summary .profit{color:#ff8b99}.trade-app-body .desk-summary .loss{color:#78b9ff}
+.trade-app-body .desk-summary .paper-chip{border-color:#6684a3;background:#ffffff12;color:#cdeaff}
+.trade-app-body .desk-summary .desk-guide summary{color:#cdeaff}
+.trade-app-body .desk-summary>.icon-button{background:#ffffff12;color:#eaf6ff;border-color:#6684a3}
+.trade-app-body .desk-guide-body{background:#fff;color:#304960}
+.trade-app-body .trade-card{background:#fff;border-color:#aebdcb}
+.trade-app-body .trade-card>header,.trade-app-body .real-account-panel>summary{background:linear-gradient(#edf5fc,#d9e5f0);border-color:#b6c7d7;color:#173658}
+.trade-app-body .quote-panel>.quote-header{background:#fff}
+.trade-app-body .quote-stats{background:#f2f6fa;border-color:#c9d6e2}
+.trade-app-body .chart-toolbar,.trade-app-body .watch-head,.trade-app-body .portfolio-tabs{background:#eaf1f7;border-color:#bdcbd9}
+.trade-app-body .chart-frame{background:#fff}
+.trade-app-body .order-context,.trade-app-body .order-breakdown{background:#f0f5f9;border-color:#c9d6e2}
+.trade-app-body .data-table th{background:#eaf1f7;border-color:#c9d6e2}
+.trade-app-body .data-table td{color:#304960}.trade-app-body .data-table .profit,.trade-app-body .trade-buy{color:#d9354d}.trade-app-body .data-table .loss,.trade-app-body .trade-sell{color:#1476c3}
+.trade-app-body .setup-item{background:#f0f5f9;color:#506d84;border-color:#c9d6e2}
+.trade-app-body .setup-item.ready{background:#edf7f3;color:#23715a;border-color:#b0d5c7}
+.trade-app-body .message.success{background:#edf7f3;color:#23715a;border-color:#b0d5c7}
+.trade-app-body .message.error{background:#fff1f3;color:#b72e45;border-color:#e7b9c1}
+
+/* One quote row: identity, price and market statistics share the same header. */
+.trade-app-body .quote-panel>.quote-unified{display:grid;grid-template-columns:auto auto minmax(0,1fr) 28px;align-items:center;gap:14px;padding:10px 12px;min-height:64px}
+.trade-app-body .quote-unified .quote-identity{flex-wrap:wrap;gap:4px 6px;max-width:200px}
+.trade-app-body .quote-unified .quote-main{margin:0;gap:8px;white-space:nowrap}
+.trade-app-body .quote-unified .quote-main strong{font-size:24px}
+.trade-app-body .quote-unified .quote-stats{border:0;background:transparent;min-width:0}
+.trade-app-body .quote-unified .quote-stats>div{padding:0 10px;border-left:1px solid #e1e8ee;border-right:0;min-width:0}
+.trade-app-body .quote-unified .quote-stats span{font-size:13px;white-space:nowrap}
+.trade-app-body .quote-unified .quote-stats b{margin-top:3px;font-size:13px;white-space:nowrap}
+@media(max-width:1499px){.trade-app-body .quote-panel>.quote-unified{grid-template-columns:1fr auto 28px;gap:8px}.trade-app-body .quote-unified .quote-stats{grid-column:1/-1;grid-row:2}.trade-app-body .quote-unified .quote-identity{max-width:none}.trade-app-body .quote-unified .quote-main strong{font-size:20px}}
+@media(max-width:520px){.trade-app-body .quote-panel>.quote-unified{grid-template-columns:minmax(0,1fr) auto}.trade-app-body .quote-unified .quote-main{grid-column:1;grid-row:2;flex-direction:row;align-items:center}.trade-app-body .quote-unified>.icon-button{grid-column:2;grid-row:1}.trade-app-body .quote-unified .quote-stats{grid-row:3;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.trade-app-body .quote-unified .quote-stats>div{padding:0 8px}}

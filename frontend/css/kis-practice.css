@@ -52,3 +52,13 @@
   .account-overview article{box-sizing:border-box;min-height:0;line-height:1.3}.account-overview strong{font-size:20px;line-height:1.4}
 }
 @media(min-width:1280px) and (min-height:850px){.order-context{padding:5px 10px}.order-context b{margin:1px 0}.order-breakdown{margin:6px 12px}}
+
+/* A single account/market bar leaves the trading chart the remaining desk height. */
+.desk-summary{display:grid;grid-template-columns:160px repeat(4,minmax(130px,1fr)) repeat(2,minmax(145px,.9fr)) auto 32px;align-items:center;gap:12px;padding:8px 14px;border:1px solid var(--trade-line);border-radius:12px;background:#fff;min-width:0;box-sizing:border-box}
+.desk-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.desk-title h1{margin:0;font-size:18px;font-weight:900}.desk-title .paper-chip{font-size:12px;padding:3px 7px}
+.desk-metric{min-width:0;padding-left:12px;border-left:1px solid var(--trade-line)}.desk-metric>span{display:block;color:var(--trade-muted);font-size:13px}.desk-metric>strong{display:block;margin-top:2px;font-size:18px;white-space:nowrap}
+.desk-index{display:flex;align-items:center;flex-wrap:wrap;gap:3px 7px;font-size:13px}.desk-index>span{width:100%;color:var(--trade-muted);font-weight:700}.desk-index em{font-style:normal}
+.desk-guide{position:relative}.desk-guide summary{cursor:pointer;white-space:nowrap;color:#315b9f;font-size:13px;list-style:none}.desk-guide summary::-webkit-details-marker{display:none}.desk-guide-body{position:absolute;top:30px;right:0;width:310px;max-width:80vw;padding:14px;background:#fff;border:1px solid var(--trade-line);border-radius:10px;box-shadow:0 8px 24px #13213a22;z-index:10;font-size:13px;line-height:1.6}.desk-guide-body p{margin:6px 0}
+@media(min-width:1280px) and (min-height:850px){body.trade-app-body>.trader-shell{grid-template-rows:64px minmax(0,1fr) 154px 42px}.trading-workspace{grid-template-columns:230px minmax(0,1fr) 310px}.chart-frame{min-height:120px}}
+@media(max-width:1279px){.desk-summary{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:12px}.desk-title{grid-column:span 2}.desk-metric{padding-left:8px}.desk-summary>.icon-button{justify-self:end}}
+@media(max-width:600px){.desk-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.desk-title{grid-column:1/-1}.desk-metric>strong{font-size:16px}.desk-guide-body{left:0;right:auto}}
