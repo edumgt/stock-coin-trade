@@ -29,6 +29,7 @@ from app.api.routes import (
     openapi_kis,
     quant,
     stocks,
+    stress,
 )
 
 api_router = APIRouter()
@@ -37,6 +38,7 @@ for module_router in (
     members.router,
     api_keys.router,          # /api/member/api-keys 는 /api/member 보다 먼저 등록할 필요는 없지만 명시적으로 묶어 둔다.
     market.router,
+    stress.router,
     stocks.router,
     crypto.market_router,
     crypto.trade_router,
