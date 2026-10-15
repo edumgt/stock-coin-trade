@@ -233,6 +233,10 @@ function renderHeader(user) {
       { href: '/learning/tr-pine/step-16.html', label: '16 · table 대시보드', icon: 'fa-solid fa-table-cells' },
       { href: '/learning/tr-pine/step-17.html', label: '17 · 오더 블록·SMC 차트 읽기', icon: 'fa-solid fa-layer-group' },
     ]},
+    { type: 'group', label: 'FRED · 경제지표 API', items: [
+      { href: '/learning/fred-api.html', label: '1단계 · 가입·키 발급·사용법', icon: 'fa-solid fa-book-open' },
+      { href: '/fred-api-test.html', label: '2단계 · 경제지표 조회 테스트', icon: 'fa-solid fa-chart-line' },
+    ]},
     { type: 'group', label: 'KB증권 · 외부 API 조회', items: [
       { href: '/learning/kb-securities.html', label: 'KB 전체 과정', icon: 'fa-solid fa-book-open' },
       { href: '/learning/kb-signup.html', label: '1단계 · 가입·신청', icon: 'fa-solid fa-user-plus' },

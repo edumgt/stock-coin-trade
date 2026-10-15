@@ -1,0 +1,31 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FRED 경제지표 API 실습 — EDUMGT</title><link rel="stylesheet" href="/css/style.css?v=20261012-common-3"><link rel="stylesheet" href="/css/kb-lab.css"><link rel="stylesheet" href="/css/korean-typography.css?v=20261014-ko90-1"><style>select,input{padding:10px;border:1px solid var(--border);border-radius:8px;max-width:100%;background:var(--surface);color:var(--fg)}label{display:grid;gap:6px}.fred-controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end}pre{white-space:pre-wrap;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:9px;border-bottom:1px solid var(--border)}#fred-status{margin:18px 0;overflow-wrap:anywhere}.kb-code{max-height:420px;overflow:auto}.kb-btn:disabled{opacity:.5}a{overflow-wrap:anywhere}</style></head><body><div id="header-mount"></div><main class="kb-wrap">
+<section class="kb-hero"><h1>FRED · 경제지표 API 연동</h1><p>미국 세인트루이스 연방준비은행의 경제 데이터로 금리·물가·고용을 조회합니다. 가입 → 키 발급 → 서버 설정 → 지표 조회 순서로 실습합니다.</p></section>
+<section class="kb-card"><h2>1. 가입 및 API 키 발급</h2><ol><li><a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED 공식 사이트</a>의 My Account에서 계정을 만들고 로그인합니다.</li><li><a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" rel="noopener">API Key 안내</a>에서 API 키를 신청합니다. 발급된 32자리 키는 서버에 보관합니다.</li><li>Python 환경에 <code>requests</code>를 설치합니다: <code>pip install requests</code></li></ol></section>
+<section class="kb-card"><h2>2. 서버 환경변수 설정</h2><pre class="kb-code"># 서버의 .env (Git에 커밋하지 않음)
+FRED_API_KEY=발급받은_키</pre><p>이 사이트는 서버에 등록된 키로 연결합니다. 브라우저 입력이나 별도 키 등록 없이 다음 테스트 화면을 사용할 수 있습니다. 키를 변경한 뒤에는 백엔드 환경변수를 갱신하여 재기동합니다.</p></section>
+<section class="kb-card"><h2>3. 요청과 응답 이해하기</h2><table><thead><tr><th>항목</th><th>사용법</th></tr></thead><tbody><tr><td>지표 정보</td><td>GET /fred/series · 이름, 단위, 주기, 최종 수정 시각</td></tr><tr><td>관측값</td><td>GET /fred/series/observations · 날짜별 수치</td></tr><tr><td>공통 파라미터</td><td>series_id=DGS10, api_key=서버 키, file_type=json</td></tr><tr><td>최근 데이터</td><td>sort_order=desc, limit=30 (이 실습은 1~200개)</td></tr></tbody></table><p>FRED 원본 주소는 <code>https://api.stlouisfed.org</code>입니다. 사이트에서는 <code>/api/fred-test/series</code>와 <code>/api/fred-test/observations</code>가 키를 붙여 대신 요청합니다.</p><h3>Python 예제 · 서버에서 실행</h3><pre class="kb-code">import os
+import requests
+
+response = requests.get(
+    "https://api.stlouisfed.org/fred/series/observations",
+    params={
+        "api_key": os.environ["FRED_API_KEY"],
+        "file_type": "json",
+        "series_id": "DGS10",
+        "sort_order": "desc",
+        "limit": 30,
+    },
+    timeout=15,
+)
+# 응답 URL에는 키가 포함되므로 URL이나 예외 원문을 출력하지 않습니다.
+if response.status_code == 200:
+    print(response.json()["observations"])
+else:
+    print("FRED 요청 실패:", response.status_code)</pre><p>환경변수는 실행 전에 설정해야 합니다. Python 기본 기능만으로는 .env 파일을 자동으로 읽지 않습니다.</p><h3>브라우저 예제 · 사이트의 서버 경유</h3><pre class="kb-code">const response = await fetch(
+  '/api/fred-test/observations?series_id=DGS10&amp;limit=30'
+);
+const data = await response.json();
+if (data.ok) console.log(data.result.observations);</pre></section>
+<section class="kb-card"><h2>4. 대표 지표와 해석</h2><table><thead><tr><th>코드</th><th>내용</th><th>주기·단위</th></tr></thead><tbody><tr><td>DGS10 / DGS2</td><td>미국 국채 10년 / 2년 금리</td><td>일별 · %</td></tr><tr><td>FEDFUNDS</td><td>실효 연방기금금리</td><td>월별 · %</td></tr><tr><td>CPIAUCSL</td><td>미국 소비자물가지수</td><td>월별 · 지수 (전년 대비 상승률 아님)</td></tr><tr><td>UNRATE</td><td>미국 실업률</td><td>월별 · %</td></tr><tr><td>T10Y2Y</td><td>국채 10년−2년 금리차</td><td>일별 · %p</td></tr><tr><td>VIXCLS</td><td>VIX 종가</td><td>일별 · 지수</td></tr></tbody></table><div class="kb-note">실시간 시세가 아닙니다. 조회 시각과 관측 기준일은 다르며 발표 지연·휴일·사후 수정이 있을 수 있습니다. 원본의 "."는 결측값이며 화면에서는 null로 표시합니다. 지표마다 단위와 발표 주기를 먼저 확인하세요.</div></section>
+<section class="kb-card"><h2>5. 테스트 및 오류 확인</h2><ol><li>지표를 선택하고 ‘지표 정보’를 눌러 단위·주기를 확인합니다.</li><li>‘관측값 조회’로 최신 유효 수치, 기준일과 JSON을 확인합니다.</li><li>DGS10과 DGS2를 각각 조회하거나 T10Y2Y로 금리차를 확인합니다.</li></ol><p>설정 누락: 서버 FRED_API_KEY 확인 · 잘못된 지표/키: 코드와 인증 확인 · 호출 제한/연결 실패: 잠시 후 재시도. 동일 요청은 60초간 캐시되며 캐시의 원래 조회 시각을 유지합니다.</p><div class="kb-actions"><a class="kb-btn" href="/fred-api-test.html">다음: 경제지표 조회 테스트</a><a class="kb-btn secondary" href="https://fred.stlouisfed.org/docs/api/fred/series_observations.html" target="_blank" rel="noopener">공식 API 문서 ↗</a></div></section>
+</main><script src="/js/config.js"></script><script src="/js/common.js?v=20261015-fred-1"></script><script>document.addEventListener('DOMContentLoaded',()=>initPage())</script></body></html>
