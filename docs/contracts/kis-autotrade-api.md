@@ -1,4 +1,4 @@
-# KIS 자동매매 연동 API 계약 (v0.6, 2026-10-13)
+# KIS 자동매매 연동 API 계약 (v0.7, 2026-10-15)
 
 > 이 문서는 domain-rag-lab / lumina-invest / stock-coin-trade 세 저장소에 **동일한 내용**으로 복사되어 있다.
 > 변경 시 세 저장소를 함께 갱신하고 버전을 올린다. 변경 이력은 문서 끝에 적는다.
@@ -157,12 +157,21 @@ Base: `https://<stock-coin-trade>/openapi/v1/kis`  (기존 `/openapi/v1/orders`�
 | `GATEWAY_UNREACHABLE` | 연결/타임아웃 (주문 POST 는 재시도 없음) | `live_orders.status=UNKNOWN` → confirm_fills 가 당일 목록에서 매칭 |
 | `GATEWAY_INVALID_RESPONSE` | JSON 아님 | ERROR 기록 |
 
+### 2-7. 시세 `GET /quote/{symbol}?environment=paper` (v0.7, 읽기 전용)
+응답: 전일대비 `change` 는 부호 포함(KIS `prdy_vrss` 절대값에 `prdy_vrss_sign` 4·5 면 음수). 현재가가 0 이면 `KIS_QUOTE_UNAVAILABLE`(502). `symbol` 은 6자리 코드(아니면 422 `INVALID_REQUEST`).
+```json
+{"ok": true, "environment": "paper", "quote": {"symbol": "005930", "price": 71500, "change": -500, "changeRate": -0.69, "prevClose": 72000,
+  "open": 72000, "high": 72300, "low": 71200, "volume": 1234567, "upperLimit": 93600, "lowerLimit": 50400}}
+```
+사용처: stock-kms-portal iv 챗봇 `CheckQuote` 인텐트(Lambda `iv-lex-trade-hook`).
+
 ## 3. 구현 현황 (2026-10-02)
 - stock-coin-trade: 2절 전부 구현 (`app/api/routes/openapi_kis.py`, `app/services/brokers/kis_autotrade.py`). 스코프는 `api_key.scopes`(`kis:order`) 단일(2026-10-02 env 화이트리스트 폐기). 당일/기간 조회는 KIS 연속조회 페이지네이션 적용
 - lumina-invest: 클라이언트 `app/services/brokers/stock_coin_trade_gateway.py`, 로더 `app/services/strategy_loader.py`
 - domain-rag-lab: 1절 전부 구현 (`app/api/routes/strategies.py`)
 
 ## 4. 변경 이력
+- v0.7 (2026-10-15) 시세 `GET /quote/{symbol}` 추가(iv 챗봇 CheckQuote 용, 읽기 전용)
 - v0.6 (2026-10-13) `GET /strategies/{id}/versions`(불합격 포함 이력), Bearer 세션 인증 허용(pr 화면 export), lumina 운영 모드 3분할(②에서만 스펙 적용)·유니버스 엄격 적용·재검증 중계·pr 백테스트 프리필 링크 명시
 - v0.5 (2026-10-02) 권한을 `api_key.scopes` 로 일원화(env 폐기), 미결 사항 확정(폴링·가상 /orders 유지)
 - v0.4 (2026-10-02) 체결 조회 `lookup`/`inference` 필드, 모의투자 체결 목록 제약 명시

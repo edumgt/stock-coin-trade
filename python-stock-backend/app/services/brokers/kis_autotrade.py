@@ -322,6 +322,26 @@ def current_price(environment: str, symbol: str) -> int:
     return _int((body.get("output") or {}).get("stck_prpr"))
 
 
+def get_quote(environment: str, symbol: str) -> dict[str, Any]:
+    """현재가 요약(계약 2-7, 읽기 전용). inquire-price 한 번. iv 챗봇 CheckQuote 가 쓴다. 전일대비는 부호를 붙여 돌려준다(KIS 는 절대값 + prdy_vrss_sign)."""
+    _, body = request(environment, "GET", "/uapi/domestic-stock/v1/quotations/inquire-price", "quote",
+                      params={"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": symbol}, label="현재가 조회")
+    o = body.get("output") or {}
+    price = _int(o.get("stck_prpr"))
+    if price <= 0:
+        raise AutotradeError("현재가를 확인할 수 없습니다.", 502, "KIS_QUOTE_UNAVAILABLE")
+    change = abs(_int(o.get("prdy_vrss")))
+    if str(o.get("prdy_vrss_sign") or "") in ("4", "5"):      # 1 상한 2 상승 3 보합 4 하한 5 하락
+        change = -change
+    try:
+        change_rate = float(o.get("prdy_ctrt") or 0)
+    except (TypeError, ValueError):
+        change_rate = 0.0
+    return {"symbol": symbol, "price": price, "change": change, "changeRate": change_rate, "prevClose": _int(o.get("stck_sdpr")) or price - change,
+            "open": _int(o.get("stck_oprc")), "high": _int(o.get("stck_hgpr")), "low": _int(o.get("stck_lwpr")), "volume": _int(o.get("acml_vol")),
+            "upperLimit": _int(o.get("stck_mxpr")), "lowerLimit": _int(o.get("stck_llam"))}
+
+
 def get_balance(environment: str) -> dict[str, Any]:
     cano, product = _account(environment)
     _, body = request(

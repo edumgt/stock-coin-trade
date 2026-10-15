@@ -117,6 +117,20 @@ def cancel_order(ctx: ApiKeyContext, db: DbSession, order_no: str, environment: 
         raise _raise(exc)
 
 
+@router.get("/quote/{symbol}")
+def quote(ctx: ApiKeyContext, db: DbSession, symbol: str, environment: str = Query("paper")) -> dict:
+    """현재가 요약(계약 2-7). 주문과 같은 스코프(kis:order)로 읽기만 한다."""
+    _scope(ctx, db)
+    env = _environment(environment)
+    sym = symbol.strip()
+    if not (sym.isdigit() and len(sym) == 6):
+        raise ApiError(422, ok=False, error="INVALID_REQUEST", message="symbol 은 6자리 종목코드여야 합니다.")
+    try:
+        return {"ok": True, "environment": env, "quote": kis_autotrade.get_quote(env, sym)}
+    except BrokerApiError as exc:
+        raise _raise(exc)
+
+
 @router.get("/balance")
 def balance(ctx: ApiKeyContext, db: DbSession, environment: str = Query("paper")) -> dict:
     _scope(ctx, db)

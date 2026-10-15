@@ -347,3 +347,19 @@ def test_order_records_symbol_name_from_holdings(api):
     with api.db() as db:
         import json as _json
         assert _json.loads(db.query(KisAutotradeOrder).one().request_json)["_name"] == "삼성전자"
+
+
+def test_quote_endpoint_returns_signed_change(api):
+    """계약 2-7 `GET /quote/{symbol}`: KIS 절대값 전일대비 + 부호코드 → 부호 있는 change, 6자리 코드 검증, 현재가 0 이면 502."""
+    api.kis_request.return_value = (Mock(status_code=200), {"rt_cd": "0", "output": {
+        "stck_prpr": "71500", "prdy_vrss": "500", "prdy_vrss_sign": "5", "prdy_ctrt": "-0.69", "stck_sdpr": "72000",
+        "stck_oprc": "72000", "stck_hgpr": "72300", "stck_lwpr": "71200", "acml_vol": "1234567", "stck_mxpr": "93600", "stck_llam": "50400"}})
+    response = api.get("/openapi/v1/kis/quote/005930?environment=paper", headers=AUTH)
+    assert response.status_code == 200
+    q = response.json()["quote"]
+    assert q["price"] == 71500 and q["change"] == -500 and q["changeRate"] == -0.69 and q["prevClose"] == 72000 and q["volume"] == 1234567
+    assert api.kis_request.call_args.kwargs["params"]["FID_INPUT_ISCD"] == "005930"
+    assert api.get("/openapi/v1/kis/quote/abc?environment=paper", headers=AUTH).status_code == 422
+    api.kis_request.return_value = (Mock(status_code=200), {"rt_cd": "0", "output": {"stck_prpr": "0"}})
+    bad = api.get("/openapi/v1/kis/quote/005930?environment=paper", headers=AUTH)
+    assert bad.status_code == 502 and bad.json()["error"] == "KIS_QUOTE_UNAVAILABLE"

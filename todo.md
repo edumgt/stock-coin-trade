@@ -922,3 +922,11 @@ KIS 원문이라 숫자가 `"70,900.0"` 같은 **문자열**로 오므로 `kisNu
 15:30 장 마감 후가 안전하다.
 
 **커밋 안 했다** — 변경만 남겨 두었다.
+
+### 6-23. 2026-10-15 Open API 시세 조회 `GET /openapi/v1/kis/quote/{symbol}` 추가 — iv 챗봇 CheckQuote 용 (사용자 요청: 챗봇 대화 분석 보강)
+
+**배경**: iv.edumgt.co.kr Lex 챗봇에서 "한화오션 현재 시세 알려줘" 가 답할 곳이 없어 CheckOrder 로 오분류됐다(stock-kms-portal todo 6-12). 게이트웨이에는 내부 `current_price` 만 있고 Open API 노출이 없었다.
+**변경**: `app/services/brokers/kis_autotrade.py` `get_quote(environment, symbol)` — `inquire-price` 1회, `prdy_vrss` 절대값에 `prdy_vrss_sign`(4·5) 로 부호를 붙여 `change`, `changeRate`(prdy_ctrt), `prevClose`(stck_sdpr), open/high/low, volume(acml_vol), upperLimit/lowerLimit. 현재가 0 이면 `KIS_QUOTE_UNAVAILABLE`(502). `app/api/routes/openapi_kis.py` `GET /quote/{symbol}?environment=paper` — 기존 `_scope`(kis:order / kis:*)로 권한, 6자리 코드 아니면 422 `INVALID_REQUEST`. 응답 `{"ok":true,"environment":"paper","quote":{...}}`.
+**계약**: `docs/contracts/kis-autotrade-api.md` v0.7 — 2-7 절 추가, 변경 이력. lumina-invest·domain-rag-lab 사본 동일 갱신(md5 일치).
+**검증**: `tests/test_kis_autotrade.py::test_quote_endpoint_returns_signed_change`(부호·필드·422·502) 포함 26개 통과(`.venv/bin/python -m pytest tests/test_kis_autotrade.py`).
+**배포**: 커밋 후 `main` push → GitHub Actions `deploy-ec2.yml` 이 st 서버(`/opt/stock-coin-trade`, `crypto-mock-python`)를 재배포한다. 확인: `curl -H "Authorization: Bearer <키>" "https://st.edumgt.co.kr/openapi/v1/kis/quote/005930?environment=paper"`. **배포 미완(에이전트 미커밋).**
