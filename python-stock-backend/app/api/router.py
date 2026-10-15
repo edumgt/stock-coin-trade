@@ -29,6 +29,7 @@ from app.api.routes import (
     openapi_kis,
     quant,
     stocks,
+    simulation_summary,
     stress,
 )
 
@@ -40,6 +41,7 @@ for module_router in (
     market.router,
     stress.router,
     stocks.router,
+    simulation_summary.router,
     crypto.market_router,
     crypto.trade_router,
     crypto_exchange_test.router,

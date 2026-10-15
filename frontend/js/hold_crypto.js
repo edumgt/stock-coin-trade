@@ -1,6 +1,8 @@
 /* ── 초기화: 보유자산 fetch → DOM 렌더 → WebSocket 연결 ──────── */
 (async () => {
-  await initPage({ requireAuth: true });
+  const user = await initPage({ requireAuth: true });
+  if (!user?.loggedIn) return;
+  window.dispatchEvent(new Event('hold-ready'));
 
   const res = await apiFetch('/api/trade/hold');
   if (!res.ok) {
@@ -366,6 +368,7 @@ function initWebSocket(marketArrayList, memberAsset, totalBuyKrw) {
 
 /* ── 포트폴리오 차트 (Highcharts) ──────────────────────────────── */
 async function renderPortfolioChart(holdCryptoList, marketArrayList, memberAsset) {
+  if (!document.getElementById('hold_asset_chart')) return;
   try {
     let upbitData = [];
     if (marketArrayList.length) {
