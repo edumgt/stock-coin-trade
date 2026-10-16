@@ -237,6 +237,14 @@ function renderHeader(user) {
       { href: '/learning/fred-api.html', label: '1단계 · 가입·키 발급·사용법', icon: 'fa-solid fa-book-open' },
       { href: '/fred-api-test.html', label: '2단계 · 경제지표 조회 테스트', icon: 'fa-solid fa-chart-line' },
     ]},
+    { type: 'group', label: 'DART · 전자공시 API', items: [
+      { href: '/learning/dart-api.html', label: '1단계 · 가입·키 발급·사용법', icon: 'fa-solid fa-book-open' },
+      { href: '/dart-api-test.html', label: '2단계 · 전자공시 조회 테스트', icon: 'fa-solid fa-file-invoice' },
+    ]},
+    { type: 'group', label: 'KRX · 시장정보 Open API', items: [
+      { href: '/learning/krx-api.html', label: '1단계 · 가입·키 발급·사용법', icon: 'fa-solid fa-book-open' },
+      { href: '/krx-api-test.html', label: '2단계 · 시장정보 조회 테스트', icon: 'fa-solid fa-chart-line' },
+    ]},
     { type: 'group', label: 'KB증권 · 외부 API 조회', items: [
       { href: '/learning/kb-securities.html', label: 'KB 전체 과정', icon: 'fa-solid fa-book-open' },
       { href: '/learning/kb-signup.html', label: '1단계 · 가입·신청', icon: 'fa-solid fa-user-plus' },

@@ -16,6 +16,7 @@ from app.api.routes import (
     broker_test_aws,
     crypto,
     crypto_exchange_test,
+    dart_test,
     error_analysis,
     fred_test,
     health,
@@ -23,6 +24,7 @@ from app.api.routes import (
     kis_explorer,
     kis_practice,
     kis_real,
+    krx_test,
     market,
     members,
     ohlcv_db,
@@ -36,6 +38,8 @@ from app.api.routes import (
 
 api_router = APIRouter()
 for module_router in (
+    dart_test.router,
+    krx_test.router,
     fred_test.router,
     health.router,
     members.router,

@@ -25,7 +25,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.core.context import RequestInfo, current_request
 
 API_USAGE_PREFIXES = (
-    "/api/fred-test/", "/api/broker-test/", "/api/kis-chart/", "/api/kis-explorer/", "/api/kis-real/",
+    "/api/dart-test/", "/api/krx-test/", "/api/fred-test/", "/api/broker-test/", "/api/kis-chart/", "/api/kis-explorer/", "/api/kis-real/",
     "/api/aws-broker-test/", "/api/alpaca-test/", "/api/aws-alpaca-test/", "/api/crypto-exchange-test/",
 )
 ERROR_LOG_EXCLUDED_PREFIX = "/api/error-analysis/"

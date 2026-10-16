@@ -130,6 +130,8 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       REDIS_SESSION_KEY_PREFIX: ${REDIS_SESSION_KEY_PREFIX:-stock-coin-trade:session:}
       FRED_API_KEY: ${FRED_API_KEY:-}
+      DART_API_KEY: ${DART_API_KEY:-}
+      KRX_AUTH_KEY: ${KRX_AUTH_KEY:-}
       CMC_API_KEY: ${CMC_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # ARIA 암복호화 예제(/api/aria)의 서버 기본 키. 비우면 데모용 고정 키를 쓴다.

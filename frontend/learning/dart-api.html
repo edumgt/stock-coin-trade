@@ -1,0 +1,24 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DART 전자공시 API 실습 — EDUMGT</title><link rel="stylesheet" href="/css/style.css?v=20261012-common-3"><link rel="stylesheet" href="/css/kb-lab.css"><link rel="stylesheet" href="/css/korean-typography.css?v=20261014-ko90-1"><style>pre{white-space:pre-wrap;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:9px;border-bottom:1px solid var(--border)}.kb-code{max-height:420px;overflow:auto}a{overflow-wrap:anywhere}</style></head><body><div id="header-mount"></div><main class="kb-wrap">
+<section class="kb-hero"><h1>DART · 전자공시 API 연동</h1><p>금융감독원 OpenDART로 국내 상장사의 기업개황·공시목록·재무제표를 조회합니다. 가입 → 인증키 발급 → 서버 설정 → 조회 순서로 실습합니다.</p></section>
+<section class="kb-card"><h2>1. 가입 및 인증키 발급</h2><ol><li><a href="https://opendart.fss.or.kr/" target="_blank" rel="noopener">OpenDART 공식 사이트</a>에서 회원가입 후 로그인합니다.</li><li>상단 메뉴 <b>인증키 신청/관리 → 인증키 신청</b>에서 사용 목적을 적고 신청하면 이메일 인증 후 40자리 인증키가 발급됩니다.</li><li><b>인증키 관리</b>에서 키 상태(정상)와 일일 요청 한도(기본 20,000건)를 확인합니다. 키는 서버에만 보관합니다.</li><li>Python 환경에 <code>requests</code>를 설치합니다: <code>pip install requests</code></li></ol></section>
+<section class="kb-card"><h2>2. 서버 환경변수 설정</h2><pre class="kb-code"># 서버의 .env (Git에 커밋하지 않음)
+DART_API_KEY=발급받은_40자리_인증키</pre><p>이 사이트는 서버에 등록된 키로 연결합니다. 브라우저 입력이나 별도 키 등록 없이 다음 테스트 화면을 사용할 수 있습니다. 키를 변경한 뒤에는 백엔드 환경변수를 갱신하여 재기동합니다.</p></section>
+<section class="kb-card"><h2>3. 요청과 응답 이해하기</h2><table><thead><tr><th>항목</th><th>사용법</th></tr></thead><tbody><tr><td>고유번호 목록</td><td>GET /api/corpCode.xml · ZIP 안에 XML. 종목코드(6자리) → 고유번호(corp_code, 8자리) 매핑. 서버가 30일 캐시</td></tr><tr><td>기업개황</td><td>GET /api/company.json · corp_code · 회사명·대표자·시장구분·설립일·결산월</td></tr><tr><td>공시목록</td><td>GET /api/list.json · corp_code, bgn_de, end_de, page_count · 접수번호·보고서명·접수일</td></tr><tr><td>재무제표 주요계정</td><td>GET /api/fnlttSinglAcnt.json · corp_code, bsns_year, reprt_code · 자산·부채·자본·매출·영업이익·당기순이익</td></tr><tr><td>공통 파라미터</td><td>crtfc_key=서버 키. 모든 API 는 종목코드가 아니라 <b>고유번호</b>로 조회</td></tr></tbody></table><p>DART 원본 주소는 <code>https://opendart.fss.or.kr</code>입니다. 사이트에서는 <code>/api/dart-test/company</code>·<code>/disclosures</code>·<code>/financials</code>가 종목코드를 고유번호로 바꾸고 키를 붙여 대신 요청합니다.</p><h3>응답 status 코드</h3><table><thead><tr><th>status</th><th>의미</th></tr></thead><tbody><tr><td>000</td><td>정상</td></tr><tr><td>010 / 011</td><td>미등록 키 / 사용할 수 없는 키</td></tr><tr><td>013</td><td>조회된 자료 없음 (연도·보고서 구분 확인)</td></tr><tr><td>020</td><td>일일 요청 한도 초과</td></tr><tr><td>800</td><td>시스템 점검</td></tr></tbody></table><p>HTTP 상태는 항상 200 이고 성공·실패는 본문 <code>status</code>로 구분합니다. 이 점이 다른 API와 가장 다른 부분입니다.</p><h3>Python 예제 · 서버에서 실행</h3><pre class="kb-code">import os
+import requests
+
+response = requests.get(
+    "https://opendart.fss.or.kr/api/company.json",
+    params={"crtfc_key": os.environ["DART_API_KEY"], "corp_code": "00126380"},  # 삼성전자 고유번호
+    timeout=15,
+)
+body = response.json()
+# 응답 URL에는 키가 포함되므로 URL이나 예외 원문을 출력하지 않습니다.
+if body.get("status") == "000":
+    print(body["corp_name"], body["ceo_nm"], body["est_dt"])
+else:
+    print("DART 오류:", body.get("status"), body.get("message"))</pre><h3>브라우저 예제 · 사이트의 서버 경유</h3><pre class="kb-code">const response = await fetch('/api/dart-test/financials?stock_code=005930&amp;bsns_year=2025&amp;reprt_code=11011');
+const data = await response.json();
+if (data.ok) console.log(data.result.summary);</pre></section>
+<section class="kb-card"><h2>4. 보고서 구분과 해석</h2><table><thead><tr><th>reprt_code</th><th>보고서</th><th>금액 기준</th></tr></thead><tbody><tr><td>11011</td><td>사업보고서</td><td>연간 (당기 = 그 해 전체)</td></tr><tr><td>11012</td><td>반기보고서</td><td>손익은 반기 누적</td></tr><tr><td>11013</td><td>1분기보고서</td><td>손익은 1분기</td></tr><tr><td>11014</td><td>3분기보고서</td><td>손익은 3분기 누적</td></tr></tbody></table><div class="kb-note">DART는 <b>국내 상장사만</b> 제공합니다. 우선주(005935 등)는 보통주 코드(005930)로 회사를 찾습니다. 연결(CFS)이 없는 회사는 별도(OFS) 재무제표를 보여 주며 <code>fs_div</code>로 구분합니다. 금액 단위는 원(KRW)이고 결손·손실은 음수입니다. 사업보고서는 보통 다음 해 3월 말에 제출되므로 올해 연도는 비어 있을 수 있습니다.</div></section>
+<section class="kb-card"><h2>5. 테스트 및 오류 확인</h2><ol><li>종목코드를 입력하고 ‘기업개황’을 눌러 회사명·시장구분·결산월을 확인합니다.</li><li>‘공시목록’으로 최근 90일 공시와 DART 뷰어 링크를 확인합니다.</li><li>‘재무제표’로 사업연도·보고서 구분을 바꿔 가며 자산·부채·매출·영업이익 요약과 JSON을 확인합니다.</li></ol><p>설정 누락: 서버 DART_API_KEY 확인 · status 010/011: 키 발급 상태 확인 · status 013: 연도·보고서 변경 · status 020: 내일 재시도. 동일 요청은 60초간 캐시되며 고유번호 목록은 30일간 캐시됩니다.</p><div class="kb-actions"><a class="kb-btn" href="/dart-api-test.html">다음: 전자공시 조회 테스트</a><a class="kb-btn secondary" href="https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001" target="_blank" rel="noopener">공식 개발가이드 ↗</a></div></section>
+</main><script src="/js/config.js"></script><script src="/js/common.js?v=20261016-dartkrx-1"></script><script>document.addEventListener('DOMContentLoaded',()=>initPage())</script></body></html>

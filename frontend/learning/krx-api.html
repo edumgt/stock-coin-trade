@@ -1,0 +1,26 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KRX 시장정보 Open API 실습 — EDUMGT</title><link rel="stylesheet" href="/css/style.css?v=20261012-common-3"><link rel="stylesheet" href="/css/kb-lab.css"><link rel="stylesheet" href="/css/korean-typography.css?v=20261014-ko90-1"><style>pre{white-space:pre-wrap;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:9px;border-bottom:1px solid var(--border)}.kb-code{max-height:420px;overflow:auto}a{overflow-wrap:anywhere}</style></head><body><div id="header-mount"></div><main class="kb-wrap">
+<section class="kb-hero"><h1>KRX · 시장정보 Open API 연동</h1><p>한국거래소 정보데이터시스템 Open API로 종목 일별 시세·종목기본정보·지수를 조회합니다. 가입 → 인증키 발급 → 서비스별 이용 신청 → 서버 설정 → 조회 순서로 실습합니다.</p></section>
+<section class="kb-card"><h2>1. 가입·인증키 발급·이용 신청</h2><ol><li><a href="https://openapi.krx.co.kr/" target="_blank" rel="noopener">KRX Open API 포털</a>에서 회원가입 후 로그인합니다.</li><li><b>마이페이지 → API 인증키 신청</b>에서 인증키를 발급받습니다. 키는 서버에만 보관합니다.</li><li><b>서비스별 이용 신청</b>이 따로 필요합니다. 이 실습은 아래 4개 서비스를 씁니다. 승인까지 보통 1영업일이 걸리며, 승인되지 않은 서비스는 인증 오류가 납니다.<table><thead><tr><th>서비스</th><th>API</th><th>용도</th></tr></thead><tbody><tr><td>주식 · 유가증권 일별매매정보</td><td>sto/stk_bydd_trd</td><td>KOSPI 전 종목 종가·등락률·거래량·시가총액</td></tr><tr><td>주식 · 코스닥 일별매매정보</td><td>sto/ksq_bydd_trd</td><td>KOSDAQ 전 종목</td></tr><tr><td>주식 · 유가증권/코스닥 종목기본정보</td><td>sto/stk_isu_base_info · ksq_isu_base_info</td><td>상장일·액면가·상장주식수·업종</td></tr><tr><td>지수 · KOSPI/KOSDAQ/KRX 일별시세</td><td>idx/kospi_dd_trd · kosdaq_dd_trd · krx_dd_trd</td><td>지수 종가·등락·거래대금</td></tr></tbody></table></li><li>Python 환경에 <code>requests</code>를 설치합니다: <code>pip install requests</code></li></ol></section>
+<section class="kb-card"><h2>2. 서버 환경변수 설정</h2><pre class="kb-code"># 서버의 .env (Git에 커밋하지 않음)
+KRX_AUTH_KEY=발급받은_인증키</pre><p>이 사이트는 서버에 등록된 키로 연결합니다. 브라우저 입력이나 별도 키 등록 없이 다음 테스트 화면을 사용할 수 있습니다. 키를 변경한 뒤에는 백엔드 환경변수를 갱신하여 재기동합니다.</p></section>
+<section class="kb-card"><h2>3. 요청과 응답 이해하기</h2><table><thead><tr><th>항목</th><th>사용법</th></tr></thead><tbody><tr><td>요청 주소</td><td>GET https://data-dbg.krx.co.kr/svc/apis/<b>서비스/API</b> (예: sto/stk_bydd_trd)</td></tr><tr><td>인증</td><td>HTTP 헤더 <code>AUTH_KEY: 인증키</code> (URL 파라미터가 아님)</td></tr><tr><td>파라미터</td><td><code>basDd=YYYYMMDD</code> 기준일 하나. 그 날짜의 <b>전 종목</b>이 한 번에 반환됨</td></tr><tr><td>응답</td><td><code>OutBlock_1</code> 배열. 숫자도 "90,000" 같은 문자열로 오므로 쉼표를 떼고 변환</td></tr><tr><td>제공 범위</td><td>2010년 이후 ~ 조회일 <b>전 영업일(T-1)</b>. 매일 아침 갱신. 실시간 시세 아님</td></tr></tbody></table><p>사이트에서는 <code>/api/krx-test/stock</code>·<code>/market</code>·<code>/base-info</code>·<code>/index</code>가 키를 헤더에 붙여 대신 요청하고, 전 종목 응답에서 원하는 종목만 골라 줍니다. 같은 시장·날짜 응답은 5분간 캐시되어 한 번 받으면 종목을 바꿔도 KRX를 다시 부르지 않습니다.</p><h3>Python 예제 · 서버에서 실행</h3><pre class="kb-code">import os
+import requests
+
+response = requests.get(
+    "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd",
+    headers={"AUTH_KEY": os.environ["KRX_AUTH_KEY"]},
+    params={"basDd": "20261015"},
+    timeout=20,
+)
+# 헤더에 키가 있으므로 요청 객체나 예외 원문을 그대로 출력하지 않습니다.
+if response.status_code == 200:
+    rows = response.json().get("OutBlock_1", [])
+    samsung = next(r for r in rows if r["ISU_CD"] == "005930")
+    print(samsung["ISU_NM"], samsung["TDD_CLSPRC"], samsung["FLUC_RT"])
+else:
+    print("KRX 요청 실패:", response.status_code)</pre><h3>브라우저 예제 · 사이트의 서버 경유</h3><pre class="kb-code">const response = await fetch('/api/krx-test/stock?symbol=005930&amp;market=KOSPI');
+const data = await response.json();
+if (data.ok) console.log(data.result.stock.TDD_CLSPRC, data.result.stock.FLUC_RT);</pre></section>
+<section class="kb-card"><h2>4. 주요 응답 항목</h2><table><thead><tr><th>항목</th><th>내용</th><th>단위</th></tr></thead><tbody><tr><td>BAS_DD / ISU_CD / ISU_NM</td><td>기준일 / 종목코드 / 종목명</td><td>-</td></tr><tr><td>TDD_CLSPRC / TDD_OPNPRC / TDD_HGPRC / TDD_LWPRC</td><td>종가 / 시가 / 고가 / 저가</td><td>원</td></tr><tr><td>CMPPREVDD_PRC / FLUC_RT</td><td>전일 대비 / 등락률</td><td>원 / %</td></tr><tr><td>ACC_TRDVOL / ACC_TRDVAL</td><td>누적 거래량 / 거래대금</td><td>주 / 원</td></tr><tr><td>MKTCAP / LIST_SHRS</td><td>시가총액 / 상장주식수</td><td>원 / 주</td></tr><tr><td>CLSPRC_IDX / CMPPREVDD_IDX</td><td>지수 종가 / 전일 대비 (지수 API)</td><td>포인트</td></tr><tr><td>LIST_DD / PARVAL / SECT_TP_NM</td><td>상장일 / 액면가 / 소속부 (종목기본정보)</td><td>-</td></tr></tbody></table><div class="kb-note">실시간 시세가 아닙니다. 기본 기준일은 전 영업일(주말 제외)이며 공휴일이면 ‘자료 없음’이 나오므로 날짜를 하루 더 앞으로 바꿔 조회합니다. 실시간 현재가는 KIS·KB 테스트 화면을 사용합니다.</div></section>
+<section class="kb-card"><h2>5. 테스트 및 오류 확인</h2><ol><li>종목코드·시장을 고르고 ‘종목 일별시세’를 눌러 종가·등락률·시가총액을 확인합니다.</li><li>‘시가총액 상위’로 시장 전체 응답에서 정렬한 상위 종목을 확인합니다.</li><li>‘종목기본정보’로 상장일·액면가, ‘지수’로 코스피·코스닥 종가를 확인합니다.</li></ol><p>설정 누락: 서버 KRX_AUTH_KEY 확인 · 인증 거부(401/403): 키 상태와 해당 서비스 이용 신청 승인 여부 확인 · 자료 없음: 휴장일이거나 집계 전이므로 기준일 변경 · 호출 제한: 잠시 후 재시도. 같은 시장·날짜 요청은 5분간 캐시됩니다.</p><div class="kb-actions"><a class="kb-btn" href="/krx-api-test.html">다음: 시장정보 조회 테스트</a><a class="kb-btn secondary" href="https://openapi.krx.co.kr/" target="_blank" rel="noopener">KRX Open API 포털 ↗</a></div></section>
+</main><script src="/js/config.js"></script><script src="/js/common.js?v=20261016-dartkrx-1"></script><script>document.addEventListener('DOMContentLoaded',()=>initPage())</script></body></html>
