@@ -67,7 +67,8 @@ function createGrid() {
     pagination:true, paginationPageSize:25, paginationPageSizeSelector:[25,50,100],
     rowSelection:{ mode:'singleRow', enableClickSelection:true, checkboxes:false, headerCheckbox:false },
     overlayNoRowsTemplate:'<span style="padding:16px;color:#64748B">아직 KIS API 호출 기록이 없습니다.</span>',
-    onRowClicked:event => loadDetail(event.data.id),
+    onRowClicked:event => { if (event.data) loadDetail(event.data.id); },
+    onCellKeyDown:event => { if (event.event?.key === 'Enter' && event.data) { event.event.preventDefault(); loadDetail(event.data.id); } },
   });
 }
 
@@ -126,12 +127,34 @@ function applyFilters() {
   saveFilters();
 }
 
+let khDetailRequest = 0;
+let khDetailFocus;
+kh('closeDetailModal').addEventListener('click', () => kh('detailModal').close());
+kh('detailModal').addEventListener('click', event => {
+  const rect = event.currentTarget.getBoundingClientRect();
+  if (event.target === event.currentTarget && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) event.currentTarget.close();
+});
+kh('detailModal').addEventListener('close', () => {
+  khDetailRequest += 1;
+  document.body.classList.remove('detail-modal-open');
+  if (khDetailFocus?.isConnected) khDetailFocus.focus({preventScroll:true});
+});
 async function loadDetail(id) {
+  const requestId = ++khDetailRequest;
+  if (!kh('detailModal').open) {
+    khDetailFocus = document.activeElement;
+    kh('detailModal').showModal();
+    document.body.classList.add('detail-modal-open');
+  }
+  kh('detailModalTitle').textContent = `호출 #${id} · 상세 JSON`;
+  kh('detailModalStatus').textContent = '상세 기록을 불러오는 중…';
   kh('detail').textContent = '상세 기록을 불러오는 중…';
   try {
     const response = await apiFetch(`/api/api-usage/history/${id}`);
     const data = await response.json();
+    if (requestId !== khDetailRequest) return;
     if (!response.ok) throw new Error(data.error || '상세 기록을 불러오지 못했습니다.');
+    kh('detailModalStatus').textContent = '';
     const row = data.log;
     let requestMeta = row.requestMeta;
     let responseBody = row.responseBody;
@@ -144,6 +167,8 @@ async function loadDetail(id) {
       request: requestMeta, response: responseBody,
     }, null, 2);
   } catch (error) {
+    if (requestId !== khDetailRequest) return;
+    kh('detailModalStatus').textContent = '상세 조회 실패';
     kh('detail').textContent = `상세 조회 실패\n${error.message}`;
   }
 }
