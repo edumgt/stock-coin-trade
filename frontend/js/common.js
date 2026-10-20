@@ -201,7 +201,6 @@ function renderHeader(user) {
     { type: 'group', label: '자산관리', items: [
       { href: '/trade/hold.html',  label: '보유자산',       icon: 'fa-solid fa-wallet' },
       { href: '/trade/history.html', label: '내 거래이력',   icon: 'fa-solid fa-clock-rotate-left' },
-      { href: '/trade/avg-down.html', label: '물타기 계산기', icon: 'fa-solid fa-calculator' },
     ]},
     { type: 'group', label: 'KIS Testbed · 외부 모의투자', items: [
       { href: '/learning/kis-regist.html', label: '1단계 · 가입', icon: 'fa-solid fa-user-plus' },
@@ -900,13 +899,19 @@ function markdownToHtml(md) {
 
 /* ── Page init ───────────────────────────────────────────────────────────── */
 function ensureSiteFooter() {
-  // 화면별로 누락되지 않도록 공통 푸터를 한 번만 생성한다.
-  if (document.body.querySelector(':scope > footer')) return;
-  const footer = document.createElement('footer');
-  footer.id = 'site-footer';
-  footer.className = 'site-footer-unified';
-  footer.textContent = '© 2026 (주)에듀엠지티 All rights reserved.';
-  document.body.appendChild(footer);
+  // Keep one page footer in the outer shell; generated content and dialogs never own it.
+  const host = document.querySelector('body > .trading-root, body > .hts-app') || document.body;
+  const candidates = [...document.querySelectorAll('footer.site-footer-unified, footer#site-footer, body > footer')];
+  let footer = candidates.find(node => node.parentElement === host)
+    || candidates.find(node => node.parentElement === document.body);
+  if (!footer) {
+    footer = document.createElement('footer');
+    footer.id = 'site-footer';
+    footer.textContent = '© 2026 (주)에듀엠지티 All rights reserved.';
+  }
+  footer.classList.add('site-footer-unified');
+  if (footer.parentElement !== host) host.appendChild(footer);
+  candidates.forEach(node => { if (node !== footer) node.remove(); });
 }
 
 function mountApiTestGuide() {

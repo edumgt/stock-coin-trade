@@ -124,13 +124,6 @@
     .stock-picker-selected { display:block; margin:4px 0 0 2px; color:var(--muted); font-size:13px; }
     @media (max-width:640px) { .stock-picker { min-width:100%; width:100%; } }
 
-    .avgdown-modal-backdrop { position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(15,23,42,.52); }
-    .avgdown-modal-backdrop.open { display:flex; }
-    .avgdown-modal { width:95vw; max-width:95vw; height:95dvh; max-height:95dvh; overflow-y:auto; padding:20px; border:1px solid var(--border); border-radius:16px; background:var(--surface); box-shadow:0 24px 60px rgba(15,23,42,.28); }
-    .avgdown-result { display:grid; grid-template-columns:1fr 1fr; overflow:hidden; margin-top:14px; border:1px solid var(--border); border-radius:10px; }
-    .avgdown-result > div { padding:10px; background:var(--surface-2); border-bottom:1px solid var(--border); }
-    .avgdown-result > div:nth-child(odd) { border-right:1px solid var(--border); }
-    .avgdown-result > div:nth-last-child(-n+2) { border-bottom:0; }
 
     #site-footer {
       margin-top: 0;
@@ -318,7 +311,6 @@
             <button id="buyBtn" type="button" class="btn-buy" style="font-size:13px;padding:.45rem;">매수</button>
             <button id="sellBtn" type="button" class="btn-sell" style="font-size:13px;padding:.45rem;">매도</button>
           </div>
-          <button id="avgDownBtn" type="button" style="width:100%;padding:.42rem;border:1px solid rgba(37,99,235,.28);border-radius:7px;color:var(--accent-dark);background:rgba(37,99,235,.07);font-size:13.5px;font-weight:800;cursor:pointer;">물타기 계산기</button>
           <p id="stockMessage" style="font-size:13.5px;color:var(--muted);"></p>
         </div>
       </div>
@@ -448,36 +440,6 @@
 </div><!-- /trading-root -->
 
 <!-- 추가 매수 시뮬레이션: 실제 주문은 이 모달에서 실행하지 않습니다. -->
-<div id="avgDownModal" class="avgdown-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="avgDownTitle" aria-hidden="true">
-  <section class="avgdown-modal">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-      <div>
-        <h2 id="avgDownTitle" style="margin:0;font-size:18px;font-weight:900;color:var(--fg);">물타기 계산기</h2>
-        <p id="avgDownSubtitle" style="margin:5px 0 0;font-size:13.5px;line-height:1.55;color:var(--muted);"></p>
-      </div>
-      <button id="avgDownCloseBtn" type="button" aria-label="닫기" style="width:30px;height:30px;border:0;border-radius:7px;background:var(--surface-2);color:var(--muted);font-size:20px;cursor:pointer;">×</button>
-    </div>
-    <div id="avgDownUnavailable" style="display:none;margin-top:14px;padding:12px;border-radius:9px;background:rgba(37,99,235,.08);color:var(--accent-dark);font-size:13.5px;line-height:1.6;"></div>
-    <div id="avgDownContent">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;">
-        <div style="padding:10px;border-radius:9px;background:var(--surface-2);"><div style="font-size:13px;color:var(--muted);">보유 수량 · 평균단가</div><strong id="avgDownHolding" style="display:block;margin-top:3px;font-size:13px;color:var(--fg);">-</strong></div>
-        <div style="padding:10px;border-radius:9px;background:var(--surface-2);"><div style="font-size:13px;color:var(--muted);">현재가 · 현재 손익률</div><strong id="avgDownCurrent" style="display:block;margin-top:3px;font-size:13px;">-</strong></div>
-      </div>
-      <label for="avgDownQty" style="display:block;margin-top:15px;font-size:13.5px;font-weight:800;color:var(--fg);">추가 매수 수량 (주)</label>
-      <input id="avgDownQty" type="number" min="1" step="1" class="dark-input" style="margin-top:6px;font-size:14px;" placeholder="수량을 입력하세요">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:7px;">
-        <button type="button" class="order-percent-btn avgdown-percent-btn" data-percent="10">10%</button><button type="button" class="order-percent-btn avgdown-percent-btn" data-percent="25">25%</button><button type="button" class="order-percent-btn avgdown-percent-btn" data-percent="50">50%</button><button type="button" class="order-percent-btn avgdown-percent-btn" data-percent="100">전액</button>
-      </div>
-      <div class="avgdown-result">
-        <div><span style="font-size:13px;color:var(--muted);">추가 매수금액</span><strong id="avgDownCost" style="display:block;margin-top:3px;font-size:13px;color:var(--fg);">-</strong></div>
-        <div><span style="font-size:13px;color:var(--muted);">매수 후 평균단가</span><strong id="avgDownNewAvg" style="display:block;margin-top:3px;font-size:13px;color:var(--accent-dark);">-</strong></div>
-        <div><span style="font-size:13px;color:var(--muted);">평균단가 변화</span><strong id="avgDownDiff" style="display:block;margin-top:3px;font-size:13px;">-</strong></div>
-        <div><span style="font-size:13px;color:var(--muted);">남는 현금</span><strong id="avgDownCashLeft" style="display:block;margin-top:3px;font-size:13px;color:var(--fg);">-</strong></div>
-      </div>
-      <p id="avgDownNotice" style="margin:12px 0 0;font-size:13.5px;line-height:1.55;color:var(--muted);"></p>
-    </div>
-  </section>
-</div>
 
 <script>
 function switchTab(name) {
@@ -519,6 +481,6 @@ switchTab('positions');
 </script>
 <script src="/js/config.js"></script>
 <script src="/js/common.js?v=20261008-footer-25px"></script>
-<script src="/js/stock.js?v=20261007-kis-provider"></script>
+<script src="/js/stock.js?v=20261020-remove-calculator"></script>
 </body>
 </html>

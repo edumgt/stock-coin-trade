@@ -48,8 +48,8 @@ function createHistoryGrid() {
     defaultColDef: { sortable:true, filter:true, resizable:true, suppressHeaderMenuButton:true },
     animateRows:true,
     pagination:true,
-    paginationPageSize:20,
-    paginationPageSizeSelector:[20, 50, 100],
+    paginationAutoPageSize:true,
+    paginationPageSizeSelector:false,
     overlayNoRowsTemplate:'<span style="padding:16px;color:#64748B;">표시할 거래이력이 없습니다.</span>',
   });
 }

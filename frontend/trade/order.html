@@ -60,7 +60,9 @@
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <link rel="stylesheet" href="https://www.edumgt.co.kr/css/common.css?v=20261012-common-3" />
   <link rel="stylesheet" href="/css/korean-typography.css?v=20261014-ko90-1">
-</head>
+<style>
+.left-col{min-height:0}.left-col>div:first-child{flex-shrink:0}.coin-chart-card{display:flex;flex-direction:column;flex:1 0 420px;min-height:420px}.coin-chart-card>div:not(#coinChart){flex-shrink:0}#coinChart{flex:1;min-height:280px;width:100%}.coin-order-panels{flex-shrink:0;margin-bottom:0}@media(max-width:1024px){.market-col{display:none}}@media(max-height:700px){.coin-chart-card{flex-basis:360px;min-height:360px}#coinChart{min-height:240px}}
+</style></head>
 <body>
 <div class="trading-root">
   <div id="header-mount"></div>
@@ -79,7 +81,7 @@
       </div>
 
       <!-- LW Charts + 거래소 탭 통합 카드 -->
-      <div class="glass-card" style="padding:0;overflow:hidden;">
+      <div class="glass-card coin-chart-card" style="padding:0;overflow:hidden;">
 
         <!-- ① 거래소 탭 + 기간 버튼 -->
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:6px;">
@@ -129,14 +131,14 @@
         </div>
 
         <!-- ③ 캔들 차트 -->
-        <div id="coinChart" style="height:340px;"></div>
+        <div id="coinChart"></div>
       </div>
 
       <!-- 숨겨진 hidden IDs (기존 코드 호환용) -->
       <span id="domestic_price_symbol" style="display:none;">BTC</span>
 
       <!-- 매수 / 매도 폼 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+      <div class="coin-order-panels" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
         <!-- 매수 -->
         <div class="glass-card" style="padding:14px;">
           <h3 style="font-size:14px;font-weight:900;color:var(--fg);margin-bottom:10px;">

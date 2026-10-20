@@ -196,89 +196,6 @@ function setOrderQuantityByPercent(side, percent) {
   updateOrderSummary();
 }
 
-/* ── 물타기 계산기 (시뮬레이션 전용) ─────────────────────────────────────── */
-function avgDownPosition() {
-  const position = selectedPosition();
-  return position && Number(position.pnl) < 0 ? position : null;
-}
-
-function setAvgDownModalOpen(open) {
-  const modal = document.getElementById('avgDownModal');
-  if (!modal) return;
-  modal.classList.toggle('open', open);
-  modal.setAttribute('aria-hidden', String(!open));
-  if (open) document.getElementById('avgDownQty')?.focus();
-}
-
-function renderAvgDownCalculator() {
-  const position = avgDownPosition();
-  const content = document.getElementById('avgDownContent');
-  const unavailable = document.getElementById('avgDownUnavailable');
-  const subtitle = document.getElementById('avgDownSubtitle');
-  if (!content || !unavailable || !subtitle) return;
-
-  if (!position || currentStockPrice <= 0) {
-    content.style.display = 'none';
-    unavailable.style.display = 'block';
-    unavailable.textContent = currentStockPrice <= 0
-      ? '현재 시세를 불러온 뒤 다시 시도해주세요.'
-      : '현재 선택한 종목의 손익이 마이너스인 보유 포지션에서만 계산할 수 있습니다.';
-    subtitle.textContent = '손실 상태의 보유 종목을 선택하면 추가 매수 시 평균단가 변화를 계산합니다.';
-    return;
-  }
-
-  content.style.display = '';
-  unavailable.style.display = 'none';
-  const pnlRate = ((currentStockPrice - Number(position.avgPrice)) / Number(position.avgPrice)) * 100;
-  subtitle.textContent = `${position.name} (${position.symbol}) · 실제 주문은 실행되지 않는 시뮬레이션입니다.`;
-  setText('avgDownHolding', `${Number(position.quantity).toLocaleString('ko-KR')}주 · ${fmtKrw(position.avgPrice)}`);
-  setEl('avgDownCurrent', `${fmtKrw(currentStockPrice)} · ${pnlRate.toFixed(2)}%`, colorByVal(pnlRate));
-  updateAvgDownResult();
-}
-
-function updateAvgDownResult() {
-  const position = avgDownPosition();
-  if (!position || currentStockPrice <= 0) return;
-  const qty = Math.floor(Number(document.getElementById('avgDownQty')?.value) || 0);
-  const cost = qty > 0 ? currentStockPrice * qty : 0;
-  const isAffordable = cost <= lastCash;
-  const totalQty = Number(position.quantity) + qty;
-  const newAvg = qty > 0 ? Math.round((Number(position.avgPrice) * Number(position.quantity) + cost) / totalQty) : Number(position.avgPrice);
-  const avgDiff = newAvg - Number(position.avgPrice);
-
-  setText('avgDownCost', cost ? fmtKrw(cost) : '-');
-  setText('avgDownNewAvg', qty > 0 ? fmtKrw(newAvg) : '-');
-  setEl('avgDownDiff', qty > 0 ? `${avgDiff > 0 ? '+' : ''}${fmtKrw(avgDiff)}` : '-', colorByVal(avgDiff));
-  setEl('avgDownCashLeft', qty > 0 ? fmtKrw(lastCash - cost) : fmtKrw(lastCash), isAffordable ? undefined : '#E11D48');
-
-  const notice = document.getElementById('avgDownNotice');
-  if (!notice) return;
-  if (!qty) {
-    notice.textContent = `보유 현금 ${fmtKrw(lastCash)} 내에서 수량 또는 비율을 선택하세요.`;
-    notice.style.color = 'var(--muted)';
-  } else if (!isAffordable) {
-    notice.textContent = `추가 매수금액이 보유 현금보다 ${fmtKrw(cost - lastCash)} 큽니다.`;
-    notice.style.color = '#E11D48';
-  } else {
-    const breakEvenGap = Math.max(0, newAvg - currentStockPrice);
-    notice.textContent = `현재가가 새 평균단가까지 ${fmtKrw(breakEvenGap)} (${((breakEvenGap / currentStockPrice) * 100).toFixed(2)}%) 오르면 손익분기점입니다.`;
-    notice.style.color = 'var(--muted)';
-  }
-}
-
-function openAvgDownCalculator() {
-  renderAvgDownCalculator();
-  setAvgDownModalOpen(true);
-}
-
-function setAvgDownQuantityByPercent(percent) {
-  if (!currentStockPrice) return;
-  const qty = Math.floor(lastCash * (percent / 100) / currentStockPrice);
-  const input = document.getElementById('avgDownQty');
-  if (input) input.value = qty || '';
-  updateAvgDownResult();
-}
-
 /* ── API fetch helper ────────────────────────────────────────────────────── */
 async function requestJson(url, options = {}) {
   const fullUrl  = url.startsWith('/') ? API_BASE + url : url;
@@ -619,7 +536,6 @@ async function loadQuote(symbol) {
     updateBreakEven(lastPositions, symbol);
     updateWatchBtn(symbol);
     updateOrderSummary();
-    if (document.getElementById('avgDownModal')?.classList.contains('open')) renderAvgDownCalculator();
 
     // 라이브 가격 업데이트
     liveStockPrices[symbol] = { ...liveStockPrices[symbol], price: data.price, changeRate: rate };
@@ -749,7 +665,6 @@ async function loadPositions() {
   updatePortfolioMini(lastPositions, lastCash);
   updateBreakEven(lastPositions, document.getElementById('stockSymbol')?.value);
   updateOrderSummary();
-  if (document.getElementById('avgDownModal')?.classList.contains('open')) renderAvgDownCalculator();
 }
 
 // KIS 당일 주문내역 → 자체 모드 내역 모양({ts,name,symbol,type,quantity,amount}). 미체결(체결수량 0)은 주문수량·주문가로 표시한다.
@@ -895,19 +810,6 @@ document.getElementById('orderQty')?.addEventListener('input', updateOrderSummar
 document.querySelectorAll('.order-percent-btn[data-order-side]').forEach(button => {
   button.addEventListener('click', () => setOrderQuantityByPercent(button.dataset.orderSide, Number(button.dataset.percent)));
 });
-document.getElementById('avgDownBtn')?.addEventListener('click', openAvgDownCalculator);
-document.getElementById('avgDownCloseBtn')?.addEventListener('click', () => setAvgDownModalOpen(false));
-document.getElementById('avgDownQty')?.addEventListener('input', updateAvgDownResult);
-document.querySelectorAll('.avgdown-percent-btn').forEach(button => {
-  button.addEventListener('click', () => setAvgDownQuantityByPercent(Number(button.dataset.percent)));
-});
-document.getElementById('avgDownModal')?.addEventListener('click', event => {
-  if (event.target.id === 'avgDownModal') setAvgDownModalOpen(false);
-});
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && document.getElementById('avgDownModal')?.classList.contains('open')) setAvgDownModalOpen(false);
-});
-
 /* ── 초기화 버튼 ─────────────────────────────────────────────────────────── */
 document.getElementById('resetBtn')?.addEventListener('click', async () => {
   if (tradeMode === 'kis') { showMsg('KIS 모의계좌는 초기화할 수 없습니다.', true); return; }
