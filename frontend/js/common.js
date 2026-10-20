@@ -49,7 +49,7 @@ if (!document.getElementById('gnb-core-style')) {
     .gnb-group{position:relative;flex:0 0 auto}.gnb-group summary::-webkit-details-marker{display:none}.gnb-group summary i{font-size:13.5px}.gnb-link:hover,.gnb-group summary:hover{color:#0d47a1!important;background:#edf3ff}
     .gnb-dropdown{position:absolute;z-index:220;display:grid;min-width:210px;padding:6px;border:1px solid #dce3ef;border-radius:9px;background:#fff;box-shadow:0 10px 25px rgba(0,0,0,.12)}.gnb-dropdown a{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:6px;color:#334155!important;text-decoration:none!important;font-size:14.3px!important;font-weight:650!important;white-space:nowrap}.gnb-dropdown a:hover{background:#edf3ff;color:#0d47a1!important}.gnb-user{flex:0 0 auto;white-space:nowrap}
     .gnb-shortcuts{display:flex;align-items:center;gap:6px;min-width:0;overflow-x:auto}.gnb-shortcuts a{padding:8px 12px;border-radius:6px;color:#1e53e5!important;text-decoration:none!important;font-size:16px!important;font-weight:800!important;white-space:nowrap}.gnb-shortcuts a:hover{background:#e3f0ff}
-    .site-header-inner{display:grid!important;grid-template-columns:minmax(220px,1fr) auto minmax(220px,1fr);align-items:center!important;gap:16px;min-height:56px;padding:0 18px}.site-header-left,.site-header-actions{display:flex;align-items:center;gap:12px;min-width:0}.site-header-actions{justify-self:end}.header-menu-label{display:inline}
+    .site-header-inner{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center!important;gap:16px;min-height:56px;padding:0 18px}.site-header-left,.site-header-actions{display:flex;align-items:center;gap:12px;min-width:0}.site-header-actions{justify-self:end}.header-menu-label{display:inline}
     #oc-panel .oc-group-toggle,#ai-panel .oc-group-toggle{font-size:15.4px!important;line-height:1.4!important}#oc-panel .oc-nav-item,#ai-panel .oc-nav-item{font-size:15.4px!important;line-height:1.4!important}#oc-panel .oc-nav-item--sub,#ai-panel .oc-nav-item--sub{font-size:14.3px!important}#oc-panel .oc-header,#ai-panel .oc-header{font-size:16.5px!important}#oc-panel .oc-footer,#ai-panel .oc-footer{font-size:14px!important}
     /* 메뉴 3단계(패널 제목 → 그룹 → 항목)를 캐시와 무관하게 구분한다. */
     #oc-panel .oc-header{background:linear-gradient(135deg,#1746B5,#2962FF)!important;border-bottom-color:#123D91!important;color:#fff!important}
@@ -64,7 +64,7 @@ if (!document.getElementById('gnb-core-style')) {
     #oc-panel .oc-nav-item--sub::before{content:''!important;position:absolute!important;left:.62rem!important;top:50%!important;width:5px!important;height:5px!important;border-radius:50%!important;background:#86A5DF!important;transform:translateY(-50%)!important}
     #oc-panel .oc-nav-item.active,#ai-panel .oc-nav-item.active{border-color:#1746B5!important;background:linear-gradient(135deg,#2962FF,#1746B5)!important;color:#fff!important;font-weight:800!important;box-shadow:0 3px 9px rgba(41,98,255,.24)!important}
     #oc-panel .oc-nav-item--sub.active::before{background:#fff!important;box-shadow:0 0 0 3px rgba(255,255,255,.22)!important}
-    @media(max-width:760px){.site-header-inner{grid-template-columns:auto minmax(0,1fr) auto;gap:6px 8px;padding:4px 10px}.site-header-left,.site-header-actions{gap:6px}.site-header-left{grid-column:1}.site-header-actions{grid-column:3}.header-menu-label{display:none}.gnb-shortcuts{grid-column:1/-1;grid-row:2;justify-content:center;padding-bottom:2px}.gnb-shortcuts a{padding:5px 8px;font-size:14px!important}.site-header-actions button{padding-inline:7px!important}.site-header-actions span{display:none}}
+    @media(max-width:760px){.site-header-inner{grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;padding:4px 10px}.site-header-left,.site-header-actions{gap:6px}.site-header-left{grid-column:1}.site-header-actions{grid-column:2}.header-menu-label{display:none}.gnb-shortcuts{grid-column:1/-1;grid-row:2;justify-content:center;padding-bottom:2px}.gnb-shortcuts a{padding:5px 8px;font-size:14px!important}.site-header-actions button{padding-inline:7px!important}.site-header-actions span{display:none}}
     @media(max-width:900px){.gnb-shell{gap:10px;padding:0 12px;flex-wrap:wrap;padding-bottom:3px}.gnb-nav{order:3;flex-basis:100%;height:42px}.gnb-link,.gnb-group summary{height:40px;padding:0 8px;font-size:13.2px!important}.gnb-user span{display:none}.gnb-dropdown{position:fixed;left:12px;right:12px;min-width:0}}
   `;
   document.head.appendChild(gnbStyle);
@@ -283,6 +283,10 @@ function renderHeader(user) {
       { href: '/ohlcv-openapi.html', label: 'OHLCV Open API', icon: 'fa-solid fa-code' },
     ]},
     { type: 'group', label: '분석 · 도구', items: [
+      { href: '/stress-analysis.html', label: '스트레스분석', icon: 'fa-solid fa-chart-line' },
+      { href: '/ai-analysis.html', label: 'AI 분석', icon: 'fa-solid fa-robot' },
+      { href: '/knowledge-search.html', label: '지식 검색', icon: 'fa-solid fa-magnifying-glass' },
+      { href: '/knowledge-dataset.html', label: '데이터셋', icon: 'fa-solid fa-book-open' },
       { href: '/quant.html?tab=algorithm', label: '알고리즘', icon: 'fa-solid fa-code-branch' },
       { href: '/quant.html?tab=simulation', label: '시뮬레이션', icon: 'fa-solid fa-flask-vial' },
       { href: '/hts.html', label: 'HTS 시뮬레이션', icon: 'fa-solid fa-desktop' },
@@ -395,14 +399,13 @@ function renderHeader(user) {
       </div>
     </aside>
 
-    <!-- 기존 오프캔버스를 유지하고, AI 3개 기능만 상단 GNB 바로가기로 제공한다. -->
+    <!-- 분석·지식 기능은 우측 도구 메뉴의 분석 · 도구 하위에서 제공한다. -->
     <header id="site-header">
       <div class="site-header-inner">
         <div class="site-header-left">
           <button onclick="openOffcanvas()" aria-label="메뉴 열기" style="display:flex;align-items:center;gap:6px;background:transparent;border:none;cursor:pointer;padding:4px 6px;border-radius:6px;transition:background .12s;color:var(--fg-2);font-size:15.4px;font-weight:600;"><i class="fa-solid fa-bars" aria-hidden="true"></i><span class="header-menu-label">메뉴</span></button>
           <a href="/index.html" style="text-decoration:none;display:flex;align-items:center;"><span class="brand-logo-text"><i class="fa-solid fa-chart-pie" aria-hidden="true" style="margin-right:6px;"></i>실전투자</span></a>
         </div>
-        <nav class="gnb-shortcuts" aria-label="분석 기능 바로가기"><a href="/stress-analysis.html"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> 스트레스분석</a><a href="/ai-analysis.html"><i class="fa-solid fa-robot" aria-hidden="true"></i> AI 분석</a><a href="/knowledge-search.html"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> 지식 검색</a><a href="/knowledge-dataset.html"><i class="fa-solid fa-book-open" aria-hidden="true"></i> 데이터셋</a></nav>
         <div class="site-header-actions"><button onclick="openAiPanel()" aria-label="분석 도구 메뉴 열기" style="border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--accent-dark);padding:6px 9px;font-size:13.2px;font-weight:800;cursor:pointer;white-space:nowrap;"><i class="fa-solid fa-toolbox" aria-hidden="true"></i> 도구 메뉴</button>${userSection}</div>
       </div>
     </header>
