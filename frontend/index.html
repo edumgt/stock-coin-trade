@@ -55,54 +55,42 @@
     </article>
   </section>
 
-  <!-- 실시간 Top 10 카드 (2열) -->
-  <section class="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
-
-    <!-- 주식 Top 10 -->
+  <!-- 관심 4종목 TradingView 차트 (2열) — 현대차 · 삼성전자 · HD현대중공업 · 한미약품 -->
+  <section class="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-2" id="watchCharts">
     <div class="glass-card overflow-hidden">
       <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
-        <h2 class="text-base font-black" style="color:var(--fg);">주식 Top 10</h2>
-        <span class="badge badge-muted">KOSPI · KOSDAQ</span>
-        <span class="live-dot ml-auto" id="stockLiveDot" title="30초 갱신"></span>
+        <h2 class="text-base font-black" style="color:var(--fg);">현대차</h2>
+        <span class="badge badge-muted">KRX:005380</span>
+        <a href="/trade/stock.html?symbol=005380" class="ml-auto text-sm font-bold" style="color:var(--accent-dark);text-decoration:none;">주식 실습에서 열기 →</a>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead>
-          <tr style="background:var(--surface-2);">
-            <th style="padding:6px 12px;text-align:left;color:var(--muted);font-size:13px;font-weight:700;text-transform:uppercase;">종목</th>
-            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:13px;font-weight:700;">현재가</th>
-            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:13px;font-weight:700;">등락</th>
-            <th style="padding:6px 12px;text-align:left;color:var(--muted);font-size:13px;font-weight:700;">시장</th>
-          </tr>
-        </thead>
-        <tbody id="stockTop10Body">
-          <tr><td colspan="4" style="padding:16px;text-align:center;color:var(--muted);">로딩 중...</td></tr>
-        </tbody>
-      </table>
+      <div class="tv-chart" data-symbol="KRX:005380" style="height:420px;"></div>
     </div>
-
-    <!-- 코인 Top 10 (업비트 WebSocket 실시간) -->
     <div class="glass-card overflow-hidden">
       <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
-        <h2 class="text-base font-black" style="color:var(--fg);">코인 Top 10</h2>
-        <span class="badge badge-gold">Upbit KRW</span>
-        <span class="live-dot ml-auto" title="실시간 WebSocket"></span>
+        <h2 class="text-base font-black" style="color:var(--fg);">삼성전자</h2>
+        <span class="badge badge-muted">KRX:005930</span>
+        <a href="/trade/stock.html?symbol=005930" class="ml-auto text-sm font-bold" style="color:var(--accent-dark);text-decoration:none;">주식 실습에서 열기 →</a>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead>
-          <tr style="background:var(--surface-2);">
-            <th style="padding:6px 12px;text-align:left;color:var(--muted);font-size:13px;font-weight:700;text-transform:uppercase;">코인</th>
-            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:13px;font-weight:700;">현재가</th>
-            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:13px;font-weight:700;">등락</th>
-            <th style="padding:6px 12px;text-align:right;color:var(--muted);font-size:13px;font-weight:700;">거래대금</th>
-          </tr>
-        </thead>
-        <tbody id="cryptoTop10Body">
-          <tr><td colspan="4" style="padding:16px;text-align:center;color:var(--muted);">로딩 중...</td></tr>
-        </tbody>
-      </table>
+      <div class="tv-chart" data-symbol="KRX:005930" style="height:420px;"></div>
     </div>
-
+    <div class="glass-card overflow-hidden">
+      <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+        <h2 class="text-base font-black" style="color:var(--fg);">HD현대중공업</h2>
+        <span class="badge badge-muted">KRX:329180</span>
+        <a href="/trade/stock.html?symbol=329180" class="ml-auto text-sm font-bold" style="color:var(--accent-dark);text-decoration:none;">주식 실습에서 열기 →</a>
+      </div>
+      <div class="tv-chart" data-symbol="KRX:329180" style="height:420px;"></div>
+    </div>
+    <div class="glass-card overflow-hidden">
+      <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+        <h2 class="text-base font-black" style="color:var(--fg);">한미약품</h2>
+        <span class="badge badge-muted">KRX:128940</span>
+        <a href="/trade/stock.html?symbol=128940" class="ml-auto text-sm font-bold" style="color:var(--accent-dark);text-decoration:none;">주식 실습에서 열기 →</a>
+      </div>
+      <div class="tv-chart" data-symbol="KRX:128940" style="height:420px;"></div>
+    </div>
   </section>
+  <p class="text-xs mb-2" style="color:var(--muted);">차트: <a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer" style="color:var(--accent-dark);">TradingView</a> 위젯 · KRX 일봉 · 시세는 TradingView 제공(지연 가능)</p>
 
 </main>
 <footer class="site-footer-unified">© 2026 (주)에듀엠지티 All rights reserved.</footer>
@@ -112,91 +100,28 @@
 (async () => {
   await initPage();
 
-  /* ── 코인 Top 10 (업비트 WebSocket) ────────────────────────── */
-  const cryptoRes = await apiFetch('/api/crypto/market-list');
-  let marketCodes = [];
-  if (cryptoRes.ok) {
-    const ml = await cryptoRes.json();
-    const markets = (ml.markets ?? []).slice(0, 10);
-    marketCodes = ml.marketCodes ?? [];
-
-    const tbody = document.getElementById('cryptoTop10Body');
-    tbody.innerHTML = markets.map(m => `
-      <tr style="border-bottom:1px solid var(--border);cursor:pointer;" onclick="location.href='/trade/order.html'">
-        <td style="padding:8px 12px;">
-          <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap;">
-            <span style="font-weight:700;color:var(--fg);">${m.koreanName}</span>
-            <span style="font-size:13px;color:var(--muted);font-weight:600;">${m.market}</span>
-          </div>
-        </td>
-        <td id="${m.market}-idx-price" style="padding:8px 12px;text-align:right;font-weight:700;color:var(--fg);">-</td>
-        <td id="${m.market}-idx-rate"  style="padding:8px 12px;text-align:right;font-size:13.5px;font-weight:700;">-</td>
-        <td id="${m.market}-idx-vol"   style="padding:8px 12px;text-align:right;font-size:13.5px;color:var(--muted);">-</td>
-      </tr>`).join('');
-
-    // WebSocket
-    const top10Codes = markets.map(m => m.market);
-    const ws = new WebSocket(upbitWebSocketUrl());
-    ws.onopen = () => ws.send(JSON.stringify([
-      { ticket: 'edumgt-index' },
-      { type: 'ticker', codes: top10Codes },
-    ]));
-    ws.onmessage = async (e) => {
-      try {
-        const r = JSON.parse(await e.data.text());
-        if (r.type !== 'ticker') return;
-        const code  = r.code;
-        const price = new Intl.NumberFormat('ko-KR').format(r.trade_price);
-        let rate    = (r.signed_change_rate * 100).toFixed(2);
-        const color = rate > 0 ? '#E11D48' : rate < 0 ? '#2563EB' : 'var(--muted)';
-        if (rate > 0) rate = '+' + rate;
-
-        let vol = Math.round(r.acc_trade_price_24h);
-        vol = Math.round(vol / 1_000_000) * 1_000_000;
-        const volStr = (vol / 1_000_000).toLocaleString('ko-KR') + '백만';
-
-        const pEl = document.getElementById(code + '-idx-price');
-        const rEl = document.getElementById(code + '-idx-rate');
-        const vEl = document.getElementById(code + '-idx-vol');
-        if (pEl) { pEl.textContent = price; pEl.style.color = color; }
-        if (rEl) { rEl.textContent = rate + '%'; rEl.style.color = color; }
-        if (vEl) { vEl.textContent = volStr; }
-      } catch {}
-    };
-  }
-
-  /* ── 주식 Top 10 (30초 캐시 갱신) ───────────────────────────── */
-  async function loadStockTop10() {
-    try {
-      const res  = await apiFetch('/api/stocks/prices');
-      if (!res.ok) return;
-      const data = await res.json();
-      const prices = data.prices ?? {};
-
-      const sorted = Object.entries(prices)
-        .map(([sym, p]) => ({ sym, ...p }))
-        .sort((a, b) => Math.abs(b.changeRate) - Math.abs(a.changeRate))
-        .slice(0, 10);
-
-      const tbody = document.getElementById('stockTop10Body');
-      tbody.innerHTML = sorted.map(s => {
-        const rate  = Number(s.changeRate);
-        const color = rate > 0 ? '#E11D48' : rate < 0 ? '#2563EB' : 'var(--muted)';
-        const rateStr = (rate >= 0 ? '+' : '') + rate.toFixed(2) + '%';
-        const mktColor = s.market === 'KOSPI' ? 'color:var(--accent-dark);' : 'color:#059669;';
-        return `<tr style="border-bottom:1px solid var(--border);cursor:pointer;" onclick="location.href='/trade/stock.html?symbol=${encodeURIComponent(s.sym)}'">
-          <td style="padding:8px 12px;font-weight:700;color:var(--fg);">${s.name}</td>
-          <td style="padding:8px 12px;text-align:right;font-weight:700;color:var(--fg);">${Number(s.price).toLocaleString('ko-KR')}</td>
-          <td style="padding:8px 12px;text-align:right;font-size:13.5px;font-weight:700;color:${color};">${rateStr}</td>
-          <td style="padding:8px 12px;font-size:13px;font-weight:700;${mktColor}">${s.market}</td>
-        </tr>`;
-      }).join('');
-    } catch {}
-  }
-
-  await loadStockTop10();
-  setInterval(loadStockTop10, 30_000);
-
+  /* ── 관심 4종목 TradingView Advanced Chart 위젯 ─────────────── */
+  document.querySelectorAll('#watchCharts .tv-chart').forEach(el => {
+    const wrap = document.createElement('div');
+    wrap.className = 'tradingview-widget-container';
+    wrap.style.height = '100%';
+    const inner = document.createElement('div');
+    inner.className = 'tradingview-widget-container__widget';
+    inner.style.height = '100%';
+    wrap.appendChild(inner);
+    const sc = document.createElement('script');
+    sc.type = 'text/javascript';
+    sc.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    sc.async = true;
+    sc.text = JSON.stringify({
+      autosize: true, symbol: el.dataset.symbol, interval: 'D', timezone: 'Asia/Seoul',
+      theme: 'light', style: '1', locale: 'kr', allow_symbol_change: false, hide_side_toolbar: true,
+      hide_top_toolbar: false, withdateranges: true, save_image: false, calendar: false,
+      support_host: 'https://www.tradingview.com',
+    });
+    wrap.appendChild(sc);
+    el.appendChild(wrap);
+  });
 })();
 </script>
 </body>
