@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     db_max_overflow: int = 5
     db_connect_timeout: int = 5
 
+    # ── lumina-invest(fd) 연계 — hts.html 관심종목(강력매수 추천) 상류. 공개 엔드포인트라 키 불필요 ──
+    lumina_invest_base_url: str = "https://fd.edumgt.co.kr"
+
     # ── 세션 (Redis) ────────────────────────────────────────────────────
     redis_url: str = "redis://redis:6379/0"
     redis_session_key_prefix: str = "stock-coin-trade:session:"
