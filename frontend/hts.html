@@ -102,7 +102,8 @@ footer a,
   text-decoration: none !important;
 }
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.0.2/dist/ag-grid-community.min.js"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.0.2/dist/ag-grid-community.min.js"></script>
 <link rel="stylesheet" href="https://www.edumgt.co.kr/css/common.css?v=20261012-common-3" />
   <link rel="stylesheet" href="/css/korean-typography.css?v=20261014-ko90-1">
 </head>
@@ -112,7 +113,7 @@ footer a,
     <nav class="toolbar"><button class="tool active" data-command="0130"><i>★</i>관심종목</button><button class="tool" data-command="0101"><i>⌁</i>주식현재가</button><button class="tool" data-command="0600"><i>▣</i>주식주문</button><button class="tool" data-command="4990"><i>▤</i>4990 주문창</button><button class="tool" data-command="0919"><i>▤</i>기업분석</button><button class="tool" data-command="0400"><i>▤</i>종합차트</button><span class="toolbar-note">교육용 모의 HTS · 실제 주문은 실행되지 않습니다.</span></nav>
     <main class="workspace">
       <section class="window watch"><div class="titlebar"><span class="screen-no" id="leftScreenNo">0130</span><span id="leftTitle">관심종목</span><span class="window-actions">— □ ✕</span></div><div class="watch-tabs"><button class="watch-tab active">내 관심그룹</button><button class="watch-tab">시장별</button><button class="watch-tab">테마별</button></div><select class="group-select"><option>01. 국내 대표 종목</option><option>02. AI · 반도체</option><option>03. 배당 관심</option></select><div id="watchGrid" aria-label="관심종목 목록"></div><div class="memo-editor"><div class="memo-label"><label for="watchMemo"><span id="memoStockName">삼성전자</span> 메모</label><span id="memoCount">0 / 500</span></div><textarea id="watchMemo" maxlength="500" placeholder="매수 근거, 목표가, 확인할 이슈 등을 기록하세요."></textarea><div class="memo-actions"><span class="memo-status" id="memoStatus">로그인 후 종목별 메모를 저장할 수 있습니다.</span><button class="memo-save" id="memoSave" type="button">메모 저장</button></div></div><div class="watch-foot">헤더를 눌러 관심종목을 정렬할 수 있습니다.<br><span id="leftGuide">상단 입력창에 <b>0130</b> 또는 <b>관심종목</b>을 입력하면 이 창을 바로 열 수 있습니다.</span></div></section>
-      <section class="window main-panel"><div class="quote-summary"><div class="stock-title"><strong id="stockName">삼성전자</strong><span id="stockCode">005930 · KOSPI</span></div><div class="quote-price" id="mainPrice">—</div><div class="quote-stat"><label>전일대비</label><b id="changeText">—</b></div><div class="quote-stat"><label>거래량</label><b id="volumeText">—</b></div><div class="quote-stat"><label>시가총액</label><b id="capText">—</b></div></div><div class="chart-area"><div class="chart-legend"><span class="ma5">5일</span><span class="ma20">20일</span><span class="ma60">60일</span><span style="margin-left:auto;color:#8393a2;">일봉 · 수정주가</span></div><svg class="chart-svg" viewBox="0 0 700 300" preserveAspectRatio="none" aria-label="일봉 차트 (Yahoo Finance)"><path id="ma5Path" class="ma-line" stroke="#f19b37" fill="none" d=""/><path id="ma20Path" class="ma-line" stroke="#8259c9" fill="none" d=""/><path id="ma60Path" class="ma-line" stroke="#28a7a3" fill="none" d=""/><g id="candles"></g></svg><section class="supply-zone" aria-label="투자자별 수급 차트"><div class="supply-info">투자자별 누적 순매수<small>단위: 억원 · 교육용 데이터</small><div class="supply-legend"><span class="supply-foreign">외국인</span><span class="supply-inst">기관</span><span class="supply-retail">개인</span></div></div><svg class="supply-svg" viewBox="0 0 560 82" preserveAspectRatio="none"><line class="supply-zero" x1="0" y1="41" x2="560" y2="41"/><path id="foreignFlow" class="supply-line" stroke="#d73c50"/><path id="institutionFlow" class="supply-line" stroke="#257fc0"/><path id="retailFlow" class="supply-line" stroke="#7e56bd"/></svg></section></div><div><div class="bottom-tabs"><button class="bottom-tab active">종목 뉴스</button><button class="bottom-tab">기업정보</button><button class="bottom-tab">공시</button><button class="bottom-tab">투자의견</button></div><div class="news-list"><div class="news">삼성전자, 차세대 메모리 공급 확대 기대감에 강세 <time>14:18</time></div><div class="news">외국인 순매수 전환…반도체 업종 중심으로 매수세 <time>13:47</time></div><div class="news">코스피, 기관 매수에 상승폭 확대 <time>11:22</time></div></div></div></section>
+      <section class="window main-panel"><div class="quote-summary"><div class="stock-title"><strong id="stockName">삼성전자</strong><span id="stockCode">005930 · KOSPI</span></div><div class="quote-price" id="mainPrice">—</div><div class="quote-stat"><label>전일대비</label><b id="changeText">—</b></div><div class="quote-stat"><label>거래량</label><b id="volumeText">—</b></div><div class="quote-stat"><label>시가총액</label><b id="capText">—</b></div></div><div class="chart-area"><div class="chart-legend"><span class="ma5">5일</span><span class="ma20">20일</span><span class="ma60">60일</span><span style="margin-left:auto;color:#8393a2;">일봉 · 수정주가 · TradingView Lightweight Charts™</span></div><div id="tvChart" class="chart-svg" style="background:#FFFFFF;border-radius:4px;" aria-label="일봉 차트 (TradingView Lightweight Charts · Yahoo Finance)"></div><section class="supply-zone" aria-label="투자자별 수급 차트"><div class="supply-info">투자자별 누적 순매수<small>단위: 억원 · 교육용 데이터</small><div class="supply-legend"><span class="supply-foreign">외국인</span><span class="supply-inst">기관</span><span class="supply-retail">개인</span></div></div><svg class="supply-svg" viewBox="0 0 560 82" preserveAspectRatio="none"><line class="supply-zero" x1="0" y1="41" x2="560" y2="41"/><path id="foreignFlow" class="supply-line" stroke="#d73c50"/><path id="institutionFlow" class="supply-line" stroke="#257fc0"/><path id="retailFlow" class="supply-line" stroke="#7e56bd"/></svg></section></div><div><div class="bottom-tabs"><button class="bottom-tab active">종목 뉴스</button><button class="bottom-tab">기업정보</button><button class="bottom-tab">공시</button><button class="bottom-tab">투자의견</button></div><div class="news-list"><div class="news">삼성전자, 차세대 메모리 공급 확대 기대감에 강세 <time>14:18</time></div><div class="news">외국인 순매수 전환…반도체 업종 중심으로 매수세 <time>13:47</time></div><div class="news">코스피, 기관 매수에 상승폭 확대 <time>11:22</time></div></div></div></section>
       <aside class="right-col"><section class="window orderbook"><div class="titlebar"><span class="screen-no">0101</span>주식현재가 <span class="window-actions">— □ ✕</span></div><div class="book-info"><span>삼성전자</span><b id="bookPrice">—</b><span>단위: 주</span></div><div class="book-head"><span>호가</span><span>잔량</span><span>가격</span><span>잔량</span></div><div id="orderBook"></div></section><section class="window order-box"><div class="titlebar"><span class="screen-no">0600</span>주식주문 <span class="window-actions">— □ ✕</span></div><div class="order-tabs"><button class="order-tab active">매수</button><button class="order-tab">매도</button><button class="order-tab">정정/취소</button></div><div class="order-form"><div class="form-row"><span>종목</span><input id="orderStock" value="삼성전자 (005930)" readonly></div><div class="form-row"><span>주문가격</span><input id="orderPrice" value="" inputmode="numeric"></div><div class="form-row"><span>주문수량</span><input id="orderQty" value="1" inputmode="numeric"></div><div class="quick"><button data-qty="10">10%</button><button data-qty="25">25%</button><button data-qty="50">50%</button><button data-qty="100">최대</button></div><button class="submit-order" id="orderSubmit">매수 주문 연습하기</button></div></section></aside>
     </main>
     <div class="statusbar"><span class="live"></span><span>서버 연결됨</span><span>모의투자 모드</span><span id="statusScreen">현재 화면: 0130 관심종목</span></div>
@@ -139,19 +140,32 @@ footer a,
     let loggedInUser = null;
     const memoBySymbol = {};
     const fmt = n => Number(n).toLocaleString('ko-KR');
-    function drawCandles(rows, mas){
-      const g=document.getElementById('candles'); const n=rows.length; if(n<2){ g.innerHTML=''; return; }
-      const maVals=Object.values(mas||{}).flat().filter(v=>v!=null);
-      const min=Math.min(...rows.map(r=>r.low), ...maVals), max=Math.max(...rows.map(r=>r.high), ...maVals), range=Math.max(1,max-min);
-      const x=i=>16+i*(668/(n-1)), y=v=>270-(v-min)/range*235;
-      g.innerHTML=rows.map((r,i)=>{ const up=r.close>=r.open; return `<line x1="${x(i).toFixed(1)}" y1="${y(r.high).toFixed(1)}" x2="${x(i).toFixed(1)}" y2="${y(r.low).toFixed(1)}" class="${up?'candle-up':'candle-down'}" stroke-width="1.5"/><rect x="${(x(i)-4).toFixed(1)}" y="${y(Math.max(r.open,r.close)).toFixed(1)}" width="8" height="${Math.max(3,Math.abs(y(r.open)-y(r.close))).toFixed(1)}" class="${up?'candle-up':'candle-down'}"/>`; }).join('');
-      [5,20,60].forEach(k=>{ const el=document.getElementById(`ma${k}Path`); if(!el) return; const vals=mas?.[k]||[]; el.setAttribute('d', vals.map((v,i)=>v==null?null:`${x(i).toFixed(1)},${y(v).toFixed(1)}`).filter(Boolean).map((pt,i)=>`${i?'L':'M'}${pt}`).join(' ')); });
+    const UP_COLOR='#E11D48', DOWN_COLOR='#2563EB'; let tv=null;
+    function ensureChart(){
+      if(tv||!window.LightweightCharts) return tv; const el=document.getElementById('tvChart'); if(!el) return null;
+      const chart=LightweightCharts.createChart(el,{ layout:{background:{color:'#FFFFFF'}, textColor:'#6B7280', fontFamily:'inherit'}, grid:{vertLines:{color:'#F1F5F9'}, horzLines:{color:'#F1F5F9'}},
+        rightPriceScale:{borderColor:'#E5E7EB', scaleMargins:{top:0.06, bottom:0.22}}, timeScale:{borderColor:'#E5E7EB', timeVisible:false, rightOffset:2},
+        crosshair:{mode:LightweightCharts.CrosshairMode.Normal}, localization:{locale:'ko-KR', priceFormatter:v=>Number(v).toLocaleString('ko-KR')}, autoSize:true });
+      const candles=chart.addCandlestickSeries({upColor:UP_COLOR, downColor:DOWN_COLOR, borderUpColor:UP_COLOR, borderDownColor:DOWN_COLOR, wickUpColor:UP_COLOR, wickDownColor:DOWN_COLOR, priceFormat:{type:'price', precision:0, minMove:1}});
+      const volume=chart.addHistogramSeries({priceFormat:{type:'volume'}, priceScaleId:'volume', lastValueVisible:false, priceLineVisible:false}); chart.priceScale('volume').applyOptions({scaleMargins:{top:0.82, bottom:0}});
+      const ma={}; [[5,'#f19b37'],[20,'#8259c9'],[60,'#28a7a3']].forEach(([k,color])=>{ ma[k]=chart.addLineSeries({color, lineWidth:2, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false}); });
+      tv={chart, candles, volume, ma}; return tv;
     }
+    // rows: [{time:'YYYY-MM-DD', open, high, low, close, volume?}] 오름차순. mas: {5:[],20:[],60:[]} (rows 와 같은 길이, 없으면 null)
+    function drawCandles(rows, mas){
+      const c=ensureChart(); if(!c) return;
+      c.candles.setData(rows.map(r=>({time:r.time, open:r.open, high:r.high, low:r.low, close:r.close})));
+      c.volume.setData(rows.map(r=>({time:r.time, value:r.volume||0, color:r.close>=r.open?'rgba(225,29,72,.35)':'rgba(37,99,235,.35)'})));
+      [5,20,60].forEach(k=>{ const vals=mas?.[k]||[]; c.ma[k].setData(rows.map((r,i)=>vals[i]==null?null:{time:r.time, value:vals[i]}).filter(Boolean)); });
+      c.chart.timeScale().fitContent();
+    }
+    const kstDate=ms=>new Date(ms+9*3600*1000).toISOString().slice(0,10);
+    const ymd=v=>{ const d=String(v||'').replace(/[^0-9]/g,''); return d.length===8?`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`:null; };
     let chartSeq=0;
     async function loadChart(code){
       const seq=++chartSeq; try {
         const res=await fetch(`/api/stocks/chart?symbol=${code}&period=1m&include_ma=1`); const body=await res.json(); if(seq!==chartSeq) return;
-        const all=(body.data||[]).map(d=>({t:d.x, open:+d.o, high:+d.h, low:+d.l, close:+d.c})).filter(r=>r.high&&r.low);
+        const all=(body.data||[]).map(d=>({t:d.x, time:kstDate(d.x), open:+d.o, high:+d.h, low:+d.l, close:+d.c, volume:+d.v||0})).filter(r=>r.high&&r.low);
         const start=Math.max(0, all.findIndex(r=>r.t>=(body.visibleFrom||0))); const rows=all.slice(start);
         const ma=k=>rows.map((_,i)=>{ const j=start+i; if(j+1<k) return null; let sum=0; for(let q=j-k+1;q<=j;q++) sum+=all[q].close; return sum/k; });
         drawCandles(rows, {5:ma(5),20:ma(20),60:ma(60)});
@@ -273,8 +287,13 @@ footer a,
       return Array.from({length:10}, (_, index)=>{ const level=index+1; return { level, askPrice:raw[`s${level}_aprc`], askQty:raw[`s_pstn_s${level}_aprc_q`], bidPrice:raw[`b${level}_aprc`], bidQty:raw[`b_pstn_b${level}_aprc_q`] }; }).filter(level=>level.askPrice || level.bidPrice);
     }
     function renderBrokerCandles(candles){
-      const rows = candles.map(row=>({open:toNumber(row.open), high:toNumber(row.high), low:toNumber(row.low), close:toNumber(row.close)})).filter(row=>row.high && row.low);
-      if (rows.length < 2) return; chartSeq++; drawCandles(rows.slice().reverse(), null);
+      let rows = candles.map(row=>({time:ymd(row.date||row.stck_bsop_date||row.bsop_date||row.dt||row.tradeDate), open:toNumber(row.open||row.stck_oprc), high:toNumber(row.high||row.stck_hgpr), low:toNumber(row.low||row.stck_lwpr), close:toNumber(row.close||row.stck_clpr), volume:toNumber(row.volume||row.acml_vol)||0})).filter(row=>row.high && row.low);
+      if (rows.length < 2) return; chartSeq++;
+      if (rows.some(r=>!r.time)) { // 날짜가 없는 응답(일부 KB 필드)은 오늘부터 거꾸로 영업일을 부여 (응답은 최신순)
+        let d=new Date(); rows=rows.map(r=>{ while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()-1); const t=d.toISOString().slice(0,10); d.setDate(d.getDate()-1); return {...r, time:t}; });
+      }
+      const seen=new Set(); rows=rows.filter(r=>!seen.has(r.time)&&seen.add(r.time)).sort((x,y)=>x.time<y.time?-1:1);
+      drawCandles(rows, null);
     }
     async function getBroker(path){
       const response=await fetch(path); const body=await response.text(); const query=Object.fromEntries(new URL(path, location.origin).searchParams.entries());
