@@ -289,7 +289,7 @@ function renderHeader(user) {
       { href: '/quant.html?tab=algorithm', label: '알고리즘', icon: 'fa-solid fa-code-branch' },
       { href: '/quant.html?tab=simulation', label: '시뮬레이션', icon: 'fa-solid fa-flask-vial' },
       { href: '/hts.html', label: 'HTS 시뮬레이션', icon: 'fa-solid fa-desktop' },
-      { href: '/analysis.html', label: '투자 분석 학습', icon: 'fa-solid fa-graduation-cap' },
+      { href: 'https://iv.edumgt.co.kr/?view=investment-test', label: '투자테스트', icon: 'fa-solid fa-graduation-cap' },
       { href: '/ai-sheet.html', label: 'AI Sheet',       icon: 'fa-solid fa-table-cells-large' },
       { href: '/openapi.html',  label: 'Open API',       icon: 'fa-solid fa-key' },
       { href: '/api-usage-history.html', label: 'API 사용이력', icon: 'fa-solid fa-list-check' },
