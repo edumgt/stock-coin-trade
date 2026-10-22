@@ -1,91 +1,91 @@
-# 모의투자 · OpenAPI 실습 플랫폼
+# Paper Trading · Open API Practice Platform
 
 <p align="center">
-  <img src="./frontend/images/system/architecture.png" alt="시스템 아키텍처 다이어그램" width="900">
+  <img src="./frontend/images/system/architecture.png" alt="System architecture diagram" width="900">
 </p>
 
-## AWS 에 Lambda 구성, API GW 구성, 해당 repo FE EC2 구성
-## 개인별 ML/DL 대체 AI resource 연동
+## AWS Lambda and API Gateway; this repository's frontend runs on EC2
+## Connect each user's alternative ML/DL AI resources
 
-FastAPI REST API와 Vanilla JavaScript로 만든 주식·암호화폐 모의투자 및 OpenAPI 학습 플랫폼입니다. 국내 주식·코인 모의 주문, 대체자산 실습, 외부 연동용 Open API, 증권사·Alpaca Paper API의 읽기 전용 연결 테스트를 제공합니다.
+A stock and cryptocurrency paper-trading and Open API learning platform built with a FastAPI REST API and Vanilla JavaScript. It provides simulated domestic stock and crypto orders, alternative-asset exercises, an Open API for external integrations, and read-only connection tests for brokerages and the Alpaca Paper API.
 
-> 교육·연습용 프로젝트입니다. 증권사 및 Alpaca 연결 테스트는 키 검증과 읽기 전용 조회만 다루며, 실제 주문 자동화 기능을 제공하지 않습니다.
+> This is an educational and practice project. Brokerage and Alpaca connection tests only validate keys and perform read-only queries; the project does not provide automated live-order execution.
 
-## 주요 기능
+## Features
 
-- 회원가입·로그인 기반 모의 주식·코인 거래와 보유자산·거래이력 조회
-- KRX 주식 시세·차트·검색, 코인 시세·국내 거래소 가격 비교
-- 대체자산(선물·옵션·금속·부동산 지분) 모의 주문
-- AI Sheet: 공개 웹페이지 표 가져오기, 섹터별 상위 20개 종목의 최근 24개월 월별 종가 시트(yyyy-mm × 종목명) 생성
-  - 퀀트분석: M-2까지의 월별 종가로 scikit-learn LinearRegression을 학습해 M-1을 예측하고 실제 값과 비교(종목명과 함께 고정 표시)
-  - LEAN: 선택한 종목의 월별 종가로 QuantConnect LEAN(Docker) 매수 후 보유 백테스트를 실행하는 테스트 버튼 — 자세한 내용은 아래 "운영 시 유의사항" 참고
-- 투자 분석 학습, Qdrant 기반 지식 검색 및 AI 분석 기능
-- 외부 시스템용 Open API 키 발급 및 가상 주식계좌 연동 API
-- 실전연습 학습 페이지
-  - TradingView(Pine)
-  - KB증권 Open API
-  - 한국투자증권(KIS) API
-  - Alpaca Paper Trading 및 Trading CLI
-- 분석·도구의 읽기 전용 연결 테스트
-  - `증권사 시세 테스트`: KIS Testbed 현재가, KB증권 인증 상태
-  - `Alpaca Test`: Alpaca Paper 계정 상태
-- (선택) VS Code·Codex용 한투 공식 KIS MCP 서버 연동 — 자세한 내용은 아래 "KIS MCP" 절 참고
+- Paper stock and crypto trading with sign-up/login, portfolio, and transaction-history views
+- KRX stock quotes, charts, and search; crypto quotes and domestic exchange price comparisons
+- Paper orders for alternative assets (futures, options, metals, and fractional real-estate ownership)
+- AI Sheet: import tables from public web pages and create a monthly closing-price sheet (`yyyy-mm × symbol`) for the last 24 months for the top 20 stocks in each sector
+  - Quant analysis: train scikit-learn `LinearRegression` on monthly closing prices through M-2, predict M-1, and compare with actual values (symbols are displayed in a fixed column)
+  - LEAN: a test button runs a buy-and-hold backtest in QuantConnect LEAN (Docker) using monthly closing prices for selected stocks. See “Operational Considerations” below.
+- Investment-analysis learning, Qdrant-based knowledge search, and AI analysis
+- Issue Open API keys for external systems and provide APIs to connect a virtual stock account
+- Hands-on practice learning pages:
+  - TradingView (Pine)
+  - KB Securities Open API
+  - Korea Investment & Securities (KIS) API
+  - Alpaca Paper Trading and Trading CLI
+- Read-only connection tests for analysis tools:
+  - `Broker Quote Test`: KIS Testbed quotes and KB Securities authentication status
+  - `Alpaca Test`: Alpaca Paper account status
+- (Optional) Connect the official Korea Investment & Securities KIS MCP server for VS Code and Codex; see “KIS MCP” below.
 
-## Open API 실습 커리큘럼
+## Open API Practice Curriculum
 
-외부 플랫폼 가입·키 발급과 이 웹앱의 안전한 조회·모의 실습을 모듈별 과정으로 제공합니다. Key·Secret·계좌번호는 제출물에 포함하지 않습니다.
+The modular curriculum covers signing up for external platforms, obtaining keys, and safely practicing read-only queries and simulated trading in this web app. Do not include keys, secrets, or account numbers in submitted work.
 
-| 과정 | 준비 | 실습 | 문서 |
+| Course | Prerequisites | Exercises | Guide |
 |---|---|---|---|
-| KIS Testbed | KIS 모의투자·API 신청 | Testbed 조회와 모의 주문→정정→취소 | [kis-test](frontend/learning/kis-test.html) |
-| KB Open API | KB Open API 신청·키 발급 | 운영 시세·호가·차트 읽기 전용 조회 | [kb-securities](frontend/learning/kb-securities.html) |
-| Alpaca Paper | Alpaca Paper 계정·키 발급 | Paper 계정·시세와 주문→취소 흐름 | [alpaca-api](frontend/learning/alpaca-api.html) |
+| KIS Testbed | KIS paper trading and API applications | Testbed queries and paper order → modify → cancel | [kis-test](frontend/learning/kis-test.html) |
+| KB Open API | KB Open API application and keys | Read-only production quotes, order books, and charts | [kb-securities](frontend/learning/kb-securities.html) |
+| Alpaca Paper | Alpaca Paper account and keys | Paper account and quotes; order → cancel flow | [alpaca-api](frontend/learning/alpaca-api.html) |
 
-## 아키텍처
+## Architecture
 
 ```text
 Browser
   │
   ▼
 Nginx Frontend (:3333)
-  ├─ 정적 HTML / JavaScript / CSS
+  ├─ Static HTML / JavaScript / CSS
   ├─ /api/*      → FastAPI Backend
   └─ /openapi/*  → FastAPI Backend
                      │
-                     ├─ MariaDB (회원·웹 모의 주문·감사 로그)
-                     ├─ PostgreSQL quant_research (퀀트 시계열·전략·체결·성과)
-                     ├─ PostgreSQL pg-stock (국내주식 일봉·일일 집계)
-                     ├─ Qdrant market_knowledge (현재 인메모리 RAG)
-                     ├─ Redis 7.4 (로그인 서버 세션 · 7일 TTL)
-                     ├─ 국내·해외 시세 제공처
-                     └─ KIS / KB증권 / Alpaca Paper API (선택, 읽기 전용 테스트)
+                     ├─ MariaDB (members, web paper orders, audit logs)
+                     ├─ PostgreSQL quant_research (quant time series, strategies, fills, performance)
+                     ├─ PostgreSQL pg-stock (daily domestic stock data and aggregates)
+                     ├─ Qdrant market_knowledge (currently in-memory RAG)
+                     ├─ Redis 7.4 (server-side login sessions · 7-day TTL)
+                     ├─ Domestic and international quote providers
+                     └─ KIS / KB Securities / Alpaca Paper API (optional, read-only tests)
 ```
 
-| 영역 | 구성 | 역할 |
+| Area | Components | Role |
 |---|---|---|
-| Frontend | Nginx, HTML, Vanilla JS, Tailwind CDN | 화면·오프캔버스 메뉴·API 호출 |
-| Backend | FastAPI, Pydantic v2, SQLAlchemy 2.0, Redis 서버 세션, Requests | 회원·로그인 세션·모의 주문·시세·Open API·외부 API 테스트 — 계층 구조는 [python-stock-backend/README.md](python-stock-backend/README.md) |
-| Data | MariaDB, PostgreSQL Quant, PostgreSQL pg-stock, Qdrant, Redis | 서비스 트랜잭션, 퀀트 연구, 주식 원본·집계, AI 검색, 로그인 상태 |
-| 운영 | Docker Compose | frontend, python-backend, redis, mariadb/postgres(local profile) |
+| Frontend | Nginx, HTML, Vanilla JS, Tailwind CDN | UI, off-canvas menu, and API calls |
+| Backend | FastAPI, Pydantic v2, SQLAlchemy 2.0, Redis server-side sessions, Requests | Members, login sessions, paper orders, quotes, Open API, and external API tests. See [python-stock-backend/README.md](python-stock-backend/README.md) for the layered structure. |
+| Data | MariaDB, PostgreSQL Quant, PostgreSQL pg-stock, Qdrant, Redis | Service transactions, quant research, raw/aggregated stock data, AI search, and login state |
+| Operations | Docker Compose | frontend, python-backend, redis, and mariadb/postgres (`local` profile) |
 
-## 빠른 시작
+## Quick Start
 
-### 요구사항
+### Requirements
 
-- Docker Engine 및 Docker Compose v2
-- 외부 시세·AI 기능은 인터넷 연결 및 해당 서비스 키가 필요할 수 있습니다.
+- Docker Engine and Docker Compose v2
+- Internet access and service keys may be required for external quotes and AI features.
 
-### 1. 환경 파일 준비
+### 1. Prepare the environment file
 
 ```bash
 cp .env.example .env
 ```
 
-`.env`는 DB 비밀번호, 세션 키, 증권사·클라우드 API 키를 포함한 유일한 로컬 설정 파일입니다. 실제 값은 Git에 커밋하지 않습니다. Docker Compose는 `.env`를 자동으로 읽고, `uvicorn app.main:app`으로 직접 실행할 때는 `app/core/config.py`가 저장소 루트의 `.env`를 읽습니다(이미 설정된 환경변수가 우선).
+`.env` is the only local configuration file and contains DB passwords, session keys, and brokerage/cloud API keys. Never commit real values to Git. Docker Compose reads `.env` automatically. When running `uvicorn app.main:app` directly, `app/core/config.py` reads `.env` from the repository root (already-set environment variables take precedence).
 
-### 2. 외부 API 인증정보 설정
+### 2. Configure external API credentials
 
-별도 `*.key` 파일이나 `/run/secrets` fallback은 사용하지 않습니다. [.env.example](.env.example)의 주석 예시를 참고해 필요한 항목만 `.env`에 입력합니다.
+No separate `*.key` files or `/run/secrets` fallback are used. Refer to the commented examples in [.env.example](.env.example) and enter only the values you need in `.env`.
 
 ```text
 KIS_PAPER_APP_KEY=...
@@ -97,134 +97,134 @@ ALPACA_API_KEY=...
 ALPACA_SECRET_KEY=...
 ```
 
-### 3. 실행
+### 3. Start the app
 
 ```bash
 docker compose up -d --build
 docker compose ps
 ```
 
-`.env`의 `COMPOSE_PROFILES=local-db` 설정을 사용하면 로컬 MariaDB 프로필이 함께 기동됩니다.
+Set `COMPOSE_PROFILES=local-db` in `.env` to start the local MariaDB profile as well.
 
-### 4. 접속
+### 4. Open the app
 
-| 주소 | 설명 |
+| URL | Description |
 |---|---|
-| <http://localhost:3333> | 웹 애플리케이션 |
-| <http://localhost:3333/broker-api-test.html> | KIS Open API 연결 테스트 |
-| <http://localhost:3333/kis-api-explorer.html> | KIS API 탐색기 (공식 예제 기반 국내주식 API 목록·호출·응답 시각화) |
-| <http://localhost:3333/kis-chart.html> | KIS 종목 차트 (`.env`의 모의 키로 Testbed 기간별시세·당일분봉 조회) |
-| <http://localhost:3333/kis-api-history.html> | KIS 자체 API·외부 TR 호출·오류 이력 Grid (로그인 필요) |
-| <http://localhost:3333/alpaca-test.html> | Alpaca Paper API 테스트 |
-| <http://localhost:3333/openapi.html> | 외부 연동 Open API 명세 |
-| <http://localhost:3333/quant.html> | PostgreSQL 퀀트 랩 |
+| <http://localhost:3333> | Web application |
+| <http://localhost:3333/broker-api-test.html> | KIS Open API connection test |
+| <http://localhost:3333/kis-api-explorer.html> | KIS API explorer (domestic-stock API catalog, calls, and response visualization based on official examples) |
+| <http://localhost:3333/kis-chart.html> | KIS stock chart (Testbed period quotes and intraday minutes using paper keys in `.env`) |
+| <http://localhost:3333/kis-api-history.html> | Grid of KIS internal API, external TR calls, and error history (login required) |
+| <http://localhost:3333/alpaca-test.html> | Alpaca Paper API test |
+| <http://localhost:3333/openapi.html> | External integration Open API specification |
+| <http://localhost:3333/quant.html> | PostgreSQL Quant Lab |
 
-Nginx는 `/api/*`, `/openapi/*`를 FastAPI로 프록시합니다. 브라우저에서는 API 호출을 같은 origin으로 처리합니다.
+Nginx proxies `/api/*` and `/openapi/*` to FastAPI. The browser sends API calls to the same origin.
 
-로그인 세션은 Redis에 서버 측으로 저장됩니다. 브라우저 쿠키에는 서명된 세션 ID만 들어가며, 실제 `member_id`는 `stock-coin-trade:session:*` 키에 7일 TTL로 보관됩니다. 로그인·회원가입 성공 시 세션 ID를 재발급하고 로그아웃 시 Redis 세션을 삭제합니다.
+Login sessions are stored server-side in Redis. The browser cookie contains only a signed session ID; the actual `member_id` is stored in a `stock-coin-trade:session:*` key with a seven-day TTL. A new session ID is issued after successful login or registration, and the Redis session is deleted on logout.
 
-### 5. 종료
+### 5. Stop the app
 
 ```bash
 docker compose down
 ```
 
-로컬 DB 볼륨까지 제거하려면 다음 명령을 사용합니다. 데이터가 삭제되므로 주의하세요.
+To remove local database volumes as well, use the following command. This deletes data, so use it with care.
 
 ```bash
 docker compose down -v
 ```
 
-## 공개 멀티자산 데모 계정과 메뉴
+## Public Multi-Asset Demo Accounts and Menus
 
-<https://st.edumgt.co.kr>에서 바로 로그인해 확인할 수 있도록, 주식·암호화폐·대체자산 포지션을 각각 포함한 공개 데모 계정 5개를 준비했습니다. 아래 계정은 교육·기능 테스트 전용이며, 실제 개인정보·실계좌·외부 API 키를 연결하지 않습니다. 공개된 계정이므로 비밀번호 변경, 개인 정보 입력, 실제 서비스 용도의 사용은 금지합니다.
+Five public demo accounts are available at <https://st.edumgt.co.kr> for immediate exploration. Each includes stock, cryptocurrency, and alternative-asset positions. These accounts are for education and feature testing only; do not connect real personal information, live accounts, or external API keys. Because the accounts are public, do not change their passwords, enter personal information, or use them for real services.
 
-| 투자 유형 | ID(이메일) | 비밀번호 | 사전 구성 포지션 |
+| Investment style | ID (email) | Password | Preconfigured positions |
 |---|---|---|---|
-| 보수형 | `multiasset-demo-01@edumgt.test` | `DemoMultiAsset2601` | 삼성전자 · 비트코인 · 금 |
-| 균형형 | `multiasset-demo-02@edumgt.test` | `DemoMultiAsset2602` | SK하이닉스 · 이더리움 · 판교 아파트 지분 |
-| 성장형 | `multiasset-demo-03@edumgt.test` | `DemoMultiAsset2603` | NAVER · 리플 · 미국 달러 선물 |
-| 실물형 | `multiasset-demo-04@edumgt.test` | `DemoMultiAsset2604` | 현대차 · 솔라나 · KOSPI 200 콜옵션 |
-| 파생형 | `multiasset-demo-05@edumgt.test` | `DemoMultiAsset2605` | POSCO홀딩스 · 에이다 · KOSPI 200 레버리지 |
+| Conservative | `multiasset-demo-01@edumgt.test` | `DemoMultiAsset2601` | Samsung Electronics · Bitcoin · gold |
+| Balanced | `multiasset-demo-02@edumgt.test` | `DemoMultiAsset2602` | SK hynix · Ethereum · fractional Pangyo apartment |
+| Growth | `multiasset-demo-03@edumgt.test` | `DemoMultiAsset2603` | NAVER · XRP · U.S. dollar futures |
+| Real assets | `multiasset-demo-04@edumgt.test` | `DemoMultiAsset2604` | Hyundai Motor · Solana · KOSPI 200 call options |
+| Derivatives | `multiasset-demo-05@edumgt.test` | `DemoMultiAsset2605` | POSCO Holdings · Cardano · KOSPI 200 leveraged |
 
-각 계정은 초기 가상 현금도 보유합니다. 여러 사용자가 같은 공개 계정을 함께 사용하므로 주문·매도·초기화에 따라 포트폴리오 상태는 변경될 수 있습니다.
+Each account also has initial virtual cash. Multiple people share these public accounts, so orders, sales, and resets can change portfolio state.
 
-좌측 공통 offcanvas 메뉴는 모든 페이지가 같은 `frontend/js/common.js`를 사용합니다.
+The shared off-canvas menu on the left is used by every page through `frontend/js/common.js`.
 
-| 메뉴 | 주요 화면 |
+| Menu | Main screens |
 |---|---|
-| 거래 | 코인, 주식, 대체자산 |
-| 자산관리 | 보유자산, 거래이력, 물타기 계산기 |
-| 실전연습 | TradingView(Pine), KB증권, 한국투자증권 API, Alpaca API |
-| 분석 · 도구 | AI Sheet, Open API, 증권사 시세 테스트, Alpaca Test |
+| Trading | Crypto, stocks, alternative assets |
+| Asset Management | Holdings, transaction history, dollar-cost averaging calculator |
+| Practice | TradingView (Pine), KB Securities, Korea Investment & Securities API, Alpaca API |
+| Analysis · Tools | AI Sheet, Open API, broker quote test, Alpaca Test |
 
-## API 요약
+## API Overview
 
-### 모의투자 주문·분석 API
+### Paper Trading Orders and Analysis API
 
-모든 주문 API는 로그인 세션이 필요합니다. `preview` API는 현재 시세와 보유 현금·수량을 기준으로 실행 가능 여부만 계산하며, 주문·잔고·거래 이력을 변경하지 않습니다.
+All order APIs require a login session. The `preview` APIs only calculate whether an order could be executed based on current quotes, available cash, and holdings; they do not change orders, balances, or transaction history.
 
-| Method | Path | 설명 |
+| Method | Path | Description |
 |---|---|---|
-| `POST` | `/api/stocks/orders/preview` | 주식 시장가 주문의 예상 체결 금액·현금·보유수량 변화 확인 |
-| `POST` | `/api/trade/order/preview` | 코인 시장가 매수/매도의 예상 수량·금액 확인 |
-| `POST` | `/api/alternatives/orders/preview` | 선물·옵션·금속·부동산 모의 주문의 증거금/현금 영향 확인 |
-| `GET` | `/api/member/trading-activity?days=30` | 주식·코인·대체자산 체결을 합산한 기간별 거래 횟수·회전금액 통계 |
-| `GET` | `/api/member/portfolio-analysis` | 자산배분, HHI 분산도, 레버리지 노출, 손익·업종 집중도 분석 |
+| `POST` | `/api/stocks/orders/preview` | Preview estimated fill amount and cash/holding changes for a stock market order |
+| `POST` | `/api/trade/order/preview` | Preview estimated quantity and amount for a crypto market buy/sell |
+| `POST` | `/api/alternatives/orders/preview` | Preview margin/cash impact of futures, options, metals, and real-estate paper orders |
+| `GET` | `/api/member/trading-activity?days=30` | Period trading count and turnover across stock, crypto, and alternative-asset fills |
+| `GET` | `/api/member/portfolio-analysis` | Asset allocation, HHI diversification, leverage exposure, profit/loss, and sector concentration |
 
-### PostgreSQL 퀀트 API
+### PostgreSQL Quant API
 
-로컬 `local-db` 프로필은 PostgreSQL도 함께 실행하며, 첫 기동 시 `database/quant-postgres.sql`이 월별 시계열 분석용 스키마와 명시적인 샘플 OHLCV를 준비합니다. 운영 환경에서는 `QUANT_DATABASE_URL`로 별도의 PostgreSQL을 지정합니다.
+The local `local-db` profile also runs PostgreSQL. On first startup, `database/quant-postgres.sql` initializes the monthly time-series schema and explicit sample OHLCV data. In production, set a separate PostgreSQL connection with `QUANT_DATABASE_URL`.
 
-| Method | Path | 설명 |
+| Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/quant/overview` | 적재 건수·사용 가능 심볼 |
-| `GET` | `/api/quant/market-data?symbol=005930` | 파티션된 OHLCV 조회 |
-| `GET` | `/api/quant/signals?symbol=005930&fast=20&slow=50` | 윈도우 함수 기반 MA 시그널 |
-| `POST` | `/api/quant/backtests` | 전략·체결 로그·성과 지표 저장 |
-| `GET` | `/api/quant/results` | 저장된 전략과 거래 로그 |
+| `GET` | `/api/quant/overview` | Loaded row counts and available symbols |
+| `GET` | `/api/quant/market-data?symbol=005930` | Query partitioned OHLCV data |
+| `GET` | `/api/quant/signals?symbol=005930&fast=20&slow=50` | Window-function-based moving-average signals |
+| `POST` | `/api/quant/backtests` | Save strategies, fill logs, and performance metrics |
+| `GET` | `/api/quant/results` | Saved strategies and transaction logs |
 
-웹 화면은 임의 SQL을 실행하지 않고, 파라미터 바인딩된 읽기 전용 SQL 템플릿만 보여주고 실행합니다. 이는 데이터 조회 편의성과 운영 DB 보호를 함께 고려한 방식입니다.
+The web UI does not execute arbitrary SQL. It displays and runs only read-only, parameter-bound SQL templates, balancing convenient data access with protection of the production database.
 
-### OHLCV 검색·주요 종목 수집
+### OHLCV Search and Major-Stock Data Collection
 
-`/ohlcv-db.html`은 별도 `pg-stock` DB를 AG Grid Community로 조회합니다. `/api/ohlcv-db/rows`가 종목 코드·이름, 시장, 기간, 종가, 거래량 필터와 서버 페이징·정렬을 처리합니다.
+`/ohlcv-db.html` queries the separate `pg-stock` database with AG Grid Community. `/api/ohlcv-db/rows` supports filters for ticker, name, market, date range, closing price, and volume, as well as server-side pagination and sorting.
 
-주요 KOSPI·KOSDAQ 24종목의 2020년 이후 일봉은 다음 명령으로 반복 적재할 수 있습니다. 복합 PK와 upsert를 사용하므로 같은 기간을 다시 실행해도 중복되지 않습니다. 기본 공급자는 네이버 금융이며 `--provider yahoo` 또는 `--provider auto`도 지원합니다.
+Daily data since 2020 for 24 major KOSPI and KOSDAQ stocks can be loaded repeatedly with the following commands. A composite primary key and upsert prevent duplicates when the same date range is loaded again. Naver Finance is the default provider; `--provider yahoo` and `--provider auto` are also supported.
 
 ```bash
 docker compose exec python-backend python crawl_major_ohlcv.py
 docker compose exec python-backend python crawl_major_ohlcv.py --ticker 005930 --start 2020-01-01
 ```
 
-최초 적재가 끝나면 전체·연도·시장 집계를 `ohlcv_*_summary` 스냅샷 테이블에 한 번 생성합니다. 이후 백엔드 스케줄러는 기본적으로 매일 09:50·12:50·16:50(Asia/Seoul, EC2 운용 시간 08:40~17:50 이내)에 현재 연도를 증분 갱신하고 같은 배치 안에서 집계 스냅샷도 한 번 갱신합니다. 정기 작업은 `run_incremental_sync`로 매 회차 수집·집계를 실행하며, 대시보드 `/summary`는 원본 `ohlcv`를 매 요청마다 집계하지 않습니다. 수집 범위는 `.env`의 `OHLCV_SYNC_TICKERS`로 설정합니다.
+After the initial load, overall, yearly, and market aggregates are created once in `ohlcv_*_summary` snapshot tables. By default, the backend scheduler incrementally updates the current year daily at 09:50, 12:50, and 16:50 (Asia/Seoul, within EC2 operating hours of 08:40–17:50) and refreshes aggregate snapshots once in the same batch. Scheduled runs use `run_incremental_sync` to collect and aggregate data on each run. The `/summary` dashboard does not aggregate raw `ohlcv` data on every request. Configure the collection scope with `.env` variable `OHLCV_SYNC_TICKERS`.
 
 ```text
-OHLCV_SYNC_TICKERS=major          # 내장 주요 24종목
-OHLCV_SYNC_TICKERS=005930,000660  # 지정 종목
-OHLCV_SYNC_TICKERS=all            # tickers 테이블 전체(공급자 호출량 주의)
+OHLCV_SYNC_TICKERS=major          # Built-in set of 24 major stocks
+OHLCV_SYNC_TICKERS=005930,000660  # Specified tickers
+OHLCV_SYNC_TICKERS=all            # All tickers in the tickers table (watch provider request volume)
 ```
 
-| Method | Path | 설명 |
+| Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/ohlcv-db/summary` | 일일 스냅샷 기반 전체·연도·시장별 적재 현황 |
-| `GET` | `/api/ohlcv-db/tickers` | 종목별 적재 건수 요약 |
-| `GET` | `/api/ohlcv-db/rows` | AG Grid용 일별 OHLCV 조건 검색·정렬·페이징 |
+| `GET` | `/api/ohlcv-db/summary` | Loaded totals by overall, year, and market from daily snapshots |
+| `GET` | `/api/ohlcv-db/tickers` | Loaded row counts by ticker |
+| `GET` | `/api/ohlcv-db/rows` | Filter, sort, and paginate daily OHLCV rows for AG Grid |
 
-### PostgreSQL Quant on AWS VM
+### PostgreSQL Quant on an AWS VM
 
-퀀트 기능은 기존 회원·모의 주문 MariaDB와 분리된 PostgreSQL 16을 사용합니다. 웹 브라우저는 PostgreSQL에 직접 접근하지 않으며, Nginx → FastAPI → PostgreSQL 순서로 내부 Docker 네트워크에서만 통신합니다.
+Quant features use PostgreSQL 16, separate from the MariaDB database for members and paper orders. The browser never connects directly to PostgreSQL; communication is restricted to the internal Docker network: Nginx → FastAPI → PostgreSQL.
 
-| 계층 | 기술 | 역할 |
+| Layer | Technology | Role |
 |---|---|---|
-| Web | Nginx, Vanilla JS | `/quant.html` 제공 및 `/api/quant/*` 프록시 |
-| API | Python 3.12, FastAPI, SQLAlchemy, psycopg | 백테스트·팩터 회귀·파라미터 바인딩 |
-| Quant DB | PostgreSQL 16 Alpine | OHLCV 파티션, BRIN, JSONB, 체결·성과·팩터 데이터 |
-| Runtime | Docker Compose v2, EC2/VM | 내부 네트워크, 볼륨, 헬스체크, 재기동 |
+| Web | Nginx, Vanilla JS | Serve `/quant.html` and proxy `/api/quant/*` |
+| API | Python 3.12, FastAPI, SQLAlchemy, psycopg | Backtesting, factor regression, parameter binding |
+| Quant DB | PostgreSQL 16 Alpine | OHLCV partitions, BRIN, JSONB, fills, performance, and factor data |
+| Runtime | Docker Compose v2, EC2/VM | Internal network, volumes, health checks, restart |
 
-#### VM 기동
+#### Start the VM
 
-AWS EC2 또는 다른 Linux VM에는 Docker Engine과 Docker Compose v2를 설치한 뒤, 저장소에서 다음을 실행합니다.
+Install Docker Engine and Docker Compose v2 on AWS EC2 or another Linux VM, then run the following from the repository:
 
 ```bash
 cp .env.example .env
@@ -232,13 +232,13 @@ docker compose --profile local-db up -d --build
 docker compose ps
 ```
 
-`postgres` 컨테이너는 `internal` Docker 네트워크에만 연결되며 호스트 포트 `5432`를 공개하지 않습니다. FastAPI 컨테이너는 기본적으로 다음 연결 문자열을 사용합니다.
+The `postgres` container is connected only to the internal Docker network; it does not expose host port `5432`. By default, the FastAPI container uses this connection string:
 
 ```text
 postgresql+psycopg://<QUANT_DB_USER>:<QUANT_DB_PASSWORD>@postgres:5432/<QUANT_DB_NAME>
 ```
 
-운영 VM의 `.env`에는 최소한 아래 값을 실제 비밀번호로 변경합니다. `QUANT_DATABASE_URL`을 설정하면 외부 관리형 PostgreSQL(RDS 등)도 사용할 수 있습니다.
+On a production VM, replace at least the following values in `.env` with real passwords. Set `QUANT_DATABASE_URL` to use an external managed PostgreSQL service such as RDS.
 
 ```text
 QUANT_DB_NAME=quant_research
@@ -247,70 +247,70 @@ QUANT_DB_PASSWORD=<long-random-password>
 SECRET_KEY=<long-random-secret>
 ```
 
-#### 운영 확인·백업
+#### Operations and Backups
 
 ```bash
-# PostgreSQL 준비 상태
+# Check PostgreSQL readiness
 docker compose --profile local-db exec postgres pg_isready -U quant -d quant_research
 
-# 퀀트 스키마 확인
+# Inspect the quant schema
 docker compose --profile local-db exec postgres psql -U quant -d quant_research -c '\dt'
 
-# 백업: VM의 backups 디렉터리를 먼저 만들고 실행
+# Back up: create the VM's backups directory first
 mkdir -p backups
 docker compose --profile local-db exec -T postgres pg_dump -U quant -d quant_research > backups/quant_research.sql
 
-# 복구: 대상 DB가 비어 있는지 확인한 뒤 실행
+# Restore: verify the target database is empty before running
 docker compose --profile local-db exec -T postgres psql -U quant -d quant_research < backups/quant_research.sql
 ```
 
-AWS 보안 그룹에는 PostgreSQL `5432` 인바운드 규칙을 추가하지 않습니다. 운영자 접속이 필요하면 VM의 Docker 명령, SSM Session Manager 또는 VPN/사설망을 사용합니다. Docker 볼륨 `postgres-quant-data`는 `docker compose down`으로 유지되지만 `down -v`에서는 삭제되므로, 실행 전 백업 여부를 확인하세요.
+Do not add an inbound PostgreSQL `5432` rule to the AWS security group. For operator access, use Docker commands on the VM, SSM Session Manager, or a VPN/private network. The `postgres-quant-data` Docker volume survives `docker compose down` but is deleted by `down -v`; verify that a backup exists before running it.
 
-### 세션 API
+### Session API
 
-| 영역 | 대표 경로 | 인증 |
+| Area | Representative paths | Authentication |
 |---|---|---|
-| 회원 | `POST /api/member/login`, `POST /api/member/register`, `POST /api/member/logout`, `GET /api/member/me` | 일부 불필요 |
-| 국내 주식 시세 | `GET /api/stocks/list`, `/quote?symbol=`, `/chart?symbol=`, `/market` | 불필요 |
-| 주식 모의 주문 | `GET /api/stocks/account`, `/positions`, `POST /api/stocks/orders/buy`, `/sell` | 로그인 필요 |
-| 코인 | `GET /api/crypto/rankings`, `/market-list`, `/{code}`, `/{code}/domestic-prices` | 불필요 |
-| 코인 모의 주문 | `GET /api/trade/hold`, `POST /api/trade/order/buy`, `/sell` | 로그인 필요 |
-| 대체자산 | `GET /api/alternatives/markets`, `/positions`, `POST /api/alternatives/orders` | 로그인 필요 |
-| AI | `POST /api/ai/analyze`, `POST /api/ai-sheet/crawl` | 기능별 설정 필요 |
+| Members | `POST /api/member/login`, `POST /api/member/register`, `POST /api/member/logout`, `GET /api/member/me` | Not required for some |
+| Domestic stock quotes | `GET /api/stocks/list`, `/quote?symbol=`, `/chart?symbol=`, `/market` | Not required |
+| Stock paper orders | `GET /api/stocks/account`, `/positions`, `POST /api/stocks/orders/buy`, `/sell` | Login required |
+| Crypto | `GET /api/crypto/rankings`, `/market-list`, `/{code}`, `/{code}/domestic-prices` | Not required |
+| Crypto paper orders | `GET /api/trade/hold`, `POST /api/trade/order/buy`, `/sell` | Login required |
+| Alternative assets | `GET /api/alternatives/markets`, `/positions`, `POST /api/alternatives/orders` | Login required |
+| AI | `POST /api/ai/analyze`, `POST /api/ai-sheet/crawl` | Configuration depends on feature |
 
-### 외부 연동 Open API
+### External Integration Open API
 
-`/openapi/v1/*`는 이 플랫폼의 가상 주식계좌를 외부 모듈에서 조회·주문할 때 사용합니다. 웹에서 발급한 API 키를 `Authorization: Bearer <api_key>` 헤더에 넣습니다.
+Use `/openapi/v1/*` to query or place orders for this platform's virtual stock account from an external module. Include the API key issued through the web app in the `Authorization: ******` header.
 
-| Method | Path | 설명 |
+| Method | Path | Description |
 |---|---|---|
-| `GET` | `/openapi/v1/stocks` | 지원 종목 목록 |
-| `GET` | `/openapi/v1/quote/{symbol}` | 종목 시세 |
-| `GET` | `/openapi/v1/ohlcv/tickers?year=2026` | OHLCV 제공 종목·기간 조회 |
-| `GET` | `/openapi/v1/ohlcv/{ticker}?year=2026` | 종목·연도별 일봉 OHLCV 조회 |
-| `GET` | `/openapi/v1/account` | 가상 계좌 요약 |
-| `GET` | `/openapi/v1/positions` | 보유 포지션 |
-| `GET` | `/openapi/v1/orders` | 주문 이력 |
-| `POST` | `/openapi/v1/orders` | 가상 주식 주문 |
+| `GET` | `/openapi/v1/stocks` | List of supported stocks |
+| `GET` | `/openapi/v1/quote/{symbol}` | Stock quote |
+| `GET` | `/openapi/v1/ohlcv/tickers?year=2026` | OHLCV tickers and available date ranges |
+| `GET` | `/openapi/v1/ohlcv/{ticker}?year=2026` | Daily OHLCV by ticker and year |
+| `GET` | `/openapi/v1/account` | Virtual account summary |
+| `GET` | `/openapi/v1/positions` | Open positions |
+| `GET` | `/openapi/v1/orders` | Order history |
+| `POST` | `/openapi/v1/orders` | Virtual stock order |
 
-API 키당 분당 60회 제한이 적용됩니다. 키 원문은 발급 시 한 번만 표시되고 서버에는 SHA-256 해시만 저장됩니다. `/openapi/v1/*`는 `Access-Control-Allow-Origin: *`와 `Authorization` preflight를 기본 제공하므로 외부 브라우저 앱이 별도 CORS 프록시 없이 호출할 수 있습니다.
+Each API key is limited to 60 requests per minute. The key is shown only once when issued; the server stores only its SHA-256 hash. `/openapi/v1/*` provides `Access-Control-Allow-Origin: *` and an `Authorization` preflight by default, so external browser apps can call it without a separate CORS proxy.
 
-OHLCV 전용 인증·파라미터·응답·페이지·오류 명세는 `/ohlcv-openapi.html`에서 확인할 수 있습니다.
+See `/ohlcv-openapi.html` for the OHLCV-specific authentication, parameters, responses, pagination, and error specification.
 
-## 브로커·Alpaca 연결 테스트
+## Brokerage and Alpaca Connection Tests
 
-테스트 화면은 서버에서만 키를 읽습니다. 브라우저 응답·로그에 API Key, Secret, 접근 토큰, 계좌번호를 포함하지 않습니다.
+Test pages read keys only on the server. API keys, secrets, access tokens, and account numbers are never included in browser responses or logs.
 
-| 화면 | 경로 | 호출 범위 |
+| Screen | Path | Scope |
 |---|---|---|
-| KIS 연결 테스트 | `/broker-api-test.html` | KIS Testbed 현재가·일봉·호가·잔고·시장지수 조회 |
-| KIS API 탐색기 | `/kis-api-explorer.html` | 공식 저장소 `examples_llm/domestic_stock` 예제를 분석한 국내주식 REST API 131개 목록. Testbed 지원 조회 API 는 서버 경유로 호출하고 응답 JSON 을 한글 필드명 표·JSON 으로 표시. 카탈로그는 `scripts/build_kis_api_catalog.py` 로 재생성 |
-| KIS 종목 차트 | `/kis-chart.html` | 종목명·코드 검색 후 1분·일·주·월·년봉 캔들 차트(거래량·이동평균 5/20/60)와 현재가 요약, 캔들 표. 백엔드 `/api/kis-chart/candles`·`/minutes` 가 KIS 기간별시세(FHKST03010100)·당일분봉(FHKST03010200)을 호출 |
-| KIS API 호출 이력 | `/kis-api-history.html` | 자체 FastAPI 요청과 공통 KIS 게이트웨이의 실제 Testbed TR 시도·재시도·오류·응답시간을 AG Grid로 조회. App Key·Secret·토큰·CANO는 저장 전에 마스킹 |
-| KB 연결 테스트 | `/kb-api-test.html` | KB증권 토큰 인증·시세 설정 점검 |
-| Alpaca Test | `/alpaca-test.html` | Alpaca Paper `GET /v2/account` 상태 조회 |
+| KIS connection test | `/broker-api-test.html` | KIS Testbed quotes, daily data, order book, balance, and market indices |
+| KIS API explorer | `/kis-api-explorer.html` | Catalog of 131 domestic-stock REST APIs based on examples in the official `examples_llm/domestic_stock` repository. Calls supported by the Testbed are routed through the server; response JSON is displayed as a Korean-field table and JSON. Regenerate the catalog with `scripts/build_kis_api_catalog.py`. |
+| KIS stock chart | `/kis-chart.html` | Search by stock name or code; 1-minute, daily, weekly, monthly, and yearly candlestick charts (volume and 5/20/60 moving averages), current quote summary, and candle table. Backend `/api/kis-chart/candles` and `/minutes` call KIS period quotes (FHKST03010100) and intraday minutes (FHKST03010200). |
+| KIS API call history | `/kis-api-history.html` | AG Grid view of internal FastAPI requests and actual Testbed TR attempts, retries, errors, and response times through the shared KIS gateway. App Key, Secret, token, and CANO are masked before storage. |
+| KB connection test | `/kb-api-test.html` | Check KB Securities token authentication and quote configuration |
+| Alpaca Test | `/alpaca-test.html` | Query Alpaca Paper `GET /v2/account` status |
 
-백엔드 엔드포인트는 다음과 같습니다.
+Backend endpoints:
 
 ```text
 GET /api/broker-test/kis/quote?symbol=005930
@@ -318,143 +318,140 @@ GET /api/broker-test/kb/quote?symbol=005930
 GET /api/alpaca-test/paper/account
 ```
 
-KIS Testbed에는 호출 제한이 있으므로 토큰과 짧은 시세 결과를 서버에서 캐시합니다. KB증권 키가 인증 단계에서 거부되면 검증되지 않은 시세 URI를 추측해 호출하지 않습니다. Alpaca Test는 Paper 환경만 사용하고 주문·잔고·계좌번호를 반환하지 않습니다.
+KIS Testbed has request limits, so tokens and short-lived quote results are cached on the server. If KB Securities rejects a key during authentication, the app does not guess an unverified quote URI. Alpaca Test uses only the Paper environment and does not return orders, balances, or account numbers.
 
-## 외부 플랫폼·증권사·거래소 API 사전 가입 및 이용 절차
+## Registration and Usage for External Platforms, Brokers, and Exchange APIs
 
-이 저장소가 호출하는 모든 외부 API를 **가입·키 발급이 필요한 것**과 **가입 없이 바로 쓰는 공개 API**로 나눠 정리합니다. 실제 신청 화면·약관·요건은 각 서비스가 수시로 바꿀 수 있으므로, 신청 직전에는 항상 공식 사이트에서 최신 절차를 다시 확인하세요.
+This section groups every external API called by this repository into services that require registration/key issuance and public APIs that work without registration. Service application screens, terms, and requirements can change; always verify the latest process on the official site before applying.
 
-### 한눈에 보기
+### At a Glance
 
-| 플랫폼 | 가입 필요 | API Key 발급 | 이 저장소의 저장 위치 | 이 프로젝트에서의 사용 범위 |
+| Platform | Registration required | API key | Stored in this repository | Usage in this project |
 |---|---|---|---|---|
-| 한국투자증권(KIS) | 계좌 개설 + 모의투자 별도 신청 | 필요 (모의 App Key·Secret) | `.env`의 `KIS_PAPER_*` | 모의(Testbed) 시세 조회, 로그인 회원용 잔고·모의 주문 흐름 테스트 |
-| KB증권 | 계좌 개설(M-able) + Open API 신청 | 필요 (App Key·Secret) | `.env`의 `KB_APP_KEY`/`KB_APP_SECRET` | 토큰 인증, 시세·호가·차트 읽기 전용 조회 |
-| Alpaca Markets | 이메일 가입 | 필요 (Paper Key·Secret) | `.env`의 `ALPACA_API_KEY`/`ALPACA_SECRET_KEY` | Paper 계정 조회, 보호된 Paper 주문 흐름 테스트 |
-| Binance | 공개 시세는 불필요 | 공개 시세는 불필요(인증 API·Testnet만 필요) | 해당 없음(미구현) | 공개 24hr 시세·호가만 조회 |
-| Korbit | 공개 시세는 불필요 | 공개 시세는 불필요(개인 자산 API만 필요) | 해당 없음(미구현) | 공개 현재가·호가 조회, 국내가 비교 |
-| 업비트·빗썸·코인원 | 불필요 | 불필요 | 해당 없음 | 코인 현재가·국내 거래소 가격 비교(공개 API) |
-| CoinMarketCap | 가입 필요 | 필요 (`CMC_API_KEY`) | `.env`의 `CMC_API_KEY` | 코인 랭킹 정기 동기화(매시 정각), 미설정 시 건너뜀 |
-| Anthropic (Claude API) | 가입 필요 | 필요 (`ANTHROPIC_API_KEY`) | `.env`의 `ANTHROPIC_API_KEY` | AI Sheet/투자 분석 기능, 미설정 시 경고만 표시하고 비활성 |
-| TradingView | 무료 계정 가입 | 불필요 | 해당 없음 | Pine Script 실전연습(웹 위젯·Pine Editor) |
-| 이 플랫폼 자체 Open API | 이 웹앱 회원가입 | 필요 (웹에서 발급) | 발급 시 1회 표시, 서버는 SHA-256 해시만 저장 | 가상 주식계좌 조회·주문 — 절차는 위 "외부 연동 Open API" 참고 |
+| Korea Investment & Securities (KIS) | Open an account and separately apply for paper trading | Yes (paper App Key and Secret) | `.env` `KIS_PAPER_*` | Paper (Testbed) quotes; test balance and paper-order flows for logged-in members |
+| KB Securities | Open an account (M-able) and apply for Open API | Yes (App Key and Secret) | `.env` `KB_APP_KEY` / `KB_APP_SECRET` | Token authentication; read-only quotes, order books, and charts |
+| Alpaca Markets | Email registration | Yes (Paper Key and Secret) | `.env` `ALPACA_API_KEY` / `ALPACA_SECRET_KEY` | Query Paper account and test protected Paper order flow |
+| Binance | Not for public quotes | Not for public quotes (only authenticated APIs and Testnet need keys) | Not applicable (not implemented) | Query only public 24-hour quotes and order books |
+| Korbit | Not for public quotes | Not for public quotes (only personal-asset APIs need keys) | Not applicable (not implemented) | Query public quotes/order books and compare domestic prices |
+| Upbit, Bithumb, Coinone | No | No | Not applicable | Crypto quotes and domestic exchange price comparison (public APIs) |
+| CoinMarketCap | Yes | Yes (`CMC_API_KEY`) | `.env` `CMC_API_KEY` | Hourly crypto-ranking sync; skipped if unset |
+| Anthropic (Claude API) | Yes | Yes (`ANTHROPIC_API_KEY`) | `.env` `ANTHROPIC_API_KEY` | AI Sheet/investment analysis; disabled with a warning if unset |
+| TradingView | Free account | No | Not applicable | TradingView Pine Script practice (web widget and Pine Editor) |
+| This platform's own Open API | Sign up for this web app | Yes (issued on the website) | Shown once at issuance; only the SHA-256 hash is stored | Query/order for virtual stock account; see “External Integration Open API” above |
 
-### 1. 한국투자증권(KIS) Open API
+### 1. Korea Investment & Securities (KIS) Open API
 
-1. 한국투자증권 계좌가 없다면 공식 앱/웹에서 비대면 계좌개설을 먼저 진행합니다. ([한국투자증권 로그인·가입](https://securities.koreainvestment.com/main/member/login/login.jsp))
-2. [모의투자 안내](https://www.truefriend.com/main/research/virtual/_static/TF07da010000.jsp)에서 한국투자증권 고객 ID로 로그인해 **모의투자 참가 신청**을 하고, 완료 후 **나의계좌 → 계좌정보**에서 모의투자 전용 계좌번호(`CANO-상품코드`)를 확인합니다.
-3. [KIS Developers](https://apiportal.koreainvestment.com)에 로그인해 **API 신청**에서 방금 만든 모의투자 계좌를 선택해 서비스를 신청합니다. 신청현황에서 모의투자용 **App Key·App Secret**이 발급됩니다. 실전 계좌 행의 키는 이 프로젝트에서 사용하지 않습니다.
-4. 발급받은 값을 `.env`의 `KIS_PAPER_APP_KEY`/`KIS_PAPER_APP_SECRET`/`KIS_PAPER_ACCOUNT_NO`에 저장합니다. `KIS_ENVIRONMENT=paper` 외의 값은 서버가 거부합니다. 계좌번호는 `CANO-계좌상품코드`(예: `12345678-01`) 형식입니다.
-5. 모의(Testbed) 도메인은 `https://openapivts.koreainvestment.com:29443`이며, 실전 도메인(`https://openapi.koreainvestment.com:9443`)은 사용하지 않습니다. 모의투자 토큰 발급은 **1분당 1회** 제한이 있으므로 짧은 간격으로 재시도하지 마세요.
-6. 자세한 절차·스크린샷은 3단계 학습 페이지 [`/learning/kis-regist.html`](frontend/learning/kis-regist.html)(가입) → [`/learning/kis-dev.html`](frontend/learning/kis-dev.html)(키 발급) → [`/learning/kis-test.html`](frontend/learning/kis-test.html)(테스트)에, VS Code에서 자연어로 쓰는 공식 MCP 연동은 아래 "KIS MCP" 절에 정리되어 있습니다.
-7. 로그인 후 `/kis-real-trading-practice.html`에서 KIS Testbed 모의계좌 잔고·보유종목·당일 주문내역을 조회하고 시장가/지정가 모의 매수·매도 주문을 접수할 수 있습니다. 주문 실행은 브라우저 확인, CSRF 검증, 주문 내용에 결합된 60초짜리 1회 승인 토큰을 요구하며 기본 1회 한도는 1,000주·1,000만 원입니다.
-8. 모든 웹 기반 KIS 호출은 자체 FastAPI와 `app.services.brokers.kis.kis_request()` 공통 게이트웨이를 순서대로 거칩니다. 로그인 회원의 자체 API 기록과 실제 KIS TR 시도는 `/kis-api-history.html`에서 확인할 수 있으며, 실패 시 사용이력과 시스템 오류 이력에 모두 마스킹하여 기록합니다.
+1. If you do not have a Korea Investment & Securities account, first open one through the official app or website. ([Korea Investment & Securities sign-in/registration](https://securities.koreainvestment.com/main/member/login/login.jsp))
+2. Sign in with your Korea Investment & Securities customer ID on the [paper trading guide](https://www.truefriend.com/main/research/virtual/_static/TF07da010000.jsp) and apply to participate in paper trading. After approval, find the paper-only account number (`CANO-product code`) under **My Account → Account Information**.
+3. Sign in to [KIS Developers](https://apiportal.koreainvestment.com), open **API Application**, select the newly created paper account, and apply for the service. The application status page provides the paper App Key and App Secret. Do not use keys listed for a live account in this project.
+4. Save the issued values in `.env` as `KIS_PAPER_APP_KEY`, `KIS_PAPER_APP_SECRET`, and `KIS_PAPER_ACCOUNT_NO`. The server rejects any `KIS_ENVIRONMENT` value other than `paper`. The account number must use `CANO-account product code` format, e.g. `12345678-01`.
+5. The paper (Testbed) domain is `https://openapivts.koreainvestment.com:29443`. Do not use the live domain (`https://openapi.koreainvestment.com:9443`). Paper-trading token issuance is limited to once per minute, so do not retry at short intervals.
+6. The detailed process and screenshots are in the three-step learning pages: [`/learning/kis-regist.html`](frontend/learning/kis-regist.html) (registration) → [`/learning/kis-dev.html`](frontend/learning/kis-dev.html) (key issuance) → [`/learning/kis-test.html`](frontend/learning/kis-test.html) (testing). Official MCP integration for natural-language use in VS Code is described under “KIS MCP” below.
+7. After login, `/kis-real-trading-practice.html` can query the KIS Testbed paper-account balance, holdings, and same-day orders, and submit paper market/limit buy and sell orders. Order execution requires browser confirmation, CSRF validation, and a single-use 60-second approval token bound to the order details. The default per-order limit is 1,000 shares or KRW 10 million.
+8. All web-based KIS calls pass through the custom FastAPI backend and the shared `app.services.brokers.kis.kis_request()` gateway. A logged-in member's API history and actual KIS TR attempts are available at `/kis-api-history.html`; failures are masked and recorded in both usage history and system error history.
 
-### 2. KB증권 Open API
+### 2. KB Securities Open API
 
-1. KB M-able 앱을 설치하고 비대면 계좌개설을 진행합니다(본인 명의 휴대폰·신분증 필요).
-2. 앱에서 KB증권 ID를 등록한 뒤, PC 웹사이트에서 **클라우드 인증서 로그인** 등 본인 인증 수단으로 로그인합니다.
-3. 로그인 후 **Open API → Open API 신청/조회** 메뉴에서 신청할 계좌를 선택하고 비밀번호를 입력해 조회한 뒤, 표시되는 API 그룹·이용기간·약관에 동의해 신청을 제출합니다.
-4. 신청현황에서 **App Key·App Secret**을 확인해 `.env`의 `KB_APP_KEY`/`KB_APP_SECRET`에 저장합니다.
-5. **클라우드 인증서 발급, ID 등록, 계좌 이용 등록은 심사 상황에 따라 개인별로 수시간이 걸릴 수 있으므로** 테스트 직전이 아니라 미리 신청해 두세요.
-6. 개발 문서·API 명세는 [KB증권 Open API 포털](https://openapi.kbsec.com/intro)에서, 이 프로젝트의 실제 호출 대상은 `https://developer.kbsec.com:32484`(운영 환경)입니다. 주문·잔고 조회는 이 학습 도구에 포함되어 있지 않고 토큰 인증과 시세·호가·차트 읽기 전용 조회만 제공합니다. 절차 전체는 [`/learning/kb-securities.html`](frontend/learning/kb-securities.html) 참고.
+1. Install the KB M-able app and open an account remotely (a phone and ID issued in your name are required).
+2. Register a KB Securities ID in the app, then sign in to the PC website using an identity-verification method such as a cloud certificate.
+3. After signing in, go to **Open API → Apply for/View Open API**, select the account, and enter its password to look up the account. Submit the application after agreeing to the displayed API groups, usage period, and terms.
+4. Find the App Key and App Secret under application status and save them in `.env` as `KB_APP_KEY` and `KB_APP_SECRET`.
+5. Issuing a cloud certificate, registering an ID, and enabling an account may take several hours depending on review. Apply in advance rather than immediately before testing.
+6. Find developer documents and API specifications in the [KB Securities Open API portal](https://openapi.kbsec.com/intro). This project calls `https://developer.kbsec.com:32484` (production environment). The learning tool does not provide order or balance queries; it only provides token authentication and read-only quotes, order books, and charts. See the complete procedure in [`/learning/kb-securities.html`](frontend/learning/kb-securities.html).
 
 ### 3. Alpaca Markets (Paper Trading)
 
-1. [Alpaca 가입/대시보드](https://app.alpaca.markets/signup)에서 이메일로 계정을 만들고 요구되는 이메일 확인 절차를 완료합니다.
-2. 대시보드 좌측 상단 계정 선택기에서 **Paper Trading** 계정을 선택하거나 새로 생성합니다.
-3. **Home** 대시보드의 **API Keys** 패널에서 Paper 계정용 Key·Secret을 생성합니다. Secret은 최초 표시 이후 다시 확인되지 않을 수 있으므로 즉시 저장합니다.
-4. 발급받은 값을 `.env`의 `ALPACA_API_KEY`/`ALPACA_SECRET_KEY`에 저장합니다. Paper 엔드포인트는 `https://paper-api.alpaca.markets`/`https://data.alpaca.markets`이며, Live는 키와 도메인이 모두 다르므로 이 프로젝트에서는 전환하지 않습니다.
-5. 거주 국가에 따라 Live 계정 승인 여부·상품·세금 요건이 달라질 수 있지만, Paper 전용 계정은 별도 심사 없이 만들 수 있습니다.
-6. 자세한 SDK(`alpaca-py`)·Trading CLI 사용법은 아래 "Alpaca Paper Trading" 절과 [`/learning/alpaca-api.html`](frontend/learning/alpaca-api.html) 참고.
+1. Create an account by email at [Alpaca sign-up/dashboard](https://app.alpaca.markets/signup) and complete the required email verification.
+2. Select or create a **Paper Trading** account in the account selector at the upper left of the dashboard.
+3. Generate a key and secret for the Paper account in the **API Keys** panel on the **Home** dashboard. The secret may only be shown once, so save it immediately.
+4. Save the values in `.env` as `ALPACA_API_KEY` and `ALPACA_SECRET_KEY`. Paper endpoints are `https://paper-api.alpaca.markets` and `https://data.alpaca.markets`. Live uses different keys and domains, and this project does not switch to it.
+5. Live-account approval, products, and tax requirements may vary by country of residence, but a Paper-only account can be created without a separate review.
+6. For details on the `alpaca-py` SDK and Trading CLI, see “Alpaca Paper Trading” below and [`/learning/alpaca-api.html`](frontend/learning/alpaca-api.html).
 
 ### 4. Binance Spot
 
-- **공개 시세·호가(`/binance-api-test.html`, `crypto_exchange_test.py`)는 가입·API Key 없이 바로 호출됩니다.** `GET https://api.binance.com/api/v3/ticker/24hr`, `.../depth` 등은 Key 없이 공개 데이터를 반환합니다.
-- 인증이 필요한 계정·주문 API를 직접 붙이려면 [Binance](https://www.binance.com) 가입 후 API Key·Secret을 발급받아야 하며, 서명(HMAC SHA-256)과 IP 화이트리스트 설정이 필요합니다. 이 프로젝트는 해당 기능을 구현하지 않았습니다.
-- 실습·검증용으로는 운영 키 대신 [Binance Spot Testnet](https://testnet.binance.vision)에서 별도 계정과 키를 발급받아 `https://testnet.binance.vision`을 사용하세요. 출금 권한은 어떤 경우에도 API 키에 부여하지 않는 것을 원칙으로 합니다.
-- 절차·엔드포인트는 [`/learning/binance-api.html`](frontend/learning/binance-api.html) 참고.
+- **Public quotes and order books (`/binance-api-test.html`, `crypto_exchange_test.py`) work without registration or an API key.** Calls such as `GET https://api.binance.com/api/v3/ticker/24hr` and `.../depth` return public data without a key.
+- To directly use authenticated account or order APIs, register with [Binance](https://www.binance.com) and obtain an API Key and Secret. Signing (HMAC SHA-256) and IP allowlisting are required. This project does not implement these features.
+- For practice and validation, use a separate account and keys from [Binance Spot Testnet](https://testnet.binance.vision) and the `https://testnet.binance.vision` endpoint instead of production keys. Never grant withdrawal permission to an API key.
+- See [`/learning/binance-api.html`](frontend/learning/binance-api.html) for the process and endpoints.
 
-### 5. Korbit(코빗)
+### 5. Korbit
 
-- **공개 시세·호가(`/korbit-api-test.html`)는 가입·API Key 없이 바로 호출됩니다.** `GET https://api.korbit.co.kr/v2/tickers`, `.../orderbook` 등이 여기 해당합니다. `crypto.py`의 국내 거래소 가격 비교도 같은 공개 엔드포인트(`v1/ticker/detailed`)를 사용합니다.
-- 개인 자산 조회·주문·입출금 API를 사용하려면 [Korbit](https://www.korbit.co.kr) 가입과 본인 인증 후 API Key를 발급받아야 하며, 키 발급 시 **자산 조회 / 주문 조회 / 주문 신청 / 입출금 조회·신청** 권한을 개별적으로 선택합니다. 이 프로젝트는 해당 기능을 구현하지 않았으며, 구현하더라도 출금 권한은 부여하지 않는 것을 권장합니다.
-- 공식 API 문서: [docs.korbit.co.kr](https://docs.korbit.co.kr/). 절차는 [`/learning/korbit-api.html`](frontend/learning/korbit-api.html) 참고.
+- **Public quotes and order books (`/korbit-api-test.html`) work without registration or an API key.** These include `GET https://api.korbit.co.kr/v2/tickers` and `.../orderbook`. Domestic exchange price comparisons in `crypto.py` use the same public endpoint (`v1/ticker/detailed`).
+- Personal asset, order, and deposit/withdrawal APIs require a [Korbit](https://www.korbit.co.kr) account, identity verification, and an API key. When issuing a key, choose permissions individually: **asset query / order query / order placement / deposit and withdrawal query/request**. This project does not implement these features; if implemented, withdrawal permissions are not recommended.
+- Official API documentation: [docs.korbit.co.kr](https://docs.korbit.co.kr/). See [`/learning/korbit-api.html`](frontend/learning/korbit-api.html) for the process.
 
-### 6. 업비트·빗썸·코인원 (국내 코인 시세 비교)
+### 6. Upbit, Bithumb, and Coinone (Domestic Crypto Price Comparison)
 
-코인 상세 화면의 "국내 거래소 가격 비교"는 업비트(`api.upbit.com`), 빗썸(`api.bithumb.com`), 코인원(`api.coinone.co.kr`)의 **공개 시세 API**만 호출합니다. 세 거래소 모두 가입·로그인·API Key 없이 바로 조회할 수 있으며, 이 프로젝트는 매매를 하지 않으므로 계정 개설이 필요하지 않습니다.
+“Domestic exchange price comparison” on a crypto detail page calls only the **public quote APIs** of Upbit (`api.upbit.com`), Bithumb (`api.bithumb.com`), and Coinone (`api.coinone.co.kr`). All three exchanges can be queried without an account, sign-in, or API key. Because this project does not trade on them, no account is required.
 
-### 7. CoinMarketCap (코인 랭킹 동기화)
+### 7. CoinMarketCap (Crypto Ranking Sync)
 
-1. [CoinMarketCap API](https://coinmarketcap.com/api/) 사이트에서 가입한 뒤 무료(Basic) 플랜 API Key를 발급받습니다.
-2. 발급받은 값을 `.env`의 `CMC_API_KEY`에 저장합니다. `scheduler.py`가 매시 정각(Asia/Seoul) `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest`를 호출해 코인 랭킹을 동기화합니다.
-3. 키를 설정하지 않아도 앱은 정상 동작하며, 동기화 작업만 로그 경고와 함께 건너뜁니다.
+1. Register on the [CoinMarketCap API](https://coinmarketcap.com/api/) site and obtain a free Basic-plan API key.
+2. Save it in `.env` as `CMC_API_KEY`. Every hour on the hour (Asia/Seoul), `scheduler.py` calls `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest` to sync crypto rankings.
+3. The app works normally without a key; only the sync job is skipped with a log warning.
 
-### 8. Anthropic Claude API (AI Sheet · 투자 분석)
+### 8. Anthropic Claude API (AI Sheet · Investment Analysis)
 
-1. [console.anthropic.com](https://console.anthropic.com)에서 가입하고 결제 수단을 등록한 뒤 API Key를 발급받습니다.
-2. 발급받은 값을 `.env`의 `ANTHROPIC_API_KEY`에 저장합니다. `ai.py`가 `https://api.anthropic.com/v1/messages`를 호출해 AI Sheet 크롤링 결과 분석·투자 분석 기능을 제공합니다.
-3. 키를 설정하지 않으면 AI 분석 기능은 화면에 "ANTHROPIC_API_KEY가 설정되지 않았습니다" 안내만 표시하고 비활성 상태로 유지됩니다.
+1. Register at [console.anthropic.com](https://console.anthropic.com), add a payment method, and obtain an API key.
+2. Save it in `.env` as `ANTHROPIC_API_KEY`. `ai.py` calls `https://api.anthropic.com/v1/messages` to provide AI Sheet crawl-result and investment analysis.
+3. Without a key, AI analysis remains disabled and the UI displays “ANTHROPIC_API_KEY is not configured.”
 
-### 9. TradingView (Pine Script 실전연습)
+### 9. TradingView (Pine Script Practice)
 
-[TradingView 가입·로그인](https://www.tradingview.com/accounts/signin/)에서 무료 계정을 만들면 차트 열람·Pine Editor 사용이 가능합니다. API Key 발급 절차는 없으며, 이 프로젝트는 TradingView의 공식 차트/Pine Script 학습 자료로 연결만 합니다. Pine Script를 저장하거나 전략 백테스트(Strategy Report)를 실행하려면 로그인이 필요합니다. 자세한 내용은 [`/learning/tradingview-pine.html`](frontend/learning/tradingview-pine.html) 참고.
+Create a free account at [TradingView sign-in/registration](https://www.tradingview.com/accounts/signin/) to view charts and use the Pine Editor. No API key is issued; this project links to TradingView's official chart and Pine Script learning resources. Sign-in is required to save Pine Script or run a strategy backtest (Strategy Report). See [`/learning/tradingview-pine.html`](frontend/learning/tradingview-pine.html) for details.
 
-### 10. 이 플랫폼 자체 Open API
+### 10. This Platform's Own Open API
 
-위 외부 서비스와 달리, 이 웹앱이 자체 발급하는 `/openapi/v1/*` 키는 이 사이트에 회원가입 후 **회원 메뉴에서 직접 발급**합니다. 발급·인증·호출 제한 절차는 위 "외부 연동 Open API" 절을 참고하세요.
+Unlike the external services above, keys for this web app's `/openapi/v1/*` API are issued directly from the member menu after signing up for the site. See “External Integration Open API” above for issuance, authentication, and rate-limit details.
 
-## Secrets Manager 트랙 (AWS Secrets Manager 실제 사용)
+## Secrets Manager Track (Using AWS Secrets Manager)
 
-`.env`의 브로커 값을 **AWS Secrets Manager에 실제 생성**하고, 서버가 IAM Role로 읽어 KIS·KB·Alpaca의 읽기 전용 API를 호출합니다. 각 브로커는 JSON 보안 암호 하나로 저장합니다.
+Create actual AWS Secrets Manager secrets for the broker values in `.env`; the server reads them through an IAM Role and calls the read-only KIS, KB, and Alpaca APIs. Store each broker's values in one JSON secret.
 
-가장 자세하고 쉬운 순서는 [`/learning/aws-ssm-key-management.html`](frontend/learning/aws-ssm-key-management.html)에 있습니다. 핵심 순서는 다음과 같습니다.
+The simplest detailed guide is [`/learning/aws-ssm-key-management.html`](frontend/learning/aws-ssm-key-management.html). The core steps follow.
 
-### 1. 리전과 Secret 접두사 설정
+### 1. Configure the Region and Secret Prefix
 
 ```text
 AWS_REGION=ap-northeast-2
 AWS_SECRETS_MANAGER_PREFIX=stock-coin-trade
-# 고객 관리형 KMS 키를 쓸 때만 설정
-# AWS_SECRETS_MANAGER_KMS_KEY_ID=<KMS key ARN 또는 ID>
+# Set only when using a customer-managed KMS key
+# AWS_SECRETS_MANAGER_KMS_KEY_ID=<KMS key ARN or ID>
 ```
 
-EC2에서는 `AWS_ACCESS_KEY_ID`·`AWS_SECRET_ACCESS_KEY`·`AWS_SESSION_TOKEN`을 비우고 인스턴스 프로파일을 사용합니다. 로컬에서는 AWS SSO 또는 임시 자격 증명을 사용합니다.
+On EC2, leave `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` empty and use an instance profile. Locally, use AWS SSO or temporary credentials.
 
-현재 EC2 운영 구성은 `StockCoinTradeSecretsReadOnly` 정책을
-`StockCoinTradeSecretsReadRole` Role과 `StockCoinTradeSecretsProfile` 인스턴스 프로파일로 연결합니다.
-이 Role은 위 세 Secret의 `DescribeSecret`·`GetSecretValue`만 허용합니다. EC2의 AWS CLI에는
-`ap-northeast-2` 리전만 설정하며, 장기 Access Key는 저장하지 않습니다.
+The current EC2 production setup attaches the `StockCoinTradeSecretsReadOnly` policy to the `StockCoinTradeSecretsReadRole` role and `StockCoinTradeSecretsProfile` instance profile. This role allows only `DescribeSecret` and `GetSecretValue` for the three secrets listed above. Configure only the `ap-northeast-2` region in the EC2 AWS CLI; do not store long-lived access keys.
 
-### 2. 값 노출 없이 3개 JSON Secret 미리보기
+### 2. Preview Three JSON Secrets Without Revealing Values
 
-업로드 도구는 `.env`의 대응 환경변수를 읽지만 값은 출력하지 않습니다.
+The upload tool reads matching environment variables from `.env` but never prints their values.
 
 ```bash
 cd python-stock-backend && uv run python -m app.cli.upload_keys_to_secrets_manager \
   --profile sagemaker-admin --region ap-northeast-2
 ```
 
-`stock-coin-trade/kis`, `stock-coin-trade/kb`, `stock-coin-trade/alpaca`가 모두 `READY`인지 확인합니다. 각 Secret 안에는 브로커별 필드가 JSON으로 저장됩니다.
+Verify that `stock-coin-trade/kis`, `stock-coin-trade/kb`, and `stock-coin-trade/alpaca` all show `READY`. Each secret stores broker-specific fields as JSON.
 
-### 3. 실제 Secrets Manager 적재
+### 3. Upload to Secrets Manager
 
-업로드 담당 IAM에는 [`aws/iam/secrets-manager-provisioner-policy.json`](aws/iam/secrets-manager-provisioner-policy.json)을 연결합니다. 고객 관리형 KMS 키를 쓰면 해당 키의 암호화 권한도 필요합니다.
+Attach [`aws/iam/secrets-manager-provisioner-policy.json`](aws/iam/secrets-manager-provisioner-policy.json) to the IAM identity responsible for the upload. If using a customer-managed KMS key, encryption permissions for that key are also required.
 
 ```bash
 cd python-stock-backend && uv run python -m app.cli.upload_keys_to_secrets_manager \
   --profile sagemaker-admin --region ap-northeast-2 --apply
 ```
 
-기존 값을 회전할 때만 다음처럼 덮어씁니다.
+Overwrite existing values only when rotating them:
 
 ```bash
 cd python-stock-backend && uv run python -m app.cli.upload_keys_to_secrets_manager \
   --profile sagemaker-admin --region ap-northeast-2 --apply --overwrite --only kis
 ```
 
-### 4. 앱 Role은 읽기만 허용
+### 4. Allow the App Role Read Access Only
 
 ```json
 {
@@ -467,163 +464,163 @@ cd python-stock-backend && uv run python -m app.cli.upload_keys_to_secrets_manag
 }
 ```
 
-저장소의 [`aws/iam/secrets-manager-runtime-policy.json`](aws/iam/secrets-manager-runtime-policy.json)을 그대로 사용할 수 있습니다. 고객 관리형 KMS 키를 쓸 때만 해당 키의 `kms:Decrypt`를 추가합니다. 앱 Role에는 생성·갱신·삭제 권한을 주지 않습니다.
+You can use [`aws/iam/secrets-manager-runtime-policy.json`](aws/iam/secrets-manager-runtime-policy.json) as-is. Add `kms:Decrypt` for the relevant key only when using a customer-managed KMS key. Do not grant the app role permission to create, update, or delete secrets.
 
-### 5. 앱 재시작 후 검증
+### 5. Restart the App and Verify
 
 ```bash
 docker compose up -d --build python-backend frontend
 ```
 
-1. `/aws-broker-api-test.html`에서 준비 상태가 `3/3`인지 확인합니다.
-2. KIS 현재가, KB 토큰을 순서대로 실행합니다.
-3. `/aws-alpaca-test.html`에서 Paper 계정을 확인합니다.
-4. 모두 성공한 뒤 `.env`를 계속 로컬에 둘 필요가 없다면 별도 안전 저장소로 옮깁니다. 검증 전에 삭제하지 않습니다.
+1. At `/aws-broker-api-test.html`, verify readiness is `3/3`.
+2. Test a KIS quote and then a KB token.
+3. Verify the Paper account at `/aws-alpaca-test.html`.
+4. After all tests succeed, move `.env` to another secure store if it no longer needs to remain local. Do not delete it before verification.
 
-브라우저와 API 응답에는 Secret 원문, AWS 자격 증명, 브로커 토큰이 반환되지 않습니다. 로컬 업로드 도구도 루트 `.env`만 읽습니다.
+Secret values, AWS credentials, and broker tokens are never returned in browser pages or API responses. The local upload tool reads only the root `.env`.
 
-## KIS MCP — VS Code·Codex에서 자연어로 KIS API 사용하기
+## KIS MCP — Use the KIS API in Natural Language from VS Code or Codex
 
-`/broker-api-test.html`의 KIS 연결 테스트와는 별개로, 한국투자증권은 AI 도구로 **MCP(Model Context Protocol)** 를 제공합니다. MCP는 생성형 AI가 외부 도구와 데이터에 표준 방식으로 연결되도록 하는 규약입니다. 이 프로젝트는 MCP 서버를 자체 구현하거나 `broker_test.py`를 MCP로 감싼 것이 아니라, 아래의 한투 공식 MCP를 별도로 사용합니다.
+Separate from the KIS connection test at `/broker-api-test.html`, Korea Investment & Securities provides **MCP (Model Context Protocol)** for AI tools. MCP is a protocol that lets generative AI connect to external tools and data using a standard interface. This project does not implement its own MCP server or wrap `broker_test.py` as MCP; instead, it uses the official KIS MCP servers described below.
 
-| 구분 | 용도 | 공식 안내 |
+| Server | Purpose | Official guide |
 |---|---|---|
-| KIS Code Assistant MCP (코딩도우미) | 자연어로 필요한 Open API를 찾고, 파라미터·응답 구조를 포함한 호출 예제 코드를 생성 | [코딩도우미 MCP](https://apiportal.koreainvestment.com/tools-sample) |
-| KIS Trading MCP (트레이딩) | 국내·해외주식, 선물·옵션, 채권, ETF/ETN·인증 등의 Open API를 MCP 도구로 호출 | [트레이딩 MCP](https://apiportal.koreainvestment.com/tools-trading) |
+| KIS Code Assistant MCP (coding assistant) | Find the required Open API in natural language and generate example calls with parameters and response structures | [Code Assistant MCP](https://apiportal.koreainvestment.com/tools-sample) |
+| KIS Trading MCP (trading) | Call domestic/international stock, futures/options, bond, ETF/ETN, and authentication Open APIs as MCP tools | [Trading MCP](https://apiportal.koreainvestment.com/tools-trading) |
 
-두 도구의 차이와 API 신청 → MCP 클라이언트 연결 → 보안인증키 발급 → 샘플 실행 절차는 [한국투자증권 MCP 소개](https://apiportal.koreainvestment.com/tools-mcp)에서 최신 내용을 확인하세요. 코딩도우미는 API 탐색·예제 생성용이고, 트레이딩 MCP는 API를 실제 호출할 수 있으므로 이 저장소에서는 **모의투자 키만** 연결하는 것을 기본으로 합니다.
+For the differences between the tools and the latest steps for API application → MCP client connection → security authentication key issuance → sample execution, see the [Korea Investment & Securities MCP guide](https://apiportal.koreainvestment.com/tools-mcp). Code Assistant is for API discovery and example generation; Trading MCP can actually call APIs, so this repository uses **paper-trading keys only** by default.
 
-아래 구성은 한투 공식 저장소 [koreainvestment/open-trading-api](https://github.com/koreainvestment/open-trading-api)의 두 MCP 서버를 이 프로젝트의 VS Code와 Codex에 연결합니다.
+The setup below connects the two official MCP servers from the [Korea Investment & Securities repository](https://github.com/koreainvestment/open-trading-api) to this project's VS Code and Codex.
 
-### 설치 및 연결
+### Install and Connect
 
-Python 3.12+, Git이 필요합니다. 아래 명령은 [한투 공식 저장소](https://github.com/koreainvestment/open-trading-api/tree/main/MCP)의 두 서버를 Git 무시 폴더 `mcp/`에 내려받고, 전용 가상환경에 `uv`와 의존성을 설치합니다. 이 저장소를 새로 클론한 환경에서는 한 번 실행하세요.
+Python 3.12+ and Git are required. The commands below download both servers from the [official KIS repository](https://github.com/koreainvestment/open-trading-api/tree/main/MCP) into the Git-ignored `mcp/` folder and install `uv` and dependencies into a dedicated virtual environment. Run them once in a fresh clone.
 
 ```bash
 bash scripts/setup_kis_mcp.sh
 ```
 
-`.codex/config.toml`은 이 프로젝트를 신뢰한 Codex CLI·IDE용, `.vscode/mcp.json`은 VS Code Copilot Chat용 두 서버 설정입니다. 둘 다 `scripts/kis_mcp.py`를 통해 공식 서버를 stdio로 실행합니다. 설정을 추가한 뒤 IDE나 Codex 세션을 다시 시작하고 MCP 도구 목록에서 `kis-code-assistant`와 `kis-trading-paper`를 확인하세요.
+`.codex/config.toml` configures both servers for Codex CLI/IDE after trusting this project; `.vscode/mcp.json` configures them for VS Code Copilot Chat. Both launch the official servers over stdio through `scripts/kis_mcp.py`. After adding the configuration, restart the IDE or Codex session and verify `kis-code-assistant` and `kis-trading-paper` in the MCP tool list.
 
-거래 MCP는 저장소 루트 `.env`의 `KIS_PAPER_APP_KEY`, `KIS_PAPER_APP_SECRET`, `KIS_PAPER_ACCOUNT_NO`만 사용합니다. 계좌번호는 `12345678-01` 형식이어야 하며 키와 계좌번호는 MCP 설정 파일에 기록되지 않습니다.
+The Trading MCP uses only `KIS_PAPER_APP_KEY`, `KIS_PAPER_APP_SECRET`, and `KIS_PAPER_ACCOUNT_NO` from the repository-root `.env`. The account number must use `12345678-01` format. Keys and account numbers are not written to MCP configuration files.
 
 ```bash
 python3 scripts/kis_mcp.py code --check
 python3 scripts/kis_mcp.py trade --check
 ```
 
-### VS Code 탐색기 하단 KIS MCP 패널
+### KIS MCP Panel at the Bottom of the VS Code Explorer
 
-이 저장소의 [`vscode-kis-mcp/`](vscode-kis-mcp/) 확장을 설치하면 VS Code **탐색기 하단**에 **KIS MCP** 보기가 나타납니다. **API 검색 예시**와 **삼성전자 시세** 버튼으로 바로 시작하거나, 서버·도구를 선택하고 JSON 인자를 넣어 호출할 수 있습니다. 응답은 패널 안에서 확인·복사합니다. Trading 도구는 모의투자 환경으로 고정되며, 그 밖의 거래 호출은 실행 전 확인창을 표시합니다.
+Install this repository's [`vscode-kis-mcp/`](vscode-kis-mcp/) extension to show a **KIS MCP** view at the **bottom of the VS Code Explorer**. Start with **API Search Example** or **Samsung Electronics Quote**, or select a server and tool and enter JSON arguments. Review and copy responses in the panel. Trading tools are fixed to the paper environment; other trading calls display a confirmation dialog before execution.
 
-새 VS Code 환경에서는 `vscode-kis-mcp/`에서 `vsce package --no-dependencies`로 VSIX를 만든 뒤 `code --install-extension kis-mcp-explorer-0.1.0.vsix`로 설치하세요. 설치 후 **Developer: Reload Window**를 실행하고 탐색기에서 **KIS MCP**를 펼치거나 명령 팔레트의 **KIS MCP: 탐색기 패널 열기**를 사용하세요. 패널은 기존 `scripts/kis_mcp.py`로 공식 서버에 연결합니다.
+In a fresh VS Code environment, build the VSIX in `vscode-kis-mcp/` with `vsce package --no-dependencies`, then install it with `code --install-extension kis-mcp-explorer-0.1.0.vsix`. After installation, run **Developer: Reload Window**, then expand **KIS MCP** in the Explorer or use **KIS MCP: Open Explorer Panel** from the command palette. The panel connects to the official servers using the existing `scripts/kis_mcp.py`.
 
-### VS Code 보조 사이드바에서 KIS MCP 사용
+### Use KIS MCP in the VS Code Auxiliary Sidebar
 
-현재 설치된 Codex 확장은 VS Code 보조 사이드바에 표시됩니다. `.vscode/settings.json`은 이 프로젝트를 열 때 보조 사이드바를 보이도록 설정합니다. 현재 창에서 `Ctrl+Shift+P` → **Codex: Open Codex Sidebar**를 실행해 패널을 여세요. Codex IDE 확장은 프로젝트 `.codex/config.toml`의 `kis-code-assistant`와 `kis-trading-paper` MCP 서버를 사용합니다. 설정을 처음 추가했거나 도구가 보이지 않으면 Codex 패널의 설정 메뉴에서 확장을 다시 시작하세요.
+The installed Codex extension appears in the VS Code auxiliary sidebar. `.vscode/settings.json` configures the auxiliary sidebar to be visible when this project is open. In the current window, run `Ctrl+Shift+P` → **Codex: Open Codex Sidebar** to open the panel. The Codex IDE extension uses the `kis-code-assistant` and `kis-trading-paper` MCP servers in this project's `.codex/config.toml`. If the configuration was just added or the tools are missing, restart the extension from the Codex panel settings menu.
 
-패널에 `KIS Code Assistant MCP로 국내주식 현재가 API와 필수 인자를 찾아줘`처럼 입력하면 API 문서를 조회할 수 있습니다. `KIS Trading MCP로 모의투자 삼성전자(005930) 현재가를 조회해줘`는 모의 서버의 시세 도구를 호출합니다. 모의 주문 도구는 실행 전 요청 내용을 확인하세요. 공식 [Codex IDE 확장 안내](https://learn.chatgpt.com/docs/codex/ide)와 [MCP 설정 안내](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)를 참고하세요.
+Enter a prompt such as `Use KIS Code Assistant MCP to find the domestic stock quote API and its required arguments` to look up API documentation. `Use KIS Trading MCP to query the Samsung Electronics (005930) quote in paper trading` calls the paper server's quote tool. Review the request before using a paper-order tool. See the official [Codex IDE extension guide](https://learn.chatgpt.com/docs/codex/ide) and [MCP configuration guide](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
 
-거래 실행기는 실전 키를 전달하지 않고 공식 서버의 `~/KIS/config/kis_devlp.yaml` 출력 위치를 Git 무시된 `mcp/home/`으로 격리합니다. 코드에서 사용하는 `ENV=live`는 공식 서버의 `.env.live` 전송 설정 파일 이름이며, 거래에 사용할 키는 `KIS_PAPER_*`입니다. 거래 MCP에는 모의 주문 도구가 있으므로 호출 내용을 확인하고 사용하세요.
+The trading runner does not receive live keys and isolates the official server's `~/KIS/config/kis_devlp.yaml` output under the Git-ignored `mcp/home/`. The `ENV=live` used in code is the official server's `.env.live` transport configuration filename; the keys used for trading are `KIS_PAPER_*`. The Trading MCP has paper-order tools, so review calls before using them.
 
-서버가 노출하는 기능과 최신 요구사항은 [코드 검색 MCP](https://github.com/koreainvestment/open-trading-api/tree/main/MCP/KIS%20Code%20Assistant%20MCP), [거래 MCP](https://github.com/koreainvestment/open-trading-api/tree/main/MCP/Kis%20Trading%20MCP)를 참고하세요.
+For server capabilities and the latest requirements, see [Code Assistant MCP source](https://github.com/koreainvestment/open-trading-api/tree/main/MCP/KIS%20Code%20Assistant%20MCP) and [Trading MCP source](https://github.com/koreainvestment/open-trading-api/tree/main/MCP/Kis%20Trading%20MCP).
 
-### 구성 흐름과 문제 해결
+### Configuration Flow and Troubleshooting
 
 ```text
-Codex CLI·IDE (.codex/config.toml) ───────┐
-VS Code Copilot Chat (.vscode/mcp.json) ───┼─→ scripts/kis_mcp.py ─→ 공식 KIS MCP 서버
-VS Code 탐색기 KIS MCP 패널 ────────────────┘          │                 ├─ Code Assistant
-                                                    │                 └─ Trading (모의투자)
-                                                    └─ .env의 모의투자 키 읽기
+Codex CLI/IDE (.codex/config.toml) ──────────┐
+VS Code Copilot Chat (.vscode/mcp.json) ─────┼─→ scripts/kis_mcp.py ─→ Official KIS MCP servers
+VS Code Explorer KIS MCP panel ──────────────┘          │                 ├─ Code Assistant
+                                                        │                 └─ Trading (paper)
+                                                        └─ Read paper keys from .env
 ```
 
-- [`scripts/setup_kis_mcp.sh`](scripts/setup_kis_mcp.sh)는 공식 저장소를 Git 무시 대상인 `mcp/open-trading-api/`에 내려받고 `mcp/.venv/`에 `uv`와 의존성을 설치한다.
-- [`scripts/kis_mcp.py`](scripts/kis_mcp.py)는 `code`/`trade` 서버를 stdio로 실행하며, `KIS_ENVIRONMENT=paper`만 허용하고 모의투자 키만 전달한다. 공식 서버의 `~/KIS/config` 출력은 Git 무시된 `mcp/home/`으로 격리된다.
+- [`scripts/setup_kis_mcp.sh`](scripts/setup_kis_mcp.sh) downloads the official repository to Git-ignored `mcp/open-trading-api/` and installs `uv` and dependencies into `mcp/.venv/`.
+- [`scripts/kis_mcp.py`](scripts/kis_mcp.py) runs the `code` and `trade` servers over stdio, allows only `KIS_ENVIRONMENT=paper`, and passes only paper-trading keys. The official server's `~/KIS/config` output is isolated under Git-ignored `mcp/home/`.
 
-| 증상 | 확인할 곳 |
-| --- | --- |
-| `KIS MCP source is missing` | 저장소 루트에서 `bash scripts/setup_kis_mcp.sh` 실행 |
-| `uv is missing` | `mcp/.venv/bin/uv` 설치 확인 |
-| 거래 서버의 키·계좌 오류 | `.env`의 `KIS_PAPER_*` 세 값, 계좌번호 형식, `KIS_ENVIRONMENT=paper` |
-| MCP 도구가 보이지 않음 | VS Code·Codex 재시작 후 두 서버 연결 상태 확인 |
-| 탐색기 패널이 보이지 않음 | VSIX 설치, 창 다시 로드, **KIS MCP: 탐색기 패널 열기** 실행 |
-| 패널에 연결 실패 표시 | **서버 새로고침** 후 오류와 `--check` 결과 확인 |
+| Symptom | Where to check |
+|---|---|
+| `KIS MCP source is missing` | Run `bash scripts/setup_kis_mcp.sh` from the repository root |
+| `uv is missing` | Verify `mcp/.venv/bin/uv` is installed |
+| Trading server key/account error | Check the three `.env` `KIS_PAPER_*` values, account number format, and `KIS_ENVIRONMENT=paper` |
+| MCP tools are not visible | Restart VS Code/Codex and check the connection status of both servers |
+| Explorer panel is not visible | Install the VSIX, reload the window, and run **KIS MCP: Open Explorer Panel** |
+| Panel reports connection failure | Select **Refresh Server**, then check the error and `--check` results |
 
-공식 기능·API 목록은 [KIS MCP 안내](https://apiportal.koreainvestment.com/tools-mcp)와 [공식 MCP 소스](https://github.com/koreainvestment/open-trading-api/tree/main/MCP)를 참고하세요.
+For official features and API lists, see the [KIS MCP guide](https://apiportal.koreainvestment.com/tools-mcp) and [official MCP source](https://github.com/koreainvestment/open-trading-api/tree/main/MCP).
 
 ## Alpaca Paper Trading
 
-`실전연습 → Alpaca API`에는 계정 생성, Paper API Key 발급 위치, `alpaca-py`, Trading CLI, WebSocket 및 주의사항을 정리했습니다.
+`Practice → Alpaca API` describes account creation, where to issue a Paper API key, `alpaca-py`, Trading CLI, WebSocket, and related cautions.
 
-- Paper와 Live는 키와 도메인이 다릅니다.
-- Paper 키는 `.env`의 `ALPACA_API_KEY`/`ALPACA_SECRET_KEY`로만 관리합니다.
-- Trading CLI는 Alpha Preview 상태이므로 명령과 출력 형식이 바뀔 수 있습니다.
-- 이 프로젝트에서 “Alpaca”는 금융 API 플랫폼인 **Alpaca Markets**를 의미합니다. Stanford Alpaca, Alpacon/AlpacaX와는 별도 프로젝트입니다.
+- Paper and Live use different keys and domains.
+- Manage Paper keys only through `.env` variables `ALPACA_API_KEY` and `ALPACA_SECRET_KEY`.
+- Trading CLI is in Alpha Preview, so commands and output formats may change.
+- “Alpaca” in this project means the financial API platform **Alpaca Markets**. It is a different project from Stanford Alpaca and Alpacon/AlpacaX.
 
-공식 자료: [Paper Trading](https://docs.alpaca.markets/us/docs/paper-trading) · [Trading CLI](https://docs.alpaca.markets/us/docs/alpacas-cli) · [alpaca-py](https://alpaca.markets/sdks/python/trading.html)
+Official resources: [Paper Trading](https://docs.alpaca.markets/us/docs/paper-trading) · [Trading CLI](https://docs.alpaca.markets/us/docs/alpacas-cli) · [alpaca-py](https://alpaca.markets/sdks/python/trading.html)
 
-## 환경 변수
+## Environment Variables
 
-전체 예시는 [.env.example](.env.example)를 참조합니다.
+See [.env.example](.env.example) for the full examples.
 
-| 변수 | 용도 |
+| Variable | Purpose |
 |---|---|
-| `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD` | 로컬 MariaDB 설정 |
-| `SECRET_KEY` | 로그인 세션 쿠키 서명 키 |
-| `SESSION_STORE` | `redis`(기본) 또는 `memory`(Redis 없는 로컬 개발) |
-| `APP_STARTUP_TASKS`, `SCHEDULER_ENABLED`, `AUDIT_ENABLED` | 기동 시 테이블 보정·시드 / APScheduler / 감사 로그 기록 토글 |
-| `REDIS_URL`, `REDIS_SESSION_KEY_PREFIX` | Redis 로그인 세션 연결과 키 접두사 |
-| `CMC_API_KEY`, `ANTHROPIC_API_KEY` | 선택적 코인 데이터·AI 기능 |
-| `KIS_PAPER_*`, `KB_*` | 증권사 테스트 환경 변수 |
-| `ALPACA_API_KEY`, `ALPACA_SECRET_KEY` | Alpaca Paper API 키 대안 |
+| `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD` | Local MariaDB configuration |
+| `SECRET_KEY` | Login session cookie signing key |
+| `SESSION_STORE` | `redis` (default) or `memory` (local development without Redis) |
+| `APP_STARTUP_TASKS`, `SCHEDULER_ENABLED`, `AUDIT_ENABLED` | Toggle startup schema updates/seeding, APScheduler, and audit logging |
+| `REDIS_URL`, `REDIS_SESSION_KEY_PREFIX` | Redis login session connection and key prefix |
+| `CMC_API_KEY`, `ANTHROPIC_API_KEY` | Optional crypto data and AI features |
+| `KIS_PAPER_*`, `KB_*` | Brokerage test environment variables |
+| `ALPACA_API_KEY`, `ALPACA_SECRET_KEY` | Alpaca Paper API keys |
 
-`.env`, `*.key`, 토큰, 계좌번호, 비밀번호, 실제 주문 응답을 Git·문서·화면 캡처·브라우저 코드에 넣지 마세요.
+Do not put `.env`, `*.key`, tokens, account numbers, passwords, or real order responses in Git, documentation, screenshots, or browser code.
 
-## 저장소 구조
+## Repository Structure
 
 ```text
 .
-├── frontend/                         # 정적 웹 애플리케이션
-│   ├── index.html                     # 대시보드
-│   ├── trade/                         # 코인·주식·대체자산 모의거래
-│   ├── learning/                      # TradingView, KB, KIS, Alpaca 실전연습
-│   ├── alpaca-test.html               # Alpaca Paper 연결 테스트
-│   ├── broker-api-test.html           # KIS 연결 테스트
-│   ├── kb-api-test.html               # KB증권 연결 테스트
-│   ├── member/                        # 로그인·회원가입·플랫폼 API 키
-│   ├── js/common.js                   # 모든 페이지 공통 offcanvas 메뉴
-│   └── images/                        # 학습용 이미지·안내도
-├── python-stock-backend/              # FastAPI 백엔드 (계층 구조 상세: python-stock-backend/README.md)
-│   ├── pyproject.toml / uv.lock        # uv 프로젝트·잠금 파일
-│   ├── app/main.py                     # create_app(): lifespan·미들웨어·라우터 등록
-│   ├── app/core/                       # 설정·DB 세션·Redis 세션·CSRF·의존성·오류·감사 미들웨어
-│   ├── app/models.py                   # SQLAlchemy 2.0 타입 매핑 모델
-│   ├── app/api/routes/                 # 도메인별 APIRouter(회원·주식·코인·대체자산·KIS/KB/Alpaca·OpenAPI…)
-│   ├── app/services/                   # 도메인 로직·증권사 게이트웨이(brokers/, alpaca/)·RAG·퀀트
-│   ├── app/jobs/                       # APScheduler 배치·봇 거래·OHLCV 수집
-│   ├── app/cli/                        # 독립 실행 스크립트(python -m app.cli.<name>)
+├── frontend/                         # Static web application
+│   ├── index.html                     # Dashboard
+│   ├── trade/                         # Crypto, stock, and alternative-asset paper trading
+│   ├── learning/                      # TradingView, KB, KIS, and Alpaca practice
+│   ├── alpaca-test.html               # Alpaca Paper connection test
+│   ├── broker-api-test.html           # KIS connection test
+│   ├── kb-api-test.html               # KB Securities connection test
+│   ├── member/                        # Login, registration, and platform API keys
+│   ├── js/common.js                   # Shared off-canvas menu for all pages
+│   └── images/                        # Learning images and diagrams
+├── python-stock-backend/              # FastAPI backend (layered structure: python-stock-backend/README.md)
+│   ├── pyproject.toml / uv.lock        # uv project and lock file
+│   ├── app/main.py                     # create_app(): lifespan, middleware, and router registration
+│   ├── app/core/                       # Settings, DB sessions, Redis sessions, CSRF, dependencies, errors, and audit middleware
+│   ├── app/models.py                   # SQLAlchemy 2.0 typed models
+│   ├── app/api/routes/                 # Domain APIRouters (members, stocks, crypto, alternatives, KIS/KB/Alpaca, OpenAPI, etc.)
+│   ├── app/services/                   # Domain logic, brokerage gateways (brokers/, alpaca/), RAG, and quant
+│   ├── app/jobs/                       # APScheduler jobs, bot trading, and OHLCV collection
+│   ├── app/cli/                        # Standalone scripts (`python -m app.cli.<name>`)
 │   └── tests/                          # pytest
-├── database/db.sql                    # MariaDB 초기 스키마·예제 데이터
-├── docker/                            # Frontend·Backend 이미지와 Nginx 설정
-├── docker-compose.yml                 # 로컬 실행 구성
-├── scripts/ec2/deploy.sh              # 배포 전 문법 검사·Compose 재기동
-├── .env.example                       # 공유 가능한 환경 변수 예시
-└── mcp/                                # (Git 미추적) 한투 공식 KIS MCP 서버와 전용 실행 환경
+├── database/db.sql                    # MariaDB initial schema and sample data
+├── docker/                            # Frontend/backend images and Nginx configuration
+├── docker-compose.yml                 # Local runtime configuration
+├── scripts/ec2/deploy.sh              # Pre-deployment syntax checks and Compose restart
+├── .env.example                       # Shareable environment-variable examples
+└── mcp/                                # (Git-ignored) official KIS MCP servers and dedicated runtime
 ```
 
-## 개발·검증
+## Development and Validation
 
-### Python 린트·테스트
+### Python Lint and Tests
 
 ```bash
 cd python-stock-backend
-uv sync                 # 최초 1회(.venv)
+uv sync                 # First time only (.venv)
 uv run ruff check app tests
-uv run pytest           # DB·Redis 없이 실행 가능
+uv run pytest           # Runs without DB or Redis
 ```
 
-### Compose 재빌드와 상태 확인
+### Rebuild Compose and Check Status
 
 ```bash
 docker compose up -d --build
@@ -631,90 +628,89 @@ docker compose ps
 curl http://localhost:3333/api/alpaca-test/paper/account
 ```
 
-`scripts/ec2/deploy.sh`는 ECR 이미지를 받아 `docker compose up -d --no-build --remove-orphans`를 실행합니다.
+`scripts/ec2/deploy.sh` pulls ECR images and runs `docker compose up -d --no-build --remove-orphans`.
 
-## 배포 (EC2 · CI/CD)
+## Deployment (EC2 · CI/CD)
 
-- 서비스 주소: `https://st.edumgt.co.kr`
-- 운영: 단일 EC2 인스턴스(Elastic IP), 서비스 경로 `/opt/stock-coin-trade`
-- 컨테이너: `crypto-mock-frontend`(nginx), `crypto-mock-python`(uvicorn · FastAPI), `crypto-mock-mariadb`, `crypto-mock-postgres`
+- Service URL: `https://st.edumgt.co.kr`
+- Production: single EC2 instance (Elastic IP), service directory `/opt/stock-coin-trade`
+- Containers: `crypto-mock-frontend` (nginx), `crypto-mock-python` (uvicorn · FastAPI), `crypto-mock-mariadb`, `crypto-mock-postgres`
 
-### 로컬 vs AWS 실행 (SSL)
+### Local vs. AWS Runtime (SSL)
 
-같은 소스를 SSL 사용 여부로 나눠 실행합니다.
+The same source runs with or without SSL as follows.
 
-| 구분 | 실행 명령 | nginx 설정 | 포트 | TLS |
-|------|-----------|-----------|------|-----|
-| 로컬 개발 | `docker compose up -d` | 이미지 내장 `docker/nginx.conf` | `FRONTEND_PORT`(기본 3333) → 80 | 없음(HTTP) |
-| AWS 운영 | `docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d` | `docker/nginx.ssl.conf`(마운트) | 80(ACME·리다이렉트), 443(서비스) | Let's Encrypt |
+| Environment | Command | Nginx configuration | Ports | TLS |
+|---|---|---|---|---|
+| Local development | `docker compose up -d` | Built-in `docker/nginx.conf` | `FRONTEND_PORT` (default 3333) → 80 | None (HTTP) |
+| AWS production | `docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d` | `docker/nginx.ssl.conf` (mounted) | 80 (ACME/redirect), 443 (service) | Let's Encrypt |
 
-- 로컬은 `docker-compose.ssl.yml`을 붙이지 않으면 내장 HTTP 설정으로만 뜹니다.
-- AWS `.env`는 `FRONTEND_PORT=80`, `SESSION_COOKIE_SECURE=true`로 둡니다.
-- 최초 인증서 발급·자동 갱신 등록은 EC2에서 한 번만: `sudo scripts/ec2/init-letsencrypt.sh`. 갱신은 매일 cron이 `certbot renew`(webroot 무중단) 후 `nginx -s reload`를 수행합니다.
+- Locally, without `docker-compose.ssl.yml`, the built-in HTTP configuration is used.
+- Set AWS `.env` values `FRONTEND_PORT=80` and `SESSION_COOKIE_SECURE=true`.
+- Issue the initial certificate and register automatic renewal once on EC2 with `sudo scripts/ec2/init-letsencrypt.sh`. Daily cron runs `certbot renew` (webroot, no downtime), followed by `nginx -s reload`.
 
-### GitHub Actions 자동 배포
+### GitHub Actions Automatic Deployment
 
-`main`에 푸시하면 [.github/workflows/deploy-ec2.yml](.github/workflows/deploy-ec2.yml)가 ECR·외부 저장소 없이 EC2 docker로 **직접** 배포합니다.
+On a push to `main`, [.github/workflows/deploy-ec2.yml](.github/workflows/deploy-ec2.yml) deploys **directly** through Docker on EC2 without ECR or an external repository.
 
-1. 소스를 EC2로 `rsync`(비밀 파일·`certbot`·`.git` 제외).
-2. `docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d --build --remove-orphans`.
-3. `https://st.edumgt.co.kr/api/stocks/list` HTTPS 헬스체크.
+1. `rsync` the source to EC2 (excluding secret files, `certbot`, and `.git`).
+2. Run `docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d --build --remove-orphans`.
+3. Perform an HTTPS health check at `https://st.edumgt.co.kr/api/stocks/list`.
 
-필요한 GitHub Secrets: `EC2_SSH_KEY`(접속 개인 키), `EC2_HOST`(Elastic IP), `EC2_USER`(기본 `ubuntu`).
+Required GitHub Secrets: `EC2_SSH_KEY` (private key), `EC2_HOST` (Elastic IP), and `EC2_USER` (default `ubuntu`).
 
-### 수동 배포·검증
+### Manual Deployment and Verification
 
 ```bash
-# 로컬 검증
+# Local validation
 docker compose config --quiet
 (cd python-stock-backend && uv run ruff check app tests && uv run pytest)
 git diff --check
 
-# 커밋·푸시 → Actions가 자동 배포
-git add -A && git commit -m "<변경 내용>" && git push origin main
+# Commit and push → Actions deploys automatically
+git add -A && git commit -m "<change description>" && git push origin main
 
-# 반영 확인
+# Verify deployment
 curl -fsSL https://st.edumgt.co.kr/api/stocks/list
 curl -fsSL https://st.edumgt.co.kr/index.html
 ```
 
-정적 자산 변경 후에는 브라우저 캐시를 고려해 버전 쿼리 또는 강력 새로고침으로 확인합니다. 비밀 파일(`.env`, `*.pem`, `*.key`)과 `certbot/`은 배포 rsync·빌드 컨텍스트에서 제외됩니다.
+After changing static assets, account for browser caching by checking a version query or doing a hard refresh. Secret files (`.env`, `*.pem`, `*.key`) and `certbot/` are excluded from deployment rsync and the build context.
 
-## 운영 시 유의사항
+## Operational Considerations
 
-- 이 저장소의 모의 주문과 증권사·Alpaca 테스트는 목적과 권한이 다릅니다. 외부 증권사 주문 연동은 별도 승인·리스크 한도·중복 주문 방지·감사 로그를 갖춘 작업으로 분리하세요.
-- Paper Trading은 실제 시장 충격, 슬리피지, 호가 대기 순서 등을 완전히 재현하지 않습니다.
-- 외부 API의 URL·인증 방식·호출 제한·이용 가능 국가와 상품은 변경될 수 있으므로 실제 연동 전 공식 문서를 확인하세요.
-- 배포 환경에서는 개발용 기본 비밀번호를 사용하지 말고, 비밀 관리 도구 또는 안전한 환경 변수 주입 방식을 사용하세요.
-- AI Sheet의 LEAN 백테스트 버튼은 `python-backend` 컨테이너에 호스트의 `/var/run/docker.sock`을 마운트해 QuantConnect LEAN 컨테이너를 직접 실행합니다(Docker-outside-of-Docker). 이는 해당 컨테이너에 사실상 호스트 Docker 데몬 전체에 대한 권한을 부여하는 것과 같으므로, 신뢰할 수 없는 사용자가 접근 가능한 배포 환경에서는 이 기능을 비활성화하거나 별도로 격리하는 것을 고려하세요. `docker/lean/`의 이미지를 미리 빌드해두어야 하며(`docker build -t stock-coin-trade-lean:latest docker/lean`), 없으면 최초 요청 시 자동으로 빌드합니다.
+- Paper orders in this repository and brokerage/Alpaca tests have different purposes and permissions. Treat external brokerage order integration as a separate project with approval, risk limits, duplicate-order prevention, and audit logs.
+- Paper Trading does not fully reproduce real market impact, slippage, or queue priority.
+- External API URLs, authentication, rate limits, supported countries, and products can change; check official documentation before integrating with a live service.
+- Do not use development default passwords in deployment. Use a secret-management tool or a secure environment-variable injection method.
+- The AI Sheet LEAN backtest button mounts the host's `/var/run/docker.sock` in the `python-backend` container and directly runs a QuantConnect LEAN container (Docker-outside-of-Docker). This effectively grants that container broad access to the host Docker daemon. In deployments accessible to untrusted users, consider disabling or isolating this feature. Prebuild the image in `docker/lean/` with `docker build -t stock-coin-trade-lean:latest docker/lean`; if it is missing, it is built automatically on the first request.
 
+### Recommended TradingView Pine Scripts
 
-### Trading view 의 Pine Script 추천 
 > https://kr.tradingview.com/chart/3aw3WjMv/
 
 ```chart url
-트레이딩뷰 커뮤니티 스크립트 라이브러리에서 바로 확인 및 추가할 수 있는 공식 URL 주소입니다.
+Official URLs for finding and adding scripts directly from the TradingView Community Scripts Library.
 
 1. **UT Bot Alerts (by QuantNomad)**
 * **URL:** [https://kr.tradingview.com/script/8411CUSF-UT-Bot-Alerts/](https://www.google.com/search?q=https://kr.tradingview.com/script/8411CUSF-UT-Bot-Alerts/)
 
-
 2. **Supertrend (by KivancOzbilgic)**
 * **URL:** [https://kr.tradingview.com/script/39m4ThA1-SuperTrend/](https://www.google.com/search?q=https://kr.tradingview.com/script/39m4ThA1-SuperTrend/)
 
-
-3. **Ehlers Fisher Transform (by Everget / 존 에일러스 사이클 기반)**
+3. **Ehlers Fisher Transform (by Everget / based on John Ehlers' cycle theory)**
 * **URL:** [https://kr.tradingview.com/script/P8mEBA9g-Fisher-Transform/](https://www.google.com/search?q=https://kr.tradingview.com/script/P8mEBA9g-Fisher-Transform/)
 ```
 
-### 모의 투자 결과 화면
-![alt text](image-1.png)
+### Paper Trading Results
 
+![Screenshot of paper trading results](image-1.png)
 
-## KIS 자동매매 Open API (3-repo 연동)
+## KIS Automated Trading Open API (3-Repository Integration)
 
-lumina-invest 의 자동매매 사이클이 호출하는 **KIS 실주문 게이트웨이** `/openapi/v1/kis/*` (승인 토큰 → 주문 → 체결 조회, 멱등키, paper/real 환경 분리)를 제공한다. 기존 `/openapi/v1/orders` 는 가상 주문이다.
-- 진행 상태·인수인계: [todo.md](todo.md) — 특히 6절 "작업 보고(AI 에이전트 인수인계용)"
-- 저장소 간 API 계약: [docs/contracts/kis-autotrade-api.md](docs/contracts/kis-autotrade-api.md) (세 저장소 동일 사본)
-- 설정: `.env.example` 의 `KIS_REAL_ORDER_ENABLED` 등. 주문 권한은 DB `api_key.scopes='kis:order'` 로 부여(운영자)
-- 테스트: `cd python-stock-backend && .venv/bin/python -m pytest -q`
+Provides the **KIS live-order gateway** `/openapi/v1/kis/*` called by the automated trading cycle in `lumina-invest` (approval token → order → fill query, idempotency key, paper/live environment separation). Existing `/openapi/v1/orders` are virtual orders.
+
+- Status and handoff: [todo.md](todo.md), especially section 6, “Work Report (for AI Agent Handoff)”
+- Cross-repository API contract: [docs/contracts/kis-autotrade-api.md](docs/contracts/kis-autotrade-api.md) (identical copy in all three repositories)
+- Configuration: `.env.example` variables such as `KIS_REAL_ORDER_ENABLED`. Order permission is granted by an operator through DB `api_key.scopes='kis:order'`.
+- Tests: `cd python-stock-backend && .venv/bin/python -m pytest -q`
