@@ -149,7 +149,16 @@ footer a,
     function renderWatch(){ if(watchGridApi) watchGridApi.setGridOption('rowData',watchRows()); }
     function initWatchGrid(){ if(!window.agGrid){ toast('AG Grid를 불러오지 못했습니다. 네트워크 연결을 확인하세요.'); return; } const columnDefs=[{headerName:'종목명',field:'name',flex:1.45,minWidth:82,cellRenderer:p=>`<span class="watch-name"><strong>${p.data.name}</strong><small>${p.data.code}</small></span>`},{headerName:'현재가',field:'price',width:70,sortable:true,valueFormatter:p=>fmt(p.value),cellClass:p=>p.data.rate>=0?'up':'down',headerClass:'ag-right-aligned-header',cellStyle:{justifyContent:'flex-end'}},{headerName:'등락률',field:'rate',width:58,sortable:true,valueFormatter:p=>`${p.value>=0?'▲':'▼'} ${Math.abs(p.value).toFixed(2)}%`,cellClass:p=>p.data.rate>=0?'up':'down',cellStyle:{justifyContent:'flex-end'}},{headerName:'메모',field:'hasMemo',width:32,sortable:true,tooltipValueGetter:p=>p.data.memo||'메모 없음',cellRenderer:p=>`<span style="color:${p.value?'#2283c1':'#b3bfca'}">${p.value?'●':'·'}</span>`,cellStyle:{justifyContent:'center'}}]; watchGridApi=agGrid.createGrid(document.getElementById('watchGrid'),{theme:'legacy',columnDefs,rowData:watchRows(),defaultColDef:{resizable:true,suppressMovable:true},headerHeight:26,rowHeight:43,animateRows:false,getRowClass:p=>p.data.code===selected.code?'watch-row-selected':'',onRowClicked:p=>selectStock(p.data)}); }
     function syncMemoEditor(){ const area=document.getElementById('watchMemo'), save=document.getElementById('memoSave'); document.getElementById('memoStockName').textContent=selected.name; area.value=memoBySymbol[selected.code]||''; area.disabled=!loggedInUser; save.disabled=!loggedInUser; document.getElementById('memoCount').textContent=`${area.value.length} / 500`; document.getElementById('memoStatus').textContent=loggedInUser?`${loggedInUser.username}님 계정에만 저장됩니다.`:'로그인 후 종목별 메모를 저장할 수 있습니다.'; }
-    function selectStock(s){ selected=s; const isUp=s.rate>=0, cls=isUp?'up':'down', tri=isUp?'▲':'▼'; document.getElementById('stockName').textContent=s.name; document.getElementById('stockCode').textContent=`${s.code} · KOSPI`; document.getElementById('mainPrice').innerHTML=`${fmt(s.price)} <small class="${cls}">${tri} ${Math.abs(s.rate).toFixed(2)}%</small>`; document.getElementById('changeText').textContent=`${isUp?'+':'-'}${fmt(Math.round(s.price*Math.abs(s.rate)/(100-Math.abs(s.rate))))}원`; document.getElementById('changeText').className=cls; document.getElementById('volumeText').textContent=s.volume; document.getElementById('capText').textContent=s.cap; document.getElementById('bookPrice').textContent=`${fmt(s.price)} ${tri} ${fmt(Math.round(s.price*Math.abs(s.rate)/100))}`; document.getElementById('orderStock').value=`${s.name} (${s.code})`; document.getElementById('orderPrice').value=fmt(s.price); renderBook(s); renderWatch(); syncMemoEditor(); syncOrderModal(); syncAnalysisModal(); }
+    function renderQuoteHeader(s){ const isUp=s.rate>=0, cls=isUp?'up':'down', tri=isUp?'▲':'▼'; const chg = s.change!=null ? Math.abs(s.change) : Math.round(s.price*Math.abs(s.rate)/(100-Math.abs(s.rate))); document.getElementById('stockName').textContent=s.name; document.getElementById('stockCode').textContent=`${s.code} · KOSPI`; document.getElementById('mainPrice').innerHTML=`${fmt(s.price)} <small class="${cls}">${tri} ${Math.abs(s.rate).toFixed(2)}%</small>`; document.getElementById('changeText').textContent=`${isUp?'+':'-'}${fmt(chg)}원`; document.getElementById('changeText').className=cls; document.getElementById('volumeText').textContent=s.volume; document.getElementById('capText').textContent=s.cap; document.getElementById('bookPrice').textContent=`${fmt(s.price)} ${tri} ${fmt(chg)}`; document.getElementById('orderStock').value=`${s.name} (${s.code})`; document.getElementById('orderPrice').value=fmt(s.price); }
+    function selectStock(s){ selected=s; renderQuoteHeader(s); renderBook(s); renderWatch(); syncMemoEditor(); syncOrderModal(); syncAnalysisModal(); if(activeBroker==='kis') refreshBrokerData('kis',{silent:true}); }
+    // 관심종목 실시간 시세: 이 서비스 KIS 일봉 API 의 summary(현재가·전일대비·등락률·거래량·시가총액, 서버 30초 캐시) 로 샘플값을 덮어쓴다.
+    async function loadWatchQuotes(){
+      await Promise.all(stocks.map(async s=>{ try { const res=await fetch(`/api/kis-chart/candles?symbol=${s.code}&period=D&count=20`); const body=await res.json(); const q=body.summary; if(!body.ok||!q||!q.price) return;
+        s.price=Math.round(Number(q.price)); s.rate=Number(q.changeRate)||0; s.change=Number(q.change)||0; s.volume=fmt(Number(q.volume)||0); if(q.marketCap) s.cap=`${(Number(q.marketCap)/10000).toFixed(1)}조`; s.live=true; } catch {} }));
+      renderWatch();
+      const cur=stocks.find(x=>x.code===selected.code); if(cur&&cur.live){ selected={...selected, price:cur.price, rate:cur.rate, change:cur.change, volume:cur.volume, cap:cur.cap}; renderQuoteHeader(selected); if(!brokerOrderbook) renderBook(selected); syncOrderModal(); syncAnalysisModal(); }
+      const live=stocks.filter(x=>x.live).length; const status=document.getElementById('brokerStatus'); if(status&&live) status.textContent=`KIS 시세 ${live}/${stocks.length}종목 반영 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`;
+    }
     function renderBook(s){const gap=s.price>100000?500:100;let h=''; for(let i=5;i>=1;i--){let p=s.price+gap*i;h+=`<div class="book-row ask"><span class="num">${6-i}</span><span class="num">${fmt(3400+i*913)}</span><span class="price">${fmt(p)}</span><span class="bar" style="width:${18+i*8}%"></span><span class="num">${fmt(1200+i*744)}</span></div>`}h+='<div class="splitline"></div>';for(let i=1;i<=5;i++){let p=s.price-gap*i;h+=`<div class="book-row bid"><span class="num">${i}</span><span class="num">${fmt(1800+i*801)}</span><span class="price">${fmt(p)}</span><span class="bar" style="width:${20+i*8}%"></span><span class="num">${fmt(900+i*611)}</span></div>`}document.getElementById('orderBook').innerHTML=h;}
     let toastTimer; function toast(text){const t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600);}
     let modalOrderSide='buy';
@@ -226,7 +235,8 @@ footer a,
     function renderBrokerQuote(quote){
       const price = toNumber(quote.price); if (!price) throw new Error('증권사 응답에 현재가가 없습니다. 해당 API 사용 권한을 확인하세요.');
       const change = toNumber(quote.change), rate = Number(String(quote.changeRate ?? 0).replace('%', '').replace(/,/g, '')) || 0;
-      selected = {...selected, price, rate, volume: quote.volume ? fmt(toNumber(quote.volume)) : selected.volume};
+      selected = {...selected, price, rate, change, volume: quote.volume ? fmt(toNumber(quote.volume)) : selected.volume};
+      const entry = stocks.find(x=>x.code===selected.code); if (entry) Object.assign(entry, {price, rate, change, volume: selected.volume, live:true});
       const isUp = rate >= 0, cls = isUp ? 'up' : 'down', tri = isUp ? '▲' : '▼';
       document.getElementById('mainPrice').innerHTML = `${fmt(price)} <small class="${cls}">${tri} ${Math.abs(rate).toFixed(2)}%</small>`;
       document.getElementById('changeText').textContent = `${isUp ? '+' : '-'}${fmt(Math.abs(change))}원`; document.getElementById('changeText').className = cls;
@@ -256,7 +266,7 @@ footer a,
       let data; try { data=JSON.parse(body); } catch { throw new Error('증권사 API가 JSON 형식이 아닌 응답을 반환했습니다.'); }
       if (!response.ok || !data.ok) throw new Error(data.message || '증권사 API 요청에 실패했습니다.'); return data;
     }
-    async function refreshBrokerData(broker){
+    async function refreshBrokerData(broker, {silent=false}={}){
       activeBroker = broker; brokerOrderbook = null; const controls = document.querySelectorAll('.broker-control'); controls.forEach(button=>button.disabled=true); setBrokerUi();
       try {
         const base = `/api/broker-test/${broker}`;
@@ -268,12 +278,13 @@ footer a,
         const candles = broker === 'kis' ? chartData.chart?.candles : chartData.result?.raw?.out2;
         if (Array.isArray(candles) && candles.length) renderBrokerCandles(candles);
         document.getElementById('brokerStatus').textContent = `${brokerLabel()} 시세·호가${Array.isArray(candles) && candles.length ? '·일봉' : ''} 조회 완료`;
-        toast(`${brokerLabel()} ${selected.name} 시세를 반영했습니다.`);
+        if (!silent) toast(`${brokerLabel()} ${selected.name} 시세를 반영했습니다.`);
       } catch (error) {
         document.getElementById('brokerStatus').textContent = `${brokerLabel()} 연결 확인 필요`;
-        toast(error.message);
+        if (!silent) toast(error.message);
       } finally { controls.forEach(button=>button.disabled=false); }
     }
-    installHomeLink();installBrokerUi();installApiConsole();renderCandles();renderSupply();initWatchGrid();selectStock(selected);initMemo();
+    installHomeLink();installBrokerUi();installApiConsole();renderCandles();renderSupply();initWatchGrid();selected=stocks[0];renderQuoteHeader(selected);renderBook(selected);renderWatch();syncMemoEditor();syncOrderModal();syncAnalysisModal();initMemo();
+    loadWatchQuotes().then(()=>refreshBrokerData('kis',{silent:true}));setInterval(loadWatchQuotes,30_000);
   </script>
 </body></html>
