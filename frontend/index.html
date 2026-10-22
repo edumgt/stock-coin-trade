@@ -15,6 +15,7 @@
     body { padding-bottom: 44px; }
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','Apple SD Gothic Neo','Malgun Gothic','sans-serif']}}}}</script>
   <link rel="stylesheet" href="/css/style.css?v=20261012-common-3">
 <link rel="stylesheet" href="https://www.edumgt.co.kr/css/common.css?v=20261012-common-3" />
@@ -55,134 +56,60 @@
     </article>
   </section>
 
-  <!-- 관심 4종목 TradingView 차트 (2열) — 현대차 · 삼성전자 · HD현대중공업 · 한미약품 -->
+  <!-- 관심 4종목 일봉 차트 (2열) — 현대차 · 삼성전자 · HD현대중공업 · 한미약품
+       TradingView Lightweight Charts™ (kis-chart.html 과 같은 라이브러리) + 이 서비스 KIS 일봉 API(/api/kis-chart/candles, 로그인 불필요).
+       TradingView 임베드 위젯은 KRX 심볼을 그리지 못하고 기본값(AAPL)으로 떨어져 교체(2026-10-22). -->
   <section class="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-2" id="watchCharts">
     <div class="glass-card overflow-hidden">
-      <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+      <div class="px-5 py-3 flex items-center gap-3 flex-wrap" style="border-bottom:1px solid var(--border);">
         <h2 class="text-base font-black" style="color:var(--fg);">현대차</h2>
-        <span class="badge badge-muted">KRX:005380</span>
+        <span class="badge badge-muted">KRX 005380</span>
+        <span id="wc-005380-price" class="text-sm font-bold" style="color:var(--fg);"></span>
+        <span id="wc-005380-change" class="text-sm font-bold"></span>
         <a href="/trade/stock.html?symbol=005380" class="ml-auto text-sm font-bold" style="color:var(--accent-dark);text-decoration:none;">주식 실습에서 열기 →</a>
       </div>
-      <!-- TradingView Advanced Chart 공식 임베드 (light) · 현대차 KRX:005380 -->
-      <div class="tradingview-widget-container" style="height:420px;background:#FFFFFF;">
-        <div class="tradingview-widget-container__widget" style="height:100%;"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-{
-  "autosize": true,
-  "symbol": "KRX:005380",
-  "interval": "D",
-  "timezone": "Asia/Seoul",
-  "theme": "light",
-  "style": "1",
-  "locale": "kr",
-  "backgroundColor": "#FFFFFF",
-  "gridColor": "rgba(42, 46, 57, 0.06)",
-  "allow_symbol_change": false,
-  "hide_side_toolbar": true,
-  "hide_top_toolbar": false,
-  "withdateranges": true,
-  "save_image": false,
-  "calendar": false,
-  "support_host": "https://www.tradingview.com"
-}
-        </script>
+      <div class="wc-chart" data-symbol="005380" data-name="현대차" style="height:360px;background:#FFFFFF;position:relative;">
+        <div class="wc-msg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;">로딩 중...</div>
       </div>
     </div>
     <div class="glass-card overflow-hidden">
-      <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+      <div class="px-5 py-3 flex items-center gap-3 flex-wrap" style="border-bottom:1px solid var(--border);">
         <h2 class="text-base font-black" style="color:var(--fg);">삼성전자</h2>
-        <span class="badge badge-muted">KRX:005930</span>
+        <span class="badge badge-muted">KRX 005930</span>
+        <span id="wc-005930-price" class="text-sm font-bold" style="color:var(--fg);"></span>
+        <span id="wc-005930-change" class="text-sm font-bold"></span>
         <a href="/trade/stock.html?symbol=005930" class="ml-auto text-sm font-bold" style="color:var(--accent-dark);text-decoration:none;">주식 실습에서 열기 →</a>
       </div>
-      <!-- TradingView Advanced Chart 공식 임베드 (light) · 삼성전자 KRX:005930 -->
-      <div class="tradingview-widget-container" style="height:420px;background:#FFFFFF;">
-        <div class="tradingview-widget-container__widget" style="height:100%;"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-{
-  "autosize": true,
-  "symbol": "KRX:005930",
-  "interval": "D",
-  "timezone": "Asia/Seoul",
-  "theme": "light",
-  "style": "1",
-  "locale": "kr",
-  "backgroundColor": "#FFFFFF",
-  "gridColor": "rgba(42, 46, 57, 0.06)",
-  "allow_symbol_change": false,
-  "hide_side_toolbar": true,
-  "hide_top_toolbar": false,
-  "withdateranges": true,
-  "save_image": false,
-  "calendar": false,
-  "support_host": "https://www.tradingview.com"
-}
-        </script>
+      <div class="wc-chart" data-symbol="005930" data-name="삼성전자" style="height:360px;background:#FFFFFF;position:relative;">
+        <div class="wc-msg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;">로딩 중...</div>
       </div>
     </div>
     <div class="glass-card overflow-hidden">
-      <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+      <div class="px-5 py-3 flex items-center gap-3 flex-wrap" style="border-bottom:1px solid var(--border);">
         <h2 class="text-base font-black" style="color:var(--fg);">HD현대중공업</h2>
-        <span class="badge badge-muted">KRX:329180</span>
+        <span class="badge badge-muted">KRX 329180</span>
+        <span id="wc-329180-price" class="text-sm font-bold" style="color:var(--fg);"></span>
+        <span id="wc-329180-change" class="text-sm font-bold"></span>
         <a href="/trade/stock.html?symbol=329180" class="ml-auto text-sm font-bold" style="color:var(--accent-dark);text-decoration:none;">주식 실습에서 열기 →</a>
       </div>
-      <!-- TradingView Advanced Chart 공식 임베드 (light) · HD현대중공업 KRX:329180 -->
-      <div class="tradingview-widget-container" style="height:420px;background:#FFFFFF;">
-        <div class="tradingview-widget-container__widget" style="height:100%;"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-{
-  "autosize": true,
-  "symbol": "KRX:329180",
-  "interval": "D",
-  "timezone": "Asia/Seoul",
-  "theme": "light",
-  "style": "1",
-  "locale": "kr",
-  "backgroundColor": "#FFFFFF",
-  "gridColor": "rgba(42, 46, 57, 0.06)",
-  "allow_symbol_change": false,
-  "hide_side_toolbar": true,
-  "hide_top_toolbar": false,
-  "withdateranges": true,
-  "save_image": false,
-  "calendar": false,
-  "support_host": "https://www.tradingview.com"
-}
-        </script>
+      <div class="wc-chart" data-symbol="329180" data-name="HD현대중공업" style="height:360px;background:#FFFFFF;position:relative;">
+        <div class="wc-msg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;">로딩 중...</div>
       </div>
     </div>
     <div class="glass-card overflow-hidden">
-      <div class="px-5 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--border);">
+      <div class="px-5 py-3 flex items-center gap-3 flex-wrap" style="border-bottom:1px solid var(--border);">
         <h2 class="text-base font-black" style="color:var(--fg);">한미약품</h2>
-        <span class="badge badge-muted">KRX:128940</span>
+        <span class="badge badge-muted">KRX 128940</span>
+        <span id="wc-128940-price" class="text-sm font-bold" style="color:var(--fg);"></span>
+        <span id="wc-128940-change" class="text-sm font-bold"></span>
         <a href="/trade/stock.html?symbol=128940" class="ml-auto text-sm font-bold" style="color:var(--accent-dark);text-decoration:none;">주식 실습에서 열기 →</a>
       </div>
-      <!-- TradingView Advanced Chart 공식 임베드 (light) · 한미약품 KRX:128940 -->
-      <div class="tradingview-widget-container" style="height:420px;background:#FFFFFF;">
-        <div class="tradingview-widget-container__widget" style="height:100%;"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-{
-  "autosize": true,
-  "symbol": "KRX:128940",
-  "interval": "D",
-  "timezone": "Asia/Seoul",
-  "theme": "light",
-  "style": "1",
-  "locale": "kr",
-  "backgroundColor": "#FFFFFF",
-  "gridColor": "rgba(42, 46, 57, 0.06)",
-  "allow_symbol_change": false,
-  "hide_side_toolbar": true,
-  "hide_top_toolbar": false,
-  "withdateranges": true,
-  "save_image": false,
-  "calendar": false,
-  "support_host": "https://www.tradingview.com"
-}
-        </script>
+      <div class="wc-chart" data-symbol="128940" data-name="한미약품" style="height:360px;background:#FFFFFF;position:relative;">
+        <div class="wc-msg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;">로딩 중...</div>
       </div>
     </div>
   </section>
-  <p class="text-xs mb-2" style="color:var(--muted);">차트: <a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer" style="color:var(--accent-dark);">TradingView</a> 위젯 · KRX 일봉 · 시세는 TradingView 제공(지연 가능)</p>
+  <p class="text-xs mb-2" style="color:var(--muted);">차트: <a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer" style="color:var(--accent-dark);">TradingView Lightweight Charts™</a> · 시세: 한국투자증권 Testbed 일봉(최근 120거래일, 1분 갱신)</p>
 
 </main>
 <footer class="site-footer-unified">© 2026 (주)에듀엠지티 All rights reserved.</footer>
@@ -190,8 +117,55 @@
 <script src="/js/common.js?v=20261008-footer-25px"></script>
 <script>
 (async () => {
-  await initPage();
+  // 헤더·세션 확인(initPage)은 차트와 병렬로 — 로그인 여부와 무관하게 차트를 먼저 그린다(/api/kis-chart/candles 는 공개 API).
+  const pageReady = initPage();
 
+  /* ── 관심 4종목 일봉 차트 (Lightweight Charts + /api/kis-chart/candles) ── */
+  const UP = '#E11D48', DOWN = '#2563EB';
+  const chartEls = [...document.querySelectorAll('#watchCharts .wc-chart')];
+  if (!window.LightweightCharts) {
+    chartEls.forEach((el) => { const m = el.querySelector('.wc-msg'); if (m) m.textContent = '차트 라이브러리를 불러오지 못했습니다. 새로고침해 주세요.'; });
+    await pageReady; return;
+  }
+  const panels = chartEls.map((el) => {
+    const chart = LightweightCharts.createChart(el, {
+      layout: { background: { color: '#FFFFFF' }, textColor: '#6B7280', fontFamily: 'inherit' },
+      grid: { vertLines: { color: '#F1F5F9' }, horzLines: { color: '#F1F5F9' } },
+      rightPriceScale: { borderColor: '#E5E7EB', scaleMargins: { top: 0.08, bottom: 0.26 } },
+      timeScale: { borderColor: '#E5E7EB', timeVisible: false, rightOffset: 3 },
+      crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+      localization: { locale: 'ko-KR', priceFormatter: (p) => Number(p).toLocaleString('ko-KR') },
+      autoSize: true,
+    });
+    const candles = chart.addCandlestickSeries({ upColor: UP, downColor: DOWN, borderUpColor: UP, borderDownColor: DOWN, wickUpColor: UP, wickDownColor: DOWN, priceFormat: { type: 'price', precision: 0, minMove: 1 } });
+    const volume = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'volume' });
+    chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+    return { el, symbol: el.dataset.symbol, chart, candles, volume, msg: el.querySelector('.wc-msg') };
+  });
+
+  async function loadPanel(p, first) {
+    try {
+      const res = await apiFetch(`/api/kis-chart/candles?symbol=${p.symbol}&period=D&count=120`);
+      const body = await res.json();
+      if (!body.ok) throw new Error(body.message || '조회 실패');
+      const data = (body.candles || []).filter((c) => c.open !== null && c.close !== null);
+      if (!data.length) throw new Error('캔들 데이터 없음');
+      p.candles.setData(data.map((c) => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close })));
+      p.volume.setData(data.map((c) => ({ time: c.time, value: c.volume || 0, color: c.close >= c.open ? 'rgba(225,29,72,.35)' : 'rgba(37,99,235,.35)' })));
+      if (first) p.chart.timeScale().fitContent();
+      const q = body.summary || {};
+      const rate = Number(q.changeRate || 0), color = rate > 0 ? UP : rate < 0 ? DOWN : 'var(--muted)';
+      const priceEl = document.getElementById(`wc-${p.symbol}-price`), chgEl = document.getElementById(`wc-${p.symbol}-change`);
+      if (priceEl && q.price != null) { priceEl.textContent = Number(q.price).toLocaleString('ko-KR'); priceEl.style.color = color; }
+      if (chgEl && q.change != null) { chgEl.textContent = `${rate > 0 ? '+' : ''}${Number(q.change).toLocaleString('ko-KR')} (${rate > 0 ? '+' : ''}${rate.toFixed(2)}%)`; chgEl.style.color = color; }
+      p.msg.style.display = 'none';
+    } catch (e) {
+      p.msg.style.display = 'flex'; p.msg.textContent = `${p.el.dataset.name} 시세를 불러오지 못했습니다: ${e.message}`;
+    }
+  }
+  await Promise.all(panels.map((p) => loadPanel(p, true)));
+  setInterval(() => panels.forEach((p) => loadPanel(p, false)), 60_000);
+  await pageReady;
 })();
 </script>
 </body>
