@@ -283,13 +283,13 @@ function renderHeader(user) {
     ]},
     { type: 'group', label: '분석 · 도구', items: [
       { href: '/stress-analysis.html', label: '스트레스분석', icon: 'fa-solid fa-chart-line' },
-      { href: '/ai-analysis.html', label: 'AI 분석', icon: 'fa-solid fa-robot' },
-      { href: '/knowledge-search.html', label: '지식 검색', icon: 'fa-solid fa-magnifying-glass' },
+      
+     
       { href: '/knowledge-dataset.html', label: '데이터셋', icon: 'fa-solid fa-book-open' },
       { href: '/quant.html?tab=algorithm', label: '알고리즘', icon: 'fa-solid fa-code-branch' },
       { href: '/quant.html?tab=simulation', label: '시뮬레이션', icon: 'fa-solid fa-flask-vial' },
       { href: '/hts.html', label: 'HTS 시뮬레이션', icon: 'fa-solid fa-desktop' },
-      { href: 'https://iv.edumgt.co.kr/?view=investment-test', label: '투자테스트', icon: 'fa-solid fa-graduation-cap' },
+      
       { href: '/ai-sheet.html', label: 'AI Sheet',       icon: 'fa-solid fa-table-cells-large' },
       { href: '/openapi.html',  label: 'Open API',       icon: 'fa-solid fa-key' },
       { href: '/api-usage-history.html', label: 'API 사용이력', icon: 'fa-solid fa-list-check' },
