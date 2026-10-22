@@ -14,7 +14,8 @@ function holdSectorBadge(row) {
 (async () => {
   const user = await initPage({ requireAuth: true });
   if (!user?.loggedIn) return;
-  window.dispatchEvent(new Event('hold-ready'));
+  loadStockPortfolio();
+  loadPortfolioAnalysis();
 
   const res = await apiFetch('/api/trade/hold');
   if (!res.ok) {
@@ -32,9 +33,6 @@ function holdSectorBadge(row) {
   // 보유 코인 테이블 렌더
   renderHoldTable(holdCryptoList);
   loadCryptoVolatility(holdCryptoList);
-  await loadStockPortfolio();
-  await loadAlternativePortfolio();
-  loadPortfolioAnalysis();
 
   if (!holdCryptoList.length) {
     setText('total_member_asset', fmt(memberAsset));
@@ -96,42 +94,6 @@ async function loadStockPortfolio() {
     if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--muted);">주식 포트폴리오를 불러올 수 없습니다.</td></tr>';
   }
 }
-
-/* ── 선물·옵션·금속·부동산 포지션 ─────────────────────────────── */
-async function loadAlternativePortfolio() {
-  const tbody = document.getElementById('alternativePositionBody');
-  if (!tbody) return;
-  try {
-    const res = await apiFetch('/api/alternatives/positions?volatility=1');
-    if (!res.ok) throw new Error('alternative positions unavailable');
-    const { positions = [] } = await res.json();
-    if (!positions.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">보유한 대체자산이 없습니다.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = positions.map(pos => {
-      const pnl = Number(pos.pnl || 0);
-      return `<tr><td><div class="font-bold" style="color:var(--fg);">${pos.name}</div><div class="text-sm" style="color:var(--accent);">${pos.symbol}</div></td><td><span class="badge badge-muted">${pos.category}</span></td><td class="text-right" style="color:var(--fg);">${Number(pos.quantity).toLocaleString('ko-KR')}${pos.unit}</td><td class="text-right" style="color:var(--fg);">${fmt(pos.avgPrice)}원</td><td class="text-right font-bold" style="color:var(--accent);">${fmt(pos.evalAmount)}원</td><td class="text-right font-bold" style="color:${pnl >= 0 ? '#E11D48' : '#2563EB'};">${pnl >= 0 ? '+' : ''}${fmt(pnl)}원</td><td class="text-right">${volatilityBadgeHtml(pos.volatility)}</td></tr>`;
-    }).join('');
-  } catch {
-    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">대체자산 포트폴리오를 불러올 수 없습니다.</td></tr>';
-  }
-}
-
-/* ── 포트폴리오 분석 탭 (어드바이저 리포트) ───────────────────────────────────── */
-const CHECK_STATUS_STYLE = {
-  good: { icon: '✓', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
-  warn: { icon: '⚠', color: '#92400E', bg: '#FFFBEB', border: '#FDE68A' },
-  risk: { icon: '✕', color: '#B91C1C', bg: '#FEF2F2', border: '#FECACA' },
-};
-function healthColor(score) {
-  if (score >= 80) return '#059669';
-  if (score >= 60) return '#2563EB';
-  if (score >= 40) return '#D97706';
-  return '#DC2626';
-}
-function pnlColor(rate) { return rate >= 0 ? '#E11D48' : '#2563EB'; }
-function signed(n, digits = 2) { return `${n >= 0 ? '+' : ''}${n.toFixed(digits)}`; }
 
 async function loadPortfolioAnalysis() {
   const content = document.getElementById('portfolioAnalysisContent');

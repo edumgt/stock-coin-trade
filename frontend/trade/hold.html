@@ -33,6 +33,7 @@
     .kis-portfolio-grid { --ag-font-family:Pretendard, sans-serif; --ag-font-size:13px; --ag-background-color:#fff; --ag-foreground-color:#172033; --ag-header-background-color:#F7F9FC; --ag-header-foreground-color:#64748B; --ag-border-color:#E2E8F0; --ag-row-border-color:#E8EDF4; --ag-odd-row-background-color:#FBFCFE; --ag-selected-row-background-color:#EFF6FF; --ag-accent-color:#2563EB; }
     .kis-portfolio-grid .ag-header-cell-label { font-weight:800; }
     .hold-panel { display:none; }
+    .portfolio-asset-block + .portfolio-asset-block { margin-top:24px; }
     .hold-panel.active { display:block; padding-top:20px; }
   </style>
 <link rel="stylesheet" href="https://www.edumgt.co.kr/css/common.css?v=20261012-common-3" />
@@ -44,41 +45,17 @@
 <div id="header-mount"></div>
 <main class="hold-main w-full px-4 py-6">
   <nav class="hold-tabs" role="tablist" aria-label="보유자산 메뉴">
-    <button type="button" class="hold-tab" data-tab="kis" onclick="switchHoldTab('kis')" role="tab" aria-selected="false" aria-controls="panel-kis">KIS 모의투자</button>
-    
-    <button type="button" class="hold-tab" data-tab="analysis" onclick="switchHoldTab('analysis')" role="tab" aria-selected="false" aria-controls="panel-analysis">✦ 포트폴리오 분석</button>
-    <button type="button" class="hold-tab" data-tab="stock" onclick="switchHoldTab('stock')" role="tab" aria-selected="false" aria-controls="panel-stock">주식</button>
-    
-    <button type="button" class="hold-tab" data-tab="crypto" onclick="switchHoldTab('crypto')" role="tab" aria-selected="false" aria-controls="panel-crypto">코인</button>
-    
+    <button id="hold-tab-portfolio" type="button" class="hold-tab active" data-tab="portfolio" onclick="switchHoldTab('portfolio')" role="tab" aria-selected="true" aria-controls="panel-portfolio">모의 포트폴리오</button>
+    <button id="hold-tab-analysis" type="button" class="hold-tab" data-tab="analysis" onclick="switchHoldTab('analysis')" role="tab" aria-selected="false" aria-controls="panel-analysis">✦ 포트폴리오 분석</button>
+    <button id="hold-tab-kis" type="button" class="hold-tab" data-tab="kis" onclick="switchHoldTab('kis')" role="tab" aria-selected="false" aria-controls="panel-kis">KIS 모의투자</button>
   </nav>
 
-  <!-- 요약 -->
-  <div id="panel-summary" class="hold-panel active">
-    <section class="simulation-summary" aria-label="모의투자별 자산 및 전체 거래 집계">
-      <div class="simulation-head"><h2>모의투자별 자산 · 전체 거래 집계</h2><button id="simulationRefresh" type="button">내 원장 전체 새로고침</button></div>
-      <p class="simulation-notice">로그인한 회원의 저장된 전체 체결 이력과 현재 보유자산을 원장별로 집계합니다. 주식·코인·대체자산의 현금은 한 번만 합산합니다. KIS 스타일 가상 연습은 별도 원장, 외부 KIS·Alpaca는 공용계좌이며 통화도 구분합니다.</p>
-      <div id="simulationTotal" class="simulation-total" role="status">내 공유 모의자산 총액: 조회 중…</div>
-      <p class="simulation-notice">공유 총액 = 공유 현금 + 국내주식·코인·대체자산 평가액. 별도 연습계좌와 외부계좌는 합산하지 않습니다. 평가손익은 현재 보유분 기준이며, 누적 매수·매도는 전량 매도한 거래도 포함합니다.</p>
-      <div id="simulationCards" class="simulation-cards" aria-live="polite"><p>로그인 상태를 확인하고 있습니다.</p></div>
-    </section>
-  </div>
-
-  <!-- 포트폴리오 분석 (기존 팝업 → 탭) -->
-  <div id="panel-analysis" class="hold-panel">
-    <section class="glass-card p-5">
-      <h2 class="font-black" style="color:var(--fg);">포트폴리오 분석</h2>
-      <p class="mt-1 text-sm" style="color:var(--muted);">현재 평가액 기준 자산배분</p>
-      <div id="portfolioAnalysisContent" class="mt-4"><p class="text-sm" style="color:var(--muted);">분석 정보를 불러오는 중입니다.</p></div>
-    </section>
-  </div>
-
-  <!-- 주식 포트폴리오 -->
-  <div id="panel-stock" class="hold-panel">
+<div id="panel-portfolio" class="hold-panel active" role="tabpanel" aria-labelledby="hold-tab-portfolio">
+<div id="panel-stock" class="portfolio-asset-block">
     <section class="glass-card overflow-hidden">
       <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-3" style="border-bottom:1px solid var(--border);">
         <div>
-          <h3 class="text-base font-black" style="color:var(--fg);">주식 포트폴리오</h3>
+          <h3 class="text-base font-black" style="color:var(--fg);">모의 주식투자</h3>
           <p class="mt-1 text-sm" style="color:var(--muted);">보유 종목과 섹터별 평가 비중을 확인하세요.</p>
         </div>
         <span class="badge badge-muted">KOSPI · KOSDAQ</span>
@@ -110,9 +87,40 @@
       </div>
     </section>
   </div>
-
-  <!-- KIS 모의투자 포트폴리오 (한국투자증권 Testbed 실계좌 조회) -->
-  <div id="panel-kis" class="hold-panel">
+<div id="panel-crypto" class="portfolio-asset-block">
+    <section class="glass-card overflow-hidden">
+      <div class="px-5 py-4" style="border-bottom:1px solid var(--border);">
+        <h3 class="text-base font-black" style="color:var(--fg);">모의 코인투자</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="dark-table min-w-full">
+          <thead>
+            <tr>
+              <th class="text-left">보유자산</th>
+              <th class="text-right">보유수량</th>
+              <th class="text-right">매수평균가</th>
+              <th class="text-right">매수금액</th>
+              <th class="text-right">평가금액</th>
+              <th class="text-right">평가손익 (%)</th>
+              <th class="text-right">수익률 변동성</th>
+            </tr>
+          </thead>
+          <tbody id="holdCryptoTableBody">
+            <tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+<div id="panel-analysis" class="hold-panel">
+    <section class="glass-card p-5">
+      <h2 class="font-black" style="color:var(--fg);">포트폴리오 분석</h2>
+      <p class="mt-1 text-sm" style="color:var(--muted);">현재 평가액 기준 자산배분</p>
+      <div id="portfolioAnalysisContent" class="mt-4"><p class="text-sm" style="color:var(--muted);">분석 정보를 불러오는 중입니다.</p></div>
+    </section>
+  </div>
+<div id="panel-kis" class="hold-panel">
     <section class="glass-card overflow-hidden">
       <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-3" style="border-bottom:1px solid var(--border);">
         <div>
@@ -151,48 +159,11 @@
     </section>
   </div>
 
-  <!-- 보유 코인 -->
-  <div id="panel-crypto" class="hold-panel">
-    <section class="glass-card overflow-hidden">
-      <div class="px-5 py-4" style="border-bottom:1px solid var(--border);">
-        <h3 class="text-base font-black" style="color:var(--fg);">보유 코인</h3>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="dark-table min-w-full">
-          <thead>
-            <tr>
-              <th class="text-left">보유자산</th>
-              <th class="text-right">보유수량</th>
-              <th class="text-right">매수평균가</th>
-              <th class="text-right">매수금액</th>
-              <th class="text-right">평가금액</th>
-              <th class="text-right">평가손익 (%)</th>
-              <th class="text-right">수익률 변동성</th>
-            </tr>
-          </thead>
-          <tbody id="holdCryptoTableBody">
-            <tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </div>
-
-  <!-- 대체자산 포트폴리오 -->
-  <div id="panel-alt" class="hold-panel">
-    <section class="glass-card overflow-hidden">
-      <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border);">
-        <div><h3 class="text-base font-black" style="color:var(--fg);">대체자산 포트폴리오</h3><p class="mt-1 text-sm" style="color:var(--muted);">선물 · 옵션 · 파생상품 · 금 · 은 · 부동산 지분</p></div>
-        <a href="/trade/alternatives.html" class="text-sm font-bold" style="color:var(--accent);text-decoration:none;">거래하기 →</a>
-      </div>
-      <div class="overflow-x-auto"><table class="dark-table min-w-full"><thead><tr><th class="text-left">상품</th><th class="text-left">분류</th><th class="text-right">보유수량</th><th class="text-right">평균단가</th><th class="text-right">평가금액</th><th class="text-right">평가손익</th><th class="text-right">수익률 변동성</th></tr></thead><tbody id="alternativePositionBody"><tr><td colspan="7" class="px-4 py-6 text-center" style="color:var(--muted);">로딩 중...</td></tr></tbody></table></div>
-    </section>
-  </div>
-
 </main>
 <footer class="site-footer-unified">© 2026 (주)에듀엠지티 All rights reserved.</footer>
 <script>
 function switchHoldTab(name) {
+  name = ['portfolio','analysis','kis'].includes(name) ? name : 'portfolio';
   document.querySelectorAll('.hold-panel').forEach(panel => panel.classList.toggle('active', panel.id === `panel-${name}`));
   document.querySelectorAll('.hold-tab').forEach(tab => {
     const active = tab.dataset.tab === name;
@@ -202,12 +173,14 @@ function switchHoldTab(name) {
   // KIS 조회는 st 게이트웨이의 KIS 호출 전역 직렬화(1.05초 간격)를 타므로 페이지 로드 때가 아니라
   // 탭을 실제로 열 때만 보낸다. 숨은 패널에서는 Highcharts 가 폭 0 으로 그려지는 문제도 함께 피한다.
   if (name === 'kis' && typeof loadKisPortfolio === 'function') loadKisPortfolio();
+  requestAnimationFrame(() => {
+    if (window.Highcharts) Highcharts.charts.filter(Boolean).forEach(chart => chart.reflow());
+  });
 }
 </script>
 <script src="/js/config.js"></script>
 <script src="/js/common.js?v=20261008-footer-25px"></script>
-<script src="/js/hold-summary.js?v=20261015-summary"></script>
-<script src="/js/hold_crypto.js?v=20261022-verified-sectors-1"></script>
+<script src="/js/hold_crypto.js?v=20261022-combined-portfolio-1"></script>
 <script src="/js/hold_kis.js?v=20261022-verified-sectors-1"></script>
 </body>
 </html>
