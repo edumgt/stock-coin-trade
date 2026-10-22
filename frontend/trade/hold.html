@@ -14,7 +14,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Pretendard','-apple-system','BlinkMacSystemFont','Segoe UI','Apple SD Gothic Neo','Malgun Gothic','sans-serif']}}}}</script>
   <link rel="stylesheet" href="/css/style.css?v=20261012-common-3">
-  <script src="https://code.highcharts.com/11.1.0/highcharts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highcharts@11.1.0/highcharts.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.0.2/dist/ag-grid-community.min.js"></script>
   <style>
     /* 탭 막대는 main(공용 app-shell-layout이 스크롤을 담당하는 유일한 영역) 안에서
@@ -97,6 +97,7 @@
           <div id="stockSectorChart" class="min-h-[270px]"></div>
         </div>
       </div>
+      <p class="px-4 pb-2 text-sm" style="color:var(--muted);">섹터 기준: 네이버 금융 업종 · ETF·ETN 별도 · 조회 불가 시 분류 미확인</p>
       <div id="stockSectorSummary" class="px-4 pb-4"></div>
       <div class="overflow-x-auto" style="border-top:1px solid var(--border);">
         <table class="dark-table min-w-full">
@@ -139,6 +140,7 @@
           <div id="kisSectorChart" class="min-h-[270px]"></div>
         </div>
       </div>
+      <p class="px-4 pb-2 text-sm" style="color:var(--muted);">섹터 기준: 네이버 금융 업종 · ETF·ETN 별도 · 조회 불가 시 분류 미확인</p>
       <div id="kisSectorSummary" class="px-4 pb-4"></div>
       <p id="kisPortfolioStatus" class="px-5 pb-3 text-sm" style="color:var(--muted);">탭을 열면 조회합니다.</p>
       <div class="px-4 pb-4" style="border-top:1px solid var(--border);padding-top:14px;">
@@ -204,7 +206,7 @@ function switchHoldTab(name) {
 <script src="/js/config.js"></script>
 <script src="/js/common.js?v=20261008-footer-25px"></script>
 <script src="/js/hold-summary.js?v=20261015-summary"></script>
-<script src="/js/hold_crypto.js?v=20261015-summary"></script>
-<script src="/js/hold_kis.js?v=20261012-kis-aggrid-1"></script>
+<script src="/js/hold_crypto.js?v=20261022-verified-sectors-1"></script>
+<script src="/js/hold_kis.js?v=20261022-verified-sectors-1"></script>
 </body>
 </html>

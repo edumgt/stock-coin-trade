@@ -2,7 +2,7 @@
  *
  * 데이터: GET /api/broker-test/kis/balance — 한국투자증권 Testbed 모의계좌 잔고(로그인 필요, 읽기 전용).
  *         응답 holdings 항목은 KIS 원문이라 **값이 문자열**이고 섹터가 없다.
- * 섹터:   GET /api/stocks/list — 종목 마스터(symbol→sector). 섹터 표를 이 파일에 복제하지 않기 위해 받아서 쓴다.
+ * 섹터:   GET /api/stocks/sectors?symbols=... — 실제 보유 종목 코드별 업종. 섹터 표를 이 파일에 복제하지 않기 위해 받아서 쓴다.
  *
  * 왜 지연 로딩인가: st 는 모든 KIS 호출을 전역 1.05초 간격으로 직렬화한다. 페이지를 열 때마다 잔고를
  * 조회하면 같은 큐를 쓰는 fd 자동매매(주문·체결 확인)의 지연을 키운다. 그래서 탭을 실제로 열 때만 조회하고,
@@ -15,7 +15,6 @@
 const KIS_PALETTE = ['#2563EB', '#7C3AED', '#059669', '#EA580C', '#DB2777', '#0891B2', '#65A30D', '#D97706'];
 let kisPortfolioLoaded = false;
 let kisPortfolioLoading = false;
-let kisSectorMap = null;
 let kisPortfolioGridApi = null;
 
 /** KIS 응답은 숫자가 문자열("1,234" 포함)로 온다. */
@@ -49,18 +48,15 @@ function kisChartsMessage(message) {
   if (summary) summary.innerHTML = '';
 }
 
-/** 종목 마스터에서 symbol→sector 를 한 번만 받아 캐시한다. 실패해도 포트폴리오는 보여준다. */
-async function loadKisSectorMap() {
-  if (kisSectorMap) return kisSectorMap;
-  kisSectorMap = {};
+/** Never infer sectors from a top-N stock list. Retry missing data on refresh. */
+async function loadKisSectorMap(holdings) {
+  const symbols = [...new Set(holdings.map(item => holdNormalizeSymbol(item.symbol)).filter(Boolean))];
+  if (!symbols.length) return {};
   try {
-    const res = await apiFetch('/api/stocks/list?limit=100');
-    if (res.ok) {
-      const { stocks = [] } = await res.json();
-      stocks.forEach(stock => { if (stock.symbol) kisSectorMap[String(stock.symbol)] = stock.sector || '기타'; });
-    }
-  } catch { /* 섹터는 보조 정보다 — 없으면 '기타'로 표시한다 */ }
-  return kisSectorMap;
+    const res = await apiFetch('/api/stocks/sectors?symbols=' + encodeURIComponent(symbols.join(',')));
+    if (res.ok) return (await res.json()).sectors || {};
+  } catch { /* Balance remains available when classification is unavailable. */ }
+  return {};
 }
 
 function renderKisSectorSummary(rows, totalEval) {
@@ -68,7 +64,7 @@ function renderKisSectorSummary(rows, totalEval) {
   if (!el) return;
   if (!rows.length || totalEval <= 0) { el.innerHTML = ''; return; }
   const sectors = rows.reduce((acc, row) => {
-    const name = row.sector || '기타';
+    const name = row.sector || '분류 미확인';
     if (!acc[name]) acc[name] = { eval: 0, pnl: 0, count: 0 };
     acc[name].eval += row.evalAmount;
     acc[name].pnl += row.profitLoss;
@@ -81,7 +77,7 @@ function renderKisSectorSummary(rows, totalEval) {
     const color = info.pnl >= 0 ? '#E11D48' : '#2563EB';
     return `<div class="rounded-lg p-3" style="border:1px solid var(--border);background:var(--surface);">
       <div class="flex items-center justify-between">
-        <span class="text-sm font-extrabold" style="color:${KIS_PALETTE[index % KIS_PALETTE.length]};">${name}</span>
+        <span class="text-sm font-extrabold" style="color:${KIS_PALETTE[index % KIS_PALETTE.length]};">${holdEscapeText(name)}</span>
         <span class="text-sm" style="color:var(--muted);">${info.count}종목 · ${share.toFixed(1)}%</span>
       </div>
       <div class="mt-1 font-bold" style="color:var(--fg);">${fmt(info.eval)}원</div>
@@ -104,7 +100,7 @@ function renderKisPortfolioCharts(rows, totalEval) {
   if (otherEval > 0) allocationData.push({ name: '기타 종목', y: otherEval, color: '#94A3B8' });
 
   const sectors = rows.reduce((acc, row) => {
-    const name = row.sector || '기타';
+    const name = row.sector || '분류 미확인';
     acc[name] = (acc[name] || 0) + row.evalAmount;
     return acc;
   }, {});
@@ -157,7 +153,7 @@ function kisPortfolioColumnDefs() {
       cellRenderer: params => `<a href="/trade/stock.html?symbol=${encodeURIComponent(params.data.symbol)}" title="${params.value} 시세·매매" style="font-weight:800;color:var(--fg);text-decoration:none;">${params.value} <span style="font-size:13px;color:var(--accent);">시세 ↗</span></a>` },
     { headerName:'종목코드', field:'symbol', width:112, cellStyle:{ color:'var(--accent)', fontWeight:'700' } },
     { headerName:'섹터', field:'sector', minWidth:140,
-      cellRenderer: params => `<span class="badge badge-muted" style="font-size:13px;">${params.value || '기타'}</span>` },
+      cellRenderer: params => holdSectorBadge(params.data || {sector: params.value}) },
     { headerName:'보유수량', field:'quantity', width:118, type:'rightAligned',
       valueFormatter: params => `${fmt(Number(params.value))}주` },
     { headerName:'매수평균가', field:'avgPrice', minWidth:130, type:'rightAligned',
@@ -207,10 +203,7 @@ async function loadKisPortfolio(force = false) {
   kisPortfolioLoading = true;
   kisStatus('KIS 모의계좌 잔고를 불러오는 중…');
   try {
-    const [balanceRes, sectorMap] = await Promise.all([
-      apiFetch('/api/broker-test/kis/balance'),
-      loadKisSectorMap(),
-    ]);
+    const balanceRes = await apiFetch('/api/broker-test/kis/balance');
     const body = await balanceRes.json().catch(() => ({}));
     if (!balanceRes.ok) {
       const message = body.message || (balanceRes.status === 401
@@ -222,10 +215,11 @@ async function loadKisPortfolio(force = false) {
       return;
     }
     const balance = body.balance || {};
+    const sectorMap = await loadKisSectorMap(balance.holdings || []);
     const rows = (balance.holdings || []).map(item => ({
       symbol: String(item.symbol || ''),
       name: item.name || String(item.symbol || ''),
-      sector: sectorMap[String(item.symbol || '')] || '기타',
+      ...(sectorMap[holdNormalizeSymbol(item.symbol)] || { sector: '분류 미확인', sectorStatus: 'unavailable' }),
       quantity: kisNum(item.quantity),
       avgPrice: kisNum(item.avgPrice),
       currentPrice: kisNum(item.currentPrice),

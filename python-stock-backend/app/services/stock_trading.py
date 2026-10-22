@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.models import Member, StockOrder, StockPosition
 from app.services.stock_market import STOCKS, current_price, get_chart_cached, get_stock_info
 from app.services.volatility import annualized_volatility
+from app.services.stock_sectors import get_stock_sectors, normalize_symbol
 
 INITIAL_CASH = 100_000_000  # 회원가입 시 지급하는 초기 예수금(members.INITIAL_ASSET과 동일)
 
@@ -37,6 +38,7 @@ def _stock_volatility(symbol: str) -> float | None:
 
 def get_positions(db: Session, member_id: int, include_volatility: bool = False) -> list[dict]:
     rows = db.scalars(select(StockPosition).where(StockPosition.member_id == member_id)).all()
+    sectors = get_stock_sectors([pos.symbol for pos in rows])
     result = []
     for pos in rows:
         price = current_price(pos.symbol)
@@ -46,7 +48,7 @@ def get_positions(db: Session, member_id: int, include_volatility: bool = False)
         item = {
             "symbol": pos.symbol,
             "name": info.get("name", pos.symbol),
-            "sector": info.get("sector", "기타"),
+            **sectors.get(normalize_symbol(pos.symbol), {"sector": "분류 미확인", "sectorStatus": "unavailable"}),
             "quantity": pos.quantity,
             "avgPrice": pos.avg_price,
             "currentPrice": price,

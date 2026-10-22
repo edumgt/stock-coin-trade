@@ -1,3 +1,15 @@
+function holdEscapeText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+function holdNormalizeSymbol(value) {
+  return String(value || '').trim().toUpperCase().replace(/\.(KS|KQ)$/, '').replace(/^A(?=\d{6}$)/, '');
+}
+function holdSectorBadge(row) {
+  let details = row.sectorSource || '업종 데이터 조회 불가 · 새로고침하여 다시 확인하세요.';
+  if (row.sectorAsOf) details += ' · 확인 ' + new Date(row.sectorAsOf).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'}) + ' KST';
+  return `<span class="badge badge-muted" style="font-size:13px;" title="${holdEscapeText(details)}">${holdEscapeText(row.sector || '분류 미확인')}</span>`;
+}
+
 /* ── 초기화: 보유자산 fetch → DOM 렌더 → WebSocket 연결 ──────── */
 (async () => {
   const user = await initPage({ requireAuth: true });
@@ -71,7 +83,7 @@ async function loadStockPortfolio() {
           <div class="font-bold" style="color:var(--fg);">${pos.name} <span style="font-size:13px;color:var(--accent);">매매하기 ↗</span></div>
           <div class="text-sm" style="color:var(--accent);">${pos.symbol}</div>
         </a></td>
-        <td><span class="badge badge-muted" style="font-size:13px;">${pos.sector || '기타'}</span></td>
+        <td>${holdSectorBadge(pos)}</td>
         <td class="text-right font-semibold" style="color:var(--fg);">${Number(pos.quantity).toLocaleString('ko-KR')}주</td>
         <td class="text-right" style="color:var(--fg);">${fmt(pos.avgPrice)}원</td>
         <td class="text-right" style="color:var(--fg);">${fmt(pos.currentPrice)}원</td>
@@ -173,7 +185,7 @@ function renderStockSectorSummary(positions, totalEval) {
     return;
   }
   const sectors = positions.reduce((result, pos) => {
-    const name = pos.sector || '기타';
+    const name = pos.sector || '분류 미확인';
     const group = result[name] || { count: 0, evalAmount: 0 };
     group.count += 1;
     group.evalAmount += Number(pos.evalAmount || 0);
@@ -186,7 +198,7 @@ function renderStockSectorSummary(positions, totalEval) {
     const pct = totalEval ? data.evalAmount / totalEval * 100 : 0;
     const color = palette[index % palette.length];
     return `<div style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;background:var(--surface-2);">
-      <div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:800;color:var(--fg);"><span>${sector}</span><span>${pct.toFixed(1)}%</span></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:800;color:var(--fg);"><span>${holdEscapeText(sector)}</span><span>${pct.toFixed(1)}%</span></div>
       <div style="height:5px;border-radius:99px;background:var(--border);overflow:hidden;margin:7px 0 5px;"><div style="width:${pct}%;height:100%;background:${color};"></div></div>
       <div style="font-size:13px;color:var(--muted);">${data.count}종목 · ${fmt(data.evalAmount)}원</div>
     </div>`;
@@ -218,7 +230,7 @@ function renderStockPortfolioCharts(positions, totalEval) {
   if (otherEval > 0) allocationData.push({ name: '기타 종목', y: otherEval, color: '#94A3B8' });
 
   const sectors = positions.reduce((result, pos) => {
-    const name = pos.sector || '기타';
+    const name = pos.sector || '분류 미확인';
     result[name] = (result[name] || 0) + Number(pos.evalAmount || 0);
     return result;
   }, {});

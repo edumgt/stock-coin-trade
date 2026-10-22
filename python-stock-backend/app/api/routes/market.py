@@ -25,6 +25,15 @@ from ..schemas import QdrantAddBody, QdrantSearchBody
 router = APIRouter(prefix="/api/stocks", tags=["market"])
 
 
+@router.get("/sectors")
+def stock_sectors(symbols: str = Query("", max_length=800)) -> dict:
+    from app.services.stock_sectors import get_stock_sectors, normalize_symbol
+    codes = [value.strip() for value in symbols.split(",") if value.strip()]
+    if len(codes) > 100 or any(not normalize_symbol(code) for code in codes):
+        raise ApiError(400, message="유효한 종목코드를 최대 100개까지 입력하세요.")
+    return {"sectors": get_stock_sectors(codes), "classification": "네이버 금융 업종 (ETF·ETN 별도)"}
+
+
 @router.get("/list")
 def stock_list(limit: int = Query(30), market: str = Query("")) -> dict:
     try:
