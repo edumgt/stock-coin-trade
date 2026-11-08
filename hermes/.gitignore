@@ -1,0 +1,6 @@
+workspace/*/logs/
+workspace/discover/
+workspace/daemon.log
+workspace/PAUSE
+.venv/
+__pycache__/
