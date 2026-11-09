@@ -2,7 +2,7 @@
 id: HX-001
 title: AI 시트 페이지의 스타일 적용 미흡
 priority: P1
-status: todo
+status: review
 area: frontend
 stages: [dev, qa]
 acceptance:
