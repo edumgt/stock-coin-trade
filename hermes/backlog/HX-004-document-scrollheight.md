@@ -2,7 +2,7 @@
 id: HX-004
 title: 프런트엔드 주요 화면 document.scrollHeight 및 레이아웃 검증 및 개선
 priority: P1
-status: todo
+status: review
 area: frontend
 stages: [pm, design, dev, qa]
 acceptance:

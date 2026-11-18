@@ -298,453 +298,202 @@ body.alternatives-layout > main :is(p, span, a, button, input, select, textarea,
 .oc-guest-lock > i {
     font-size: 26px;
     color: var(--muted);
-    margin-bottom: 0.9rem;
 }
-.oc-guest-lock > p {
-    font-size: 13.5px;
-    font-weight: 600;
-    line-height: 1.5;
-    margin-bottom: 1.2rem;
-}
-.oc-guest-actions { display: flex; gap: 0.6rem; width: 100%; }
-.oc-guest-actions button {
-    flex: 1;
-    padding: 0.55rem 0;
-    font-size: 13px;
-    font-weight: 700;
-    border-radius: var(--radius-xs);
-    cursor: pointer;
-    transition: opacity 0.15s, background 0.15s;
-}
-.oc-guest-actions button:first-child {
-    background: transparent;
-    color: var(--fg-2);
-    border: 1.5px solid var(--border);
-}
-.oc-guest-actions button:first-child:hover { background: var(--accent-light); }
-.oc-guest-actions button:last-child {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-}
-.oc-guest-actions button:last-child:hover { opacity: 0.85; }
-.oc-footer { padding: 1rem 1.2rem; border-top: 1px solid var(--border); }
-
-/* ── Header ─────────────────────────────────────────────────────────────── */
-#site-header {
-    background: rgba(255,255,255,0.94);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    position: sticky; top: 0; z-index: 100;
-}
-
-/* ── GNB: 기능은 넓은 개별 화면으로, 탐색은 상단 메뉴로 ─────────────── */
-.gnb-shell { display:flex; align-items:center; gap:18px; min-height:58px; padding:0 22px; }
-.gnb-brand { flex:0 0 auto; color:var(--accent-dark); text-decoration:none; font-size:18px; font-weight:900; letter-spacing:.04em; white-space:nowrap; }
-.gnb-brand i { margin-right:6px; }
-.gnb-nav { display:flex; align-items:stretch; gap:2px; min-width:0; flex:1; overflow-x:auto; scrollbar-width:thin; }
-.gnb-link,.gnb-group summary { display:flex; align-items:center; gap:6px; height:58px; padding:0 10px; color:var(--fg-2); text-decoration:none; font-size:14.3px; font-weight:750; white-space:nowrap; cursor:pointer; list-style:none; }
-.gnb-group summary::-webkit-details-marker { display:none; }.gnb-group summary i { font-size:13.5px; transition:transform .15s; }.gnb-group[open] summary i { transform:rotate(180deg); }
-.gnb-link:hover,.gnb-group summary:hover { color:var(--accent-dark); background:var(--accent-light); }
-.gnb-group { position:relative; flex:0 0 auto; }.gnb-dropdown { position:fixed; z-index:220; display:grid; min-width:210px; padding:6px; border:1px solid var(--border); border-radius:9px; background:#fff; box-shadow:var(--shadow-md); }
-.gnb-dropdown a { display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:6px; color:var(--fg-2); text-decoration:none; font-size:14.3px; font-weight:650; white-space:nowrap; }.gnb-dropdown a:hover { background:var(--accent-light); color:var(--accent-dark); }
-.gnb-user { flex:0 0 auto; white-space:nowrap; }
-/* AI 3개 기능의 상단 바로가기 */
-.gnb-shortcuts { display:flex; align-items:center; gap:3px; min-width:0; overflow-x:auto; }
-.gnb-shortcuts a { padding:8px 12px; border-radius:6px; color:var(--accent-dark); text-decoration:none; font-size:16px; font-weight:800; white-space:nowrap; }
-.gnb-shortcuts a:hover { background:var(--accent-light); }
-@media (max-width:900px) { .gnb-shell { gap:10px; padding:0 12px; }.gnb-nav { order:3; flex-basis:100%; height:42px; }.gnb-shell { flex-wrap:wrap; padding-bottom:3px; }.gnb-link,.gnb-group summary { height:40px; padding:0 8px; font-size:13.2px; }.gnb-dropdown { position:absolute; }.gnb-user span { display:none; } }
-
-.hamburger-btn {
-    width: 36px; height: 36px;
-    background: var(--accent-light);
-    border: none; border-radius: var(--radius-xs);
-    cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-    transition: background 0.12s; flex-shrink: 0;
-}
-.hamburger-btn:hover { background: rgba(41,98,255,0.18); }
-.hamburger-btn span { display: block; width: 16px; height: 2px; background: var(--accent); border-radius: 1px; }
-
-/* ── Cards ──────────────────────────────────────────────────────────────── */
-.glass-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-}
-.glow-card {
-    background: linear-gradient(160deg, #FFFFFF 60%, var(--surface-2));
-    border: 1px solid rgba(41,98,255,0.18);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm), 0 0 20px rgba(41,98,255,0.06);
-}
-
-/* ── Tables ─────────────────────────────────────────────────────────────── */
-.dark-table { width: 100%; border-collapse: collapse; }
-.dark-table thead th {
-    background: var(--surface-2);
-    color: var(--muted);
-    font-size: 13.5px; font-weight: 700;
-    letter-spacing: 0.04em; text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-    padding: 8px 12px; white-space: nowrap;
-}
-.dark-table tbody td {
-    padding: 9px 12px; color: var(--fg);
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
-}
-.dark-table tbody tr { transition: background 0.1s; }
-.dark-table tbody tr:hover { background: var(--accent-light); }
-.dark-table tbody tr:last-child td { border-bottom: none; }
-
-/* ── Inputs ─────────────────────────────────────────────────────────────── */
-.dark-input {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    color: var(--fg);
-    border-radius: var(--radius-sm);
-    padding: 0.55rem 0.85rem;
-    width: 100%; font-size: 15px;
-    transition: border-color 0.15s, box-shadow 0.15s; outline: none;
-}
-.dark-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-}
-.dark-input::placeholder { color: #ADB5C0; }
-
-.dark-select {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    color: var(--fg);
-    border-radius: var(--radius-xs);
-    padding: 0.38rem 0.65rem; font-size: 14px; outline: none;
-    transition: border-color 0.15s; cursor: pointer;
-}
-.dark-select:focus { border-color: var(--accent); }
-.dark-select option { background: #FFFFFF; color: var(--fg); }
 
 /* ── Buttons ────────────────────────────────────────────────────────────── */
 .btn-gold {
     background: var(--accent);
-    color: #FFFFFF; font-weight: 700; font-size: 15px;
-    border-radius: var(--radius-sm); padding: 0.6rem 1.4rem;
-    border: none; cursor: pointer;
-    transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
-    box-shadow: 0 2px 8px rgba(41,98,255,0.30);
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 100%; letter-spacing: 0.01em;
-}
-.btn-gold:hover { background: var(--accent-dark); box-shadow: 0 4px 16px rgba(41,98,255,0.40); transform: translateY(-1px); }
-
-.btn-ghost {
-    background: var(--surface); color: var(--fg-2); font-weight: 600; font-size: 15px;
-    border-radius: var(--radius-sm); padding: 0.6rem 1.4rem;
-    border: 1.5px solid var(--border); cursor: pointer;
-    transition: background 0.12s, border-color 0.12s;
-    display: inline-flex; align-items: center; justify-content: center; width: 100%;
-}
-.btn-ghost:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); }
-
-.btn-buy {
-    background: #E11D48;
-    color: #fff; font-weight: 700; font-size: 16px;
-    border-radius: var(--radius-sm); padding: 0.6rem 1rem;
-    border: none; cursor: pointer;
-    transition: background 0.12s, box-shadow 0.12s;
-    box-shadow: 0 2px 8px rgba(225,29,72,0.25); width: 100%;
-}
-.btn-buy:hover { background: #BE123C; box-shadow: 0 4px 14px rgba(225,29,72,0.35); }
-
-.btn-sell {
-    background: #1565C0;
-    color: #fff; font-weight: 700; font-size: 16px;
-    border-radius: var(--radius-sm); padding: 0.6rem 1rem;
-    border: none; cursor: pointer;
-    transition: background 0.12s, box-shadow 0.12s;
-    box-shadow: 0 2px 8px rgba(21,101,192,0.25); width: 100%;
-}
-.btn-sell:hover { background: #0D47A1; box-shadow: 0 4px 14px rgba(21,101,192,0.35); }
-
-.btn-pct-buy {
-    border: 1.5px solid rgba(225,29,72,0.25); color: #E11D48;
-    background: rgba(225,29,72,0.04); border-radius: var(--radius-xs);
-    padding: 0.28rem 0; font-size: 13px; font-weight: 700;
-    cursor: pointer; transition: background 0.12s; text-align: center;
-}
-.btn-pct-buy:hover { background: rgba(225,29,72,0.10); }
-
-.btn-pct-sell {
-    border: 1.5px solid rgba(21,101,192,0.25); color: #1565C0;
-    background: rgba(21,101,192,0.04); border-radius: var(--radius-xs);
-    padding: 0.28rem 0; font-size: 13px; font-weight: 700;
-    cursor: pointer; transition: background 0.12s; text-align: center;
-}
-.btn-pct-sell:hover { background: rgba(21,101,192,0.10); }
-
-/* ── Badges ─────────────────────────────────────────────────────────────── */
-.badge {
-    border-radius: 4px; padding: 0.18rem 0.65rem;
-    font-size: 13.5px; font-weight: 700;
-    display: inline-flex; align-items: center; letter-spacing: 0.03em;
-}
-.badge-gold  { background: var(--accent); color: #FFFFFF; border: none; }
-.badge-muted { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
-.badge-green { background: #E8F5E9; color: #2E7D32; border: 1px solid rgba(46,125,50,0.2); }
-.badge-red   { background: #FFEBEE; color: #C62828; border: 1px solid rgba(198,40,40,0.2); }
-
-/* ── Period buttons ─────────────────────────────────────────────────────── */
-.period-btn {
-    border-radius: 4px; padding: 0.22rem 0.85rem;
-    font-size: 13px; font-weight: 600; transition: all 0.12s; cursor: pointer;
-    border: 1px solid var(--border); background: transparent; color: var(--muted);
-}
-.period-btn.active {
-    background: var(--accent); color: #FFFFFF; border-color: var(--accent);
-    box-shadow: 0 1px 4px rgba(41,98,255,0.25);
-}
-.period-btn:not(.active):hover {
-    background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark);
-}
-
-/* ── Market filter tabs ─────────────────────────────────────────────────── */
-.market-tab {
-    font-size: 13px; font-weight: 600; padding: 4px 12px;
-    border-radius: 4px; border: 1px solid var(--border);
-    background: transparent; color: var(--muted); cursor: pointer; transition: all 0.12s;
-}
-.market-tab.active {
-    background: var(--accent); border-color: var(--accent); color: #FFFFFF;
-}
-.market-tab:not(.active):hover {
-    background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark);
-}
-
-/* ── Exchange tabs ─────────────────────────────────────────────────────── */
-.exchange-tab {
-    font-size: 13px; font-weight: 700; padding: 4px 14px;
-    border-radius: 4px; border: 1px solid var(--border);
-    background: transparent; color: var(--muted); cursor: pointer; transition: all 0.12s;
-}
-.exchange-tab.active {
-    background: var(--accent); border-color: var(--accent); color: #FFFFFF;
-    box-shadow: 0 1px 6px rgba(41,98,255,0.28);
-}
-.exchange-tab:not(.active):hover {
-    background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark);
-}
-.dom-inline-item {
-    cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: background .1s;
-}
-.dom-inline-item:hover { background: var(--accent-light); }
-.dom-inline-item.selected { background: var(--accent-light); border: 1px solid rgba(41,98,255,0.2); }
-
-/* ── Price colors ───────────────────────────────────────────────────────── */
-.text-up    { color: #E11D48; }
-.text-down  { color: #1565C0; }
-.text-muted { color: var(--muted); }
-
-/* ── Table helpers ──────────────────────────────────────────────────────── */
-td, th { vertical-align: middle; }
-
-/* ── Scrollbar ──────────────────────────────────────────────────────────── */
-/* 스크롤바 규칙은 공통 CSS 로 이동했다(edumgt-components 계층).
-   값만 바꾸려면 아래 :root 의 --sb-* 토큰을 조정한다. */
-
-/* ── Stat cards ─────────────────────────────────────────────────────────── */
-.stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    color: white;
+    font-weight: 700;
     border-radius: var(--radius-sm);
-    padding: 0.85rem 1rem;
+    padding: 0.65rem 1.75rem;
+    transition: background-color 0.2s ease;
+}
+.btn-gold:hover {
+    background: var(--accent-dark);
+}
+.btn-ghost {
+    background: transparent;
+    color: var(--accent-dark);
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 1.75rem;
+    border: 1px solid var(--accent);
+    transition: background-color 0.2s ease;
+}
+.btn-ghost:hover {
+    background: var(--accent-light);
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.glow-card, .glass-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
-}
-.stat-card .stat-label {
-    font-size: 13.5px; font-weight: 700; letter-spacing: 0.06em;
-    text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem;
-}
-.stat-card .stat-value { font-size: 22px; font-weight: 900; color: var(--fg); line-height: 1.2; }
-.stat-card.gold-stat {
-    background: var(--accent); border: none;
-    box-shadow: 0 4px 16px rgba(41,98,255,0.25);
-}
-.stat-card.gold-stat .stat-value { color: #FFFFFF; }
-.stat-card.gold-stat .stat-label { color: rgba(255,255,255,0.75); }
-
-/* ── Section label ──────────────────────────────────────────────────────── */
-.section-label {
-    font-size: 13.5px; font-weight: 700; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--muted);
-}
-
-/* ── Asset bar ──────────────────────────────────────────────────────────── */
-.asset-bar {
-    background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: var(--radius-xs);
-    padding: 0.5rem 0.8rem; font-size: 14px;
 }
 
-/* ── Footer ─────────────────────────────────────────────────────────────── */
-#site-footer {
-    margin-top: 3rem;
-    border-top: 1px solid #27272A;
-    background: #000000;
-    color: #CBD5E1;
-}
-#site-footer .brand-logo-text {
-    background: none;
-    -webkit-text-fill-color: #FFFFFF;
-    color: #FFFFFF;
-}
-#site-footer p {
-    color: #94A3B8 !important;
-}
-#site-footer p a {
-    color: #60A5FA !important;
-}
+/* 카드 내부 여백과 간격은 Tailwind 유틸리티 클래스로 조정 (p-4 = 16px padding, m-3 = 12px margin) */
 
-/* ── Auth page ──────────────────────────────────────────────────────────── */
-.auth-page {
-    min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 2rem 1rem;
-    background: linear-gradient(135deg, #EEF4FF 0%, #F0F3FA 50%, #E8F0FE 100%);
-}
-.auth-card {
-    width: 100%; max-width: 400px;
-    background: #FFFFFF;
-    border: 1px solid #D6E2FF;
-    border-radius: 12px;
-    padding: 2.5rem 2rem;
-    box-shadow: 0 8px 32px rgba(41,98,255,0.08), 0 2px 8px rgba(0,0,0,0.06);
-}
-.auth-logo {
-    background: linear-gradient(135deg, #2962FF, #0D47A1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 30px; font-weight: 900; letter-spacing: 3px;
-    display: block; text-align: center;
-}
-
-/* ── Live indicator ─────────────────────────────────────────────────────── */
-.live-dot {
-    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-    background: #22C55E; box-shadow: 0 0 5px #22C55E;
-    animation: pulse-dot 1.5s ease-in-out infinite;
-}
-@keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.5; transform: scale(0.75); }
-}
-
-/* ── AI Panel ───────────────────────────────────────────────────────────── */
-/* Tailwind CDN의 button 초기화보다 우선해 공개 API 테스트 버튼을 명확히 표시한다. */
-body[data-exchange] .row button {
-    padding: 10px 13px !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-    background: var(--accent) !important;
-    color: #fff !important;
-    font-weight: 800 !important;
-    cursor: pointer;
-}
-body[data-exchange] .row button:disabled { opacity: .6; }
-
-#ai-panel {
-    background: #FFFFFF !important;
-    border-left: 1px solid var(--border) !important;
-    box-shadow: -4px 0 24px rgba(0,0,0,0.08) !important;
-}
-
-/* 우측 오프캔버스는 메뉴 전용이다. AI의 3개 기능은 상단 GNB 전용 화면에서 사용한다. */
-#ai-panel .right-tool-nav { flex: 1; }
-.dataset-composer-open { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:20px; padding:12px 14px; border:0; border-radius:10px; color:#fff; background:var(--accent); font:inherit; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 8px 20px rgba(37,99,235,.22); transition:transform .12s ease, box-shadow .12s ease; }
-.dataset-composer-open:hover { transform:translateY(-1px); box-shadow:0 12px 26px rgba(37,99,235,.28); }
-.dataset-composer-modal { position:fixed; z-index:500; inset:0; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.5); backdrop-filter:blur(4px); }
-.dataset-composer-modal.open { display:flex; }
-.dataset-composer-dialog { display:flex; flex-direction:column; width:min(1040px,100%); max-height:calc(100dvh - 40px); overflow:hidden; border:1px solid #c9daff; border-radius:18px; background:var(--surface); box-shadow:0 30px 80px rgba(15,23,42,.35); animation:composer-in .18s ease-out; }
-@keyframes composer-in { from { opacity:0; transform:translateY(12px) scale(.985); } to { opacity:1; transform:none; } }
-.dataset-composer-dialog header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:26px 32px 22px; border-bottom:1px solid #d9e6ff; background:linear-gradient(135deg,#e6f0ff,#fafcff); }
-.dataset-composer-heading { min-width:0; }
-.dataset-composer-eyebrow { color:var(--accent-dark); font-size:13.5px; font-weight:900; letter-spacing:.1em; }
-.dataset-composer-dialog h2 { margin:6px 0 6px; color:var(--fg); font-size:24px; font-weight:900; line-height:1.25; }
-.dataset-composer-dialog header p { margin:0; color:var(--fg-2); font-size:13.5px; line-height:1.6; }
-.dataset-composer-close { flex:0 0 auto; width:36px; height:36px; border:1px solid #c9daff; border-radius:9px; color:var(--muted); background:#fff; font-size:24px; line-height:1; cursor:pointer; transition:background .12s ease, color .12s ease; }
-.dataset-composer-close:hover { color:var(--fg); background:var(--surface-2); }
-.dataset-composer-body { flex:1 1 auto; overflow:auto; padding:26px 32px 18px; }
-.dataset-composer-row { display:grid; grid-template-columns:1.6fr .8fr; gap:16px; }
-.dataset-composer-field { display:flex; flex-direction:column; gap:7px; margin-bottom:18px; }
-.dataset-composer-label { color:var(--fg); font-size:13px; font-weight:800; }
-.dataset-composer-label em { color:var(--muted); font-style:normal; font-weight:600; }
-.dataset-composer-body input,
-.dataset-composer-body select,
-.dataset-composer-body textarea { width:100%; margin:0 !important; padding:12px 14px !important; border:1px solid var(--border) !important; border-radius:10px !important; background:#fff; color:var(--fg); font:inherit; font-size:15px !important; line-height:1.5; transition:border-color .12s ease, box-shadow .12s ease; }
-.dataset-composer-body input:focus,
-.dataset-composer-body select:focus,
-.dataset-composer-body textarea:focus { outline:none; border-color:var(--accent) !important; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
-.dataset-composer-body textarea { min-height:340px; resize:vertical; }
-.dataset-composer-meta { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:-8px; }
-.dataset-composer-count { color:var(--muted); font-size:14px; font-variant-numeric:tabular-nums; }
-.dataset-composer-count.near-limit { color:#dc2626; font-weight:800; }
-.dataset-composer-msg { flex:1 1 auto; margin:0 !important; text-align:right; font-size:13.5px; font-weight:700; }
-.dataset-composer-footer { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:16px 32px 20px; border-top:1px solid var(--border); background:var(--surface-2); }
-.dataset-composer-cancel { padding:11px 18px; border:1px solid var(--border); border-radius:10px; color:var(--fg-2); background:#fff; font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
-.dataset-composer-cancel:hover { color:var(--fg); background:var(--surface); }
-.dataset-composer-submit { width:auto !important; min-width:180px; margin:0 !important; padding:11px 22px !important; border:0; border-radius:10px; color:#fff; background:var(--accent); font:inherit; font-size:14px !important; font-weight:800; cursor:pointer; box-shadow:0 8px 20px rgba(37,99,235,.22); }
-.dataset-composer-submit:hover { filter:brightness(1.05); }
-.dataset-composer-submit:disabled { opacity:.65; cursor:wait; box-shadow:none; }
-@media(max-width:760px) { .dataset-composer-modal { padding:10px; } .dataset-composer-dialog { max-height:calc(100dvh - 20px); border-radius:14px; } .dataset-composer-dialog header { padding:18px 18px 16px; } .dataset-composer-dialog h2 { font-size:20px; } .dataset-composer-body { padding:18px; } .dataset-composer-row { grid-template-columns:1fr; gap:0; } .dataset-composer-body textarea { min-height:240px; } .dataset-composer-footer { padding:14px 18px 16px; } .dataset-composer-submit { flex:1 1 auto; } }
-
-/* ── Content control bar (hamburger ← | AI 분석 →) ─────────────────────── */
-#content-ctrl-bar {
-    /* sticky below the slim header */
-}
-
-/* 트레이딩 페이지: content-ctrl-bar는 trading-body 위에 위치 */
-.trading-root #content-ctrl-bar {
+/* ── Site footer ────────────────────────────────────────────────────────── */
+.site-footer-unified {
+    height: 10px;
+    background-color: #000;
+    color: #fff;
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    line-height: 10px;
+    text-align: center;
+    user-select: none;
     position: relative;
-    top: unset;
-    flex-shrink: 0;
+    z-index: 10;
 }
 
-/* API 테스트 화면: 실제 호출 범위와 성공 기준을 화면 안에서 확인한다. */
-.api-test-guide { margin-top:20px; border:1px solid #BFDBFE; border-radius:11px; background:#F8FBFF; color:var(--fg); }
-.api-test-guide summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; cursor:pointer; font-size:14px; font-weight:900; }
-.api-test-guide summary span { color:var(--accent-dark); font-size:13.5px; font-weight:700; }
-.api-test-guide-rate { margin:0; padding:11px 14px; border-top:1px solid #DBEAFE; border-bottom:1px solid #DBEAFE; background:#FFF8E8; color:#854D0E; font-size:13.5px; line-height:1.65; }
-.api-test-guide-scroll { overflow-x:auto; border-top:1px solid #DBEAFE; }
-.api-test-guide table { width:100%; min-width:820px; border-collapse:collapse; font-size:13.5px; line-height:1.55; }
-.api-test-guide th,.api-test-guide td { padding:10px 12px; border-bottom:1px solid #DBEAFE; text-align:left; vertical-align:top; }
-.api-test-guide thead th { color:#1E3A8A; background:#EFF6FF; font-weight:850; }
-.api-test-guide tbody th { color:var(--fg); font-weight:800; white-space:nowrap; }
-.api-test-guide code { overflow-wrap:anywhere; color:#1D4ED8; font-size:13.5px; }
-.api-test-guide-note { margin:0; padding:11px 14px; color:#475569; font-size:13.5px; line-height:1.65; }
-.api-test-guide-note + .api-test-guide-note { padding-top:0; }
-@media(max-width:600px) { .api-test-guide summary { align-items:flex-start; flex-direction:column; }.api-test-guide summary span { font-size:13.5px; } }
+/* ── Layout gutters ─────────────────────────────────────────────────────── */
+.main-content {
+    margin-left: 248px; /* 사이드바 펼침 상태 기본 폭 */
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
 
+/* ── Responsive grid for cards and charts ──────────────────────────────── */
+@media (min-width: 1440px) {
+    .hero-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        justify-content: center;
+        max-width: 1120px;
+        margin: 0 auto;
+    }
+}
+@media (max-width: 1120px) and (min-width: 960px) {
+    .hero-cards {
+        display: block;
+        max-width: 1120px;
+        margin: 0 auto;
+    }
+}
 
-/* 공통 스타일(한글 스케일·최소 글자 크기·타이틀 고정·공통 푸터)은 https://www.edumgt.co.kr/css/common.css 정본에 있다. 여기에 다시 복제하지 말 것. */
+/* ── Form layout adjustments ───────────────────────────────────────────── */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
 
-/* ══ 표준 토큰 계약 (20261012-common-3) ══════════════════════════════════════════════════
-   공통 CSS(https://www.edumgt.co.kr/css/common.css)의 edumgt-components 계층이
-   참조하는 8개 표준 토큰 이름을 이 사이트의 기존 토큰에 연결한다.
-   이 사이트의 색·값은 바뀌지 않는다. 검증: python3 shared-css/audit.py
-   ══════════════════════════════════════════════════════════════════════════ */
-:root {
-  /* 사이트 토큰 → 표준 토큰 이름 (값은 그대로, 이름만 공통 계약에 맞춘다) */
-  --text: var(--fg);
-  --accent-on: #fff;
-  /* 스크롤바 — 기존 st 값 유지 */
-  --sb-width: 4px;
-  --sb-height: 4px;
-  --sb-track: var(--bg);
-  --sb-thumb: var(--border);
-  --sb-radius: 2px;
-  --sb-thumb-hover: var(--muted);
+/* ── Scrollbar 제거 및 레이아웃 최적화 ─────────────────────────────────── */
+body, html {
+    overflow-x: hidden;
+}
+
+/* ── 기타 필요한 스타일 조정 ───────────────────────────────────────────── */
+
+/* 사이드바 및 상단 바 높이 고정 */
+#site-header {
+    height: 56px;
+    line-height: 56px;
+    z-index: 30;
+    border-bottom: 1px solid var(--border);
+}
+
+#sidebar {
+    width: 248px;
+    padding: 8px;
+    height: 100vh;
+    border-right: 1px solid var(--border);
+    z-index: 40;
+}
+
+/* 카드 높이 균일화 및 내부 여백 조정 */
+.card {
+    padding: 16px;
+    margin: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* 차트 카드 높이 고정 */
+.chart-card {
+    height: 360px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+/* 푸터 고정 및 디자인 */
+.site-footer-unified {
+    height: 10px;
+    background: #000;
+    color: #fff;
+    text-align: center;
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    line-height: 10px;
+}
+
+/* 카드 및 폼 레이아웃 중앙 정렬 및 반응형 조정 */
+@media (min-width: 1440px) {
+    main {
+        max-width: 1920px;
+        margin: 0 auto;
+    }
+    .hero-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        justify-content: center;
+    }
+}
+@media (max-width: 1120px) and (min-width: 960px) {
+    .hero-cards {
+        display: block;
+        max-width: 1120px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* 카드 내부 요소 간격 유지 */
+.card > * + * {
+    margin-top: 8px;
+}
+
+/* 버튼 높이 및 패딩 조정 */
+.btn-gold, .btn-ghost {
+    height: 32px;
+    padding-left: 28px;
+    padding-right: 28px;
+    border-radius: 8px;
+}
+
+/* 사이드바 트리거 버튼 접근성 지원 */
+.sidebar-trigger {
+    position: absolute;
+    left: 16px;
+    top: 12px;
+    z-index: 50;
+}
+
+/* 스크롤바 숨김 */
+::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* 모달 정중앙 배치 */
+dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    max-height: 90vh;
+    overflow: auto;
 }
