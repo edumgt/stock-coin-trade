@@ -31,6 +31,13 @@ FastAPI REST API와 Vanilla JavaScript로 만든 주식·암호화폐 모의투�
   - `Alpaca Test`: Alpaca Paper 계정 상태
 - (선택) VS Code·Codex용 한투 공식 KIS MCP 서버 연동 — 자세한 내용은 아래 "KIS MCP" 절 참고
 
+### 주요 기능 화면
+
+| 국내 주식 모의투자 (`/trade/stock.html`) | 암호화폐 모의투자 (`/trade/order.html`) | PostgreSQL Quant Lab (`/quant.html?tab=simulation`) |
+|---|---|---|
+| <img src="./captures/feature-stock-trading.png" alt="국내 주식 모의투자 화면" width="280"> | <img src="./captures/feature-crypto-trading.png" alt="암호화폐 모의투자 화면" width="280"> | <img src="./captures/feature-quant-lab.png" alt="PostgreSQL Quant Lab 화면" width="280"> |
+| KRX 종목 시세·이동평균선 캔들 차트 및 매수/매도 모의 주문 | 국내 주요 거래소(업비트·빗썸·코인원·코빗) 실시간 시세 비교 및 코인 모의 거래 | 읽기 전용 SQL 기반 OHLCV 데이터 탐색, 알파·베타 분석 및 전략 백테스트 |
+
 ## Open API 실습 커리큘럼
 
 외부 플랫폼 가입·키 발급과 이 웹앱의 안전한 조회·모의 실습을 모듈별 과정으로 제공합니다. Key·Secret·계좌번호는 제출물에 포함하지 않습니다.

@@ -31,6 +31,13 @@ A stock and cryptocurrency paper-trading and Open API learning platform built wi
   - `Alpaca Test`: Alpaca Paper account status
 - (Optional) Connect the official Korea Investment & Securities KIS MCP server for VS Code and Codex; see “KIS MCP” below.
 
+### Main Feature Screens
+
+| Stock Paper Trading (`/trade/stock.html`) | Crypto Paper Trading (`/trade/order.html`) | PostgreSQL Quant Lab (`/quant.html?tab=simulation`) |
+|---|---|---|
+| <img src="./captures/feature-stock-trading.png" alt="Stock Paper Trading screen" width="280"> | <img src="./captures/feature-crypto-trading.png" alt="Crypto Paper Trading screen" width="280"> | <img src="./captures/feature-quant-lab.png" alt="PostgreSQL Quant Lab screen" width="280"> |
+| Real-time/simulated KRX stock quotes, TradingView candlestick & MA charts, and order execution | Multi-exchange crypto price comparison (Upbit, Bithumb, Coinone, Korbit) with candlestick charts and buy/sell orders | Read-only SQL OHLCV explorer, factor analysis, and strategy backtest simulation |
+
 ## Open API Practice Curriculum
 
 The modular curriculum covers signing up for external platforms, obtaining keys, and safely practicing read-only queries and simulated trading in this web app. Do not include keys, secrets, or account numbers in submitted work.
